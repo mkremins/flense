@@ -38,12 +38,21 @@
 
 (def edit-mode? (atom false))
 
+(defn select-text! [elem]
+  (let [text-range     (.createRange js/document)
+        text-selection (.getSelection js/window)]
+    (.selectNodeContents text-range elem)
+    (.removeAllRanges text-selection)
+    (.addRange text-selection text-range)))
+
 (defn enable-edit-mode! []
   (let [$selected @selected]
     (when (.hasClass $selected "token")
       (reset! edit-mode? true)
       (.attr $selected "contenteditable" true)
-      (.focus (.get $selected 0)))
+      (let [elem (.get $selected 0)]
+        (.focus elem)
+        (select-text! elem)))
     (when (.hasClass $selected "coll")
       (go-down!)
       (enable-edit-mode!))))
