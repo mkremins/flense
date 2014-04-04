@@ -1,0 +1,68 @@
+@import url(http://fonts.googleapis.com/css?family=Source+Code+Pro);
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  outline: none;
+}
+
+body {
+  border-left: 4px solid rgb(240,240,255);
+  font-family: 'Source Code Pro';
+  font-size: 21px;
+  line-height: 1.4;
+  margin-left: 240px;
+  margin-top: 80px;
+  padding-left: 1.5rem;
+}
+
+#keys {
+  font-size: 14px;
+  left: 20px;
+  position: fixed;
+  top: 20px;
+}
+#keys :nth-child(1) { color: #ff0000; }
+#keys :nth-child(2) { color: #00cc00; }
+#keys :nth-child(3) { color: #0000ff; }
+#keys :nth-child(4) { color: #00cccc; }
+
+.coll.selected > .delimiter, .token.selected {
+  color: rgb(255,0,255);
+}
+.coll.selected > .items > .coll:nth-child(1) > .delimiter,
+.coll.selected > .items > .token:nth-child(1) {
+  border-bottom: 1px solid #ff0000;
+}
+.coll.selected > .items > .coll:nth-child(2) > .delimiter,
+.coll.selected > .items > .token:nth-child(2) {
+  border-bottom: 1px solid #00cc00;
+}
+.coll.selected > .items > .coll:nth-child(3) > .delimiter,
+.coll.selected > .items > .token:nth-child(3) {
+  border-bottom: 1px solid #0000ff;
+}
+.coll.selected > .items > .coll:nth-child(4) > .delimiter,
+.coll.selected > .items > .token:nth-child(4) {
+  border-bottom: 1px solid #00cccc;
+}
+
+.coll > * {
+  display: inline-block;
+}
+.coll > *:not(:first-child) {
+  margin-left: -0.75rem;
+}
+
+.coll {
+  display: block;
+}
+
+.token:not(:last-child) {
+  margin-right: 0.75rem;
+}
+
+.delimiter:first-child {
+  vertical-align: top;
+}
