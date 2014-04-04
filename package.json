@@ -1,0 +1,8 @@
+{
+  "name": "Flense",
+  "main": "index.html",
+  "window": {
+    "width": 1000,
+    "height": 800
+  }
+}
