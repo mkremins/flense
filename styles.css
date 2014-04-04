@@ -12,21 +12,10 @@ body {
   font-family: 'Source Code Pro';
   font-size: 21px;
   line-height: 1.4;
-  margin-left: 240px;
-  margin-top: 80px;
+  margin-left: 5%;
+  margin-top: 40px;
   padding-left: 1.5rem;
 }
-
-#keys {
-  font-size: 14px;
-  left: 20px;
-  position: fixed;
-  top: 20px;
-}
-#keys :nth-child(1) { color: #ff0000; }
-#keys :nth-child(2) { color: #00cc00; }
-#keys :nth-child(3) { color: #0000ff; }
-#keys :nth-child(4) { color: #00cccc; }
 
 .coll.selected > .delimiter, .token.selected {
   color: rgb(255,0,255);
