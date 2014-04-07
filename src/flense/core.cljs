@@ -1,4 +1,5 @@
 (ns flense.core
+  (:require [flense.ranges :as ranges])
   (:use [flense.keys :only [ev->key held? trap-modal-keys!]]))
 
 (enable-console-print!)
@@ -12,19 +13,12 @@
 
 (def selected (atom ($ ".selected")))
 
-(defn- select-text! [elem]
-  (let [text-range     (.createRange js/document)
-        text-selection (.getSelection js/window)]
-    (.selectNodeContents text-range elem)
-    (.removeAllRanges text-selection)
-    (.addRange text-selection text-range)))
-
 (defn enable-editing! [$elem]
   (when (.hasClass $elem "token")
     (.attr $elem "contenteditable" true)
     (let [elem (.get $elem 0)]
       (.focus elem)
-      (select-text! elem))))
+      (ranges/select-contents! elem))))
 
 (defn disable-editing! [$elem]
   (when (.hasClass $elem "token")
@@ -103,9 +97,6 @@
         (go-left!))
     (.remove $deleted)))
 
-(defn- selected-range []
-  (-> js/window (.getSelection) (.getRangeAt 0)))
-
 (defn- emulate-backspace!
   "Emulates the native backspace text editing command, removing the last
    character of the text in `$elem`."
@@ -113,13 +104,9 @@
   (let [text (.text $elem)]
     (.text $elem (subs text 0 (dec (count text))))
     ;; move cursor to end of elem content
-    (let [sel-range
-          (doto (selected-range)
-            (.selectNodeContents (.get $elem 0))
-            (.collapse false))]
-      (doto (.getSelection js/window)
-        (.removeAllRanges)
-        (.addRange sel-range)))))
+    (ranges/select-range! (doto (ranges/selected-range)
+                            (.selectNodeContents (.get $elem 0))
+                            (.collapse false)))))
 
 ;; keybinds
 
@@ -130,7 +117,7 @@
      (let [$selected @selected]
        (if (and (.hasClass $selected "token")
                 (not (#{"" "..."} (.text $selected)))
-                (empty? (.toString (selected-range))))
+                (empty? (.toString (ranges/selected-range))))
            (emulate-backspace! $selected)
            (delete-selected!))))
    :LBRAK           (partial open-coll! :vec)
