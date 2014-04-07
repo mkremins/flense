@@ -87,7 +87,8 @@
 (defn open-coll! [type]
   (let [$selected @selected]
     (.after $selected (render-coll type))
-    (go-right!)))
+    (go-right!)
+    (go-down!)))
 
 (defn break-token! []
   (let [$selected @selected]
@@ -95,10 +96,11 @@
     (go-right!)))
 
 (defn delete-selected! []
-  (let [$deleted @selected]
-    (go-left!)
-    (when (= @selected $deleted)
-      (go-up!))
+  (let [$deleted @selected
+        $parent  (.parent $deleted)]
+    (if (<= (.-length (.children $parent)) 1)
+        (go-up!)
+        (go-left!))
     (.remove $deleted)))
 
 ;; keybinds
