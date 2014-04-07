@@ -96,9 +96,8 @@
     (go-right!)))
 
 (defn delete-selected! []
-  (let [$deleted @selected
-        $parent  (.parent $deleted)]
-    (if (<= (.-length (.children $parent)) 1)
+  (let [$deleted @selected]
+    (if (= (.-length (.siblings $deleted)) 0)
         (go-up!)
         (go-left!))
     (.remove $deleted)))
