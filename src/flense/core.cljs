@@ -103,11 +103,36 @@
         (go-left!))
     (.remove $deleted)))
 
+(defn- selected-range []
+  (-> js/window (.getSelection) (.getRangeAt 0)))
+
+(defn- emulate-backspace!
+  "Emulates the native backspace text editing command, removing the last
+   character of the text in `$elem`."
+  [$elem]
+  (let [text (.text $elem)]
+    (.text $elem (subs text 0 (dec (count text))))
+    ;; move cursor to end of elem content
+    (let [sel-range
+          (doto (selected-range)
+            (.selectNodeContents (.get $elem 0))
+            (.collapse false))]
+      (doto (.getSelection js/window)
+        (.removeAllRanges)
+        (.addRange sel-range)))))
+
 ;; keybinds
 
 (def default-binds
   { ;; structural editing commands
-   :DEL             delete-selected!
+   :DEL
+   (fn [ev]
+     (let [$selected @selected]
+       (if (and (.hasClass $selected "token")
+                (not (#{"" "..."} (.text $selected)))
+                (empty? (.toString (selected-range))))
+           (emulate-backspace! $selected)
+           (delete-selected!))))
    :LBRAK           (partial open-coll! :vec)
    :SPACE           break-token!
    #{:SHIFT :NUM_9} (partial open-coll! :seq)
