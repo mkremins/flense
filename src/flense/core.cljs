@@ -31,7 +31,7 @@
 (defn select! [$elem]
   (let [$prev @selected]
     (disable-editing! $prev)
-    (when (and (.hasClass $prev "token") (empty? (.text $prev)))
+    (when (and (.hasClass $prev "token") (#{"" "..."} (.text $prev)))
       (.remove $prev))
     (.removeClass $prev "selected"))
   (reset! selected $elem)
