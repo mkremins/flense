@@ -39,40 +39,38 @@
   (when (.hasClass $elem "token")
     (enable-editing! $elem)))
 
-(defn exists? [$elem]
-  (> (.-length $elem) 0))
-
 ;; zipper navigation commands
 
 (defn go-down! []
   (let [$selected @selected]
     (when (.hasClass $selected "coll")
       (let [$items (.children $selected)]
-        (when (exists? $items)
+        (when-not (= (.-length $items) 0)
           (select! (.first $items)))))))
 
 (defn go-up! []
-  (let [$selected @selected]
-    (when-not (.hasClass $selected "top")
-      (select! (.parent $selected)))))
+  (let [$selected @selected
+        $parent   (.parent $selected)]
+    (when-not (.hasClass $parent "flense")
+      (select! $parent))))
 
 (defn go-left! []
   (let [$selected @selected
         $prev     (.prev $selected)]
-    (if (exists? $prev)
-        (select! $prev)
+    (if (= (.-length $prev) 0)
         (let [$last (-> $selected (.siblings) (.last))]
-          (when (exists? $last)
-            (select! $last))))))
+          (when-not (= (.-length $last) 0)
+            (select! $last)))
+        (select! $prev))))
 
 (defn go-right! []
   (let [$selected @selected
         $next     (.next $selected)]
-    (if (exists? $next)
-        (select! $next)
+    (if (= (.-length $next) 0)
         (let [$first (-> $selected (.siblings) (.first))]
-          (when (exists? $first)
-            (select! $first))))))
+          (when-not (= (.-length $first) 0)
+            (select! $first)))
+        (select! $next))))
 
 ;; structure editing commands
 
