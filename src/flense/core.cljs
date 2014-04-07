@@ -5,6 +5,9 @@
 
 (def $ js/$)
 
+(defn $empty? [$elem]
+  (= (.-length $elem) 0))
+
 ;; selection management
 
 (def selected (atom ($ ".selected")))
@@ -45,7 +48,7 @@
   (let [$selected @selected]
     (when (.hasClass $selected "coll")
       (let [$items (.children $selected)]
-        (when-not (= (.-length $items) 0)
+        (when-not ($empty? $items)
           (select! (.first $items)))))))
 
 (defn go-up! []
@@ -57,18 +60,18 @@
 (defn go-left! []
   (let [$selected @selected
         $prev     (.prev $selected)]
-    (if (= (.-length $prev) 0)
+    (if ($empty? $prev)
         (let [$last (-> $selected (.siblings) (.last))]
-          (when-not (= (.-length $last) 0)
+          (when-not ($empty? $last)
             (select! $last)))
         (select! $prev))))
 
 (defn go-right! []
   (let [$selected @selected
         $next     (.next $selected)]
-    (if (= (.-length $next) 0)
+    (if ($empty? $next)
         (let [$first (-> $selected (.siblings) (.first))]
-          (when-not (= (.-length $first) 0)
+          (when-not ($empty? $first)
             (select! $first)))
         (select! $next))))
 
