@@ -1,5 +1,6 @@
 (ns flense.core
-  (:require [flense.ranges :as ranges])
+  (:require [clojure.string :as string]
+            [flense.ranges :as ranges])
   (:use [flense.keys :only [ev->key held? trap-modal-keys!]]))
 
 (enable-console-print!)
@@ -71,13 +72,18 @@
 
 ;; structure editing commands
 
-(defn- render-token []
-  "<span class=\"token\">...</span>")
+(defn- render-token [text]
+  (str "<span class=\"token\">" text "</span>"))
 
-(defn- render-coll [type]
-  (str "<div class=\"coll " (name type) "\">"
-       (render-token)
-       "</div>"))
+(def ^:private render-placeholder
+  (partial render-token "..."))
+
+(defn- render-coll
+  ([type] (render-coll type [(render-placeholder)]))
+  ([type items]
+    (str "<div class=\"coll " (name type) "\">"
+         (string/join items)
+         "</div>")))
 
 (defn open-coll! [type]
   (let [$selected @selected]
@@ -87,7 +93,7 @@
 
 (defn break-token! []
   (let [$selected @selected]
-    (.after $selected (render-token))
+    (.after $selected (render-placeholder))
     (go-right!)))
 
 (defn delete-selected! []
@@ -96,6 +102,11 @@
         (go-up!)
         (go-left!))
     (.remove $deleted)))
+
+(defn replace-selected! [$replacement]
+  (let [$replaced @selected]
+    (.replaceWith $replaced $replacement)
+    (select! $replacement)))
 
 (defn- emulate-backspace!
   "Emulates the native backspace text editing command, removing the last
@@ -108,20 +119,57 @@
                             (.selectNodeContents (.get $elem 0))
                             (.collapse false)))))
 
-;; keybinds
-
-(def default-binds
-  { ;; structural editing commands
-   :DEL
-   (fn [ev]
-     (let [$selected @selected]
+(defn- exec-delete! []
+  (let [$selected @selected]
        (if (and (.hasClass $selected "token")
                 (not (#{"" "..."} (.text $selected)))
                 (empty? (.toString (ranges/selected-range))))
            (emulate-backspace! $selected)
            (delete-selected!))))
-   :LBRAK           (partial open-coll! :vec)
-   :SPACE           break-token!
+
+;; templates and autocompletion
+
+(defn- classify-coll [coll]
+  (cond (map? coll)    :map
+        (seq? coll)    :seq
+        (set? coll)    :set
+        (vector? coll) :vec))
+
+(def ^:private token? (complement coll?))
+
+(defn- render-template [template]
+  (if (token? template)
+      (render-token (pr-str template))
+      (render-coll (classify-coll template)
+                   (map render-template template))))
+
+(def default-templates
+  '{"def"  (def ... ...)
+    "defn" (defn ... "" [...] ...)
+    "fn"   (fn [...] ...)
+    "let"  (let [... ...] ...)
+    "loop" (loop [... ...] ...)
+    "try"  (try ... (catch Exception e ...))})
+
+(defn- complete [text completions]
+  text) ; TODO this is a no-op for now
+
+(defn expand-selected! [templates completions]
+  (let [$expanded @selected
+        text      (.text $expanded)]
+    (when (.hasClass $expanded "token")
+      (if-let [template (get templates text)]
+        (replace-selected! ($ (render-template template)))
+        (.text $expanded (complete text completions))))))
+
+;; keybinds
+
+(def default-binds
+  { ;; structural editing commands
+   :DEL   exec-delete!
+   :LBRAK (partial open-coll! :vec)
+   :SPACE break-token!
+   :TAB   (partial expand-selected! default-templates {})
    #{:SHIFT :NUM_9} (partial open-coll! :seq)
    #{:SHIFT :LBRAK} (partial open-coll! :map)
     ;; simple navigation commands
