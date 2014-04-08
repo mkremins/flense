@@ -20,12 +20,10 @@
 (declare render)
 
 (defn- render-coll [type children selected?]
-  (println (str "render coll of type: " (pr-str type) " with children: " (pr-str children)))
   (let [classes (str (name type) (when selected? " selected"))]
     [:div.coll {:class classes} children]))
 
 (defn- render-token [text selected?]
-  (println (str "render token with text: " (pr-str text)))
   [:span.token (if selected? {:class "selected"} {}) text])
 
 (defn- render [loc curr-loc]
