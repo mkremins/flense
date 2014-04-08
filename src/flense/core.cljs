@@ -2,7 +2,7 @@
   (:require [clojure.string :as string]
             [flense.keys :as keys]
             [flense.ranges :as ranges]))
-
+(comment
 (enable-console-print!)
 
 (def $ js/$)
@@ -200,3 +200,4 @@
   (.keydown ($ js/window) (partial handle-key default-binds)))
 
 (init)
+)
