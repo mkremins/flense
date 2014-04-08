@@ -1,20 +1,17 @@
 (ns flense.render
-  (:require [reagent.core :as r]))
-
-(def app-state
-  (r/atom {:tree ['(...)] :cursor [0 0]}))
+  (:require-macros [flense.macros :refer [extend-types]]))
 
 (defprotocol IRender
   (-render [this path cursor]))
 
-(defn render-coll [type items path cursor]
+(defn- render-coll [type items path cursor]
   (let [classes (str (name type) (when (= path cursor) " selected"))]
     [:div.coll {:class classes}
                (map-indexed (fn [idx item]
                               (-render item (conj path idx) cursor))
                             items)]))
 
-(defn render-token [text path cursor]
+(defn- render-token [text path cursor]
   [:span.token (when (= path cursor) {:class "selected"}) text])
 
 (extend-protocol IRender
@@ -34,15 +31,17 @@
   (-render [this path cursor]
     (render-coll :vec this path cursor))
 
-  js/Object
+  js/String
   (-render [this path cursor]
-    (render-token (pr-str this) path cursor)))
+    (render-token (str "\"" this "\"") path cursor)))
 
-(defn render-root [state]
+(extend-types [Keyword js/Number Symbol]
+  IRender
+  (-render [this path cursor]
+    (render-token (str this) path cursor)))
+
+(defn root [state]
   (let [{:keys [tree cursor]} @state]
     [:div.flense (map-indexed (fn [idx item]
                                 (-render item [idx] cursor))
                               tree)]))
-
-(r/render-component [(partial render-root app-state)]
-                    (.-body js/document))
