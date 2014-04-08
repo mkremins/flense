@@ -1,59 +1,38 @@
 (ns flense.core
-  (:require [clojure.string :as string]
+  (:require [clojure.zip :as zip]
             [flense.keys :as keys]
             [flense.render :as render]
             [reagent.core :as reagent]))
 
 (enable-console-print!)
 
+(defn forms-zip [root]
+  (zip/zipper coll?
+              (fn [parent]
+                (if (map? parent)
+                    (interleave (keys parent) (vals parent))
+                    parent))
+              (fn [parent children]
+                (cond (map? parent) (apply hash-map children)
+                      (seq? parent) (apply list children)
+                      (set? parent) (set children)
+                      (vector? parent) (vec children)))
+              root))
+
 (def app-state
-  (reagent/atom {:tree   ['(fn greet [name] (str "Hello, " name "!"))]
-                 :cursor [0]}))
+  (reagent/atom (forms-zip ['(fn greet [name] (str "Hello, " name "!"))])))
 
-(extend-protocol ILookup
-  List
-  (-lookup [this k]
-    (get (vec this) k))
-  (-lookup [this k not-found]
-    (or (get (vec this) k) not-found)))
+(defn go-down [loc]
+  (or (zip/down loc) loc))
 
-(defn node-at [path {:keys [tree]}]
-  (get-in tree path))
+(defn go-up [loc]
+  (or (zip/up loc) loc))
 
-(defn selected-node [{:keys [cursor] :as state}]
-  (node-at cursor state))
+(defn go-left [loc]
+  (or (zip/left loc) (zip/rightmost loc)))
 
-(defn parent-node [{:keys [cursor] :as state}]
-  (node-at (pop cursor) state))
-
-(defn go-down [state]
-  (let [node (selected-node state)]
-    (if (and (coll? node) (seq node))
-        (update-in state [:cursor] conj 0)
-        state)))
-
-(defn go-up [{:keys [cursor] :as state}]
-  (if (> (count cursor) 1)
-      (update-in state [:cursor] pop)
-      state))
-
-(defn go-right [{:keys [cursor] :as state}]
-  (let [new-cursor (conj (pop cursor) (inc (peek cursor)))]
-    (if (node-at new-cursor state)
-        (assoc state :cursor new-cursor)
-        (let [new-cursor (conj (pop cursor) 0)]
-          (if (node-at new-cursor state)
-              (assoc state :cursor new-cursor)
-              state)))))
-
-(defn go-left [{:keys [cursor] :as state}]
-  (let [new-cursor (conj (pop cursor) (dec (peek cursor)))]
-    (if (node-at new-cursor state)
-        (assoc state :cursor new-cursor)
-        (let [new-cursor (conj (pop cursor) (dec (count (parent-node state))))]
-          (if (node-at new-cursor state)
-              (assoc state :cursor new-cursor)
-              state)))))
+(defn go-right [loc]
+  (or (zip/right loc) (zip/leftmost loc)))
 
 ;; keybinds
 
@@ -85,6 +64,7 @@
   (reagent/render-component [(partial render/root app-state)]
                             (.-body js/document))
   (keys/trap-modal-keys! modal-keys)
-  (.addEventListener js/window "keydown" (partial handle-key default-binds)))
+  (.addEventListener js/window "keydown" (partial handle-key default-binds))
+  (swap! app-state go-down)) ; select the first top-level form at startup
 
 (init)

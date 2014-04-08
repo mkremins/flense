@@ -1,47 +1,48 @@
 (ns flense.render
-  (:require-macros [flense.macros :refer [extend-types]]))
+  (:require [clojure.zip :as zip]))
 
-(defprotocol IRender
-  (-render [this path cursor]))
+(defn- right-locs [loc]
+  (loop [loc loc locs []]
+    (if-let [next-loc (zip/right loc)]
+      (recur next-loc (conj locs next-loc))
+      locs)))
 
-(defn- render-coll [type items path cursor]
-  (let [classes (str (name type) (when (= path cursor) " selected"))]
-    [:div.coll {:class classes}
-               (map-indexed (fn [idx item]
-                              (-render item (conj path idx) cursor))
-                            items)]))
+(defn- downs [loc]
+  (if-let [down1 (zip/down loc)]
+    (cons down1 (right-locs down1))
+    ()))
 
-(defn- render-token [text path cursor]
-  [:span.token (when (= path cursor) {:class "selected"}) text])
+(defn- top [loc]
+  (if-let [up1 (zip/up loc)]
+    (recur up1)
+    loc))
 
-(extend-protocol IRender
-  List
-  (-render [this path cursor]
-    (render-coll :seq this path cursor))
+(declare render)
 
-  PersistentHashMap
-  (-render [this path cursor]
-    (render-coll :map (interleave (keys this) (vals this)) path cursor))
+(defn- render-coll [type children selected?]
+  (println (str "render coll of type: " (pr-str type) " with children: " (pr-str children)))
+  (let [classes (str (name type) (when selected? " selected"))]
+    [:div.coll {:class classes} children]))
 
-  PersistentHashSet
-  (-render [this path cursor]
-    (render-coll :set this path cursor))
+(defn- render-token [text selected?]
+  (println (str "render token with text: " (pr-str text)))
+  [:span.token (if selected? {:class "selected"} {}) text])
 
-  PersistentVector
-  (-render [this path cursor]
-    (render-coll :vec this path cursor))
-
-  js/String
-  (-render [this path cursor]
-    (render-token (str "\"" this "\"") path cursor)))
-
-(extend-types [Keyword js/Number Symbol]
-  IRender
-  (-render [this path cursor]
-    (render-token (str this) path cursor)))
+(defn- render [loc curr-loc]
+  (let [node (zip/node loc)
+        selected? (= loc curr-loc)]
+    (if (coll? node)
+        (render-coll (cond (map? node) :map
+                           (seq? node) :seq
+                           (set? node) :set
+                           (vector? node) :vec)
+                     (map #(render % curr-loc) (downs loc))
+                     selected?)
+        (render-token (if (string? node)
+                          (str "\"" node "\"")
+                          (str node))
+                      selected?))))
 
 (defn root [state]
-  (let [{:keys [tree cursor]} @state]
-    [:div.flense (map-indexed (fn [idx item]
-                                (-render item [idx] cursor))
-                              tree)]))
+  (let [curr-loc @state]
+    [:div.flense (map #(render % curr-loc) (downs (top curr-loc)))]))
