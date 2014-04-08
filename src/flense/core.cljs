@@ -1,7 +1,7 @@
 (ns flense.core
   (:require [clojure.string :as string]
-            [flense.ranges :as ranges])
-  (:use [flense.keys :only [ev->key held? trap-modal-keys!]]))
+            [flense.keys :as keys]
+            [flense.ranges :as ranges]))
 
 (enable-console-print!)
 
@@ -180,17 +180,23 @@
 
 (def modal-keys #{:ALT :CTRL :SHIFT})
 
-(defn handle-key [ev]
-  (let [keys (->> modal-keys (filter held?) (reduce conj #{(ev->key ev)}))
-        keys (if (= (count keys) 1) (first keys) keys)]
-    (when-let [exec-bind! (get default-binds keys)]
+(defn handle-key [keybinds ev]
+  (let [pressed
+        (->> modal-keys
+             (filter keys/held?)
+             (reduce conj #{(keys/ev->key ev)}))
+        pressed
+        (if (= (count pressed) 1)
+            (first pressed)
+            pressed)]
+    (when-let [exec-bind! (get keybinds pressed)]
       (.preventDefault ev)
       (exec-bind! ev))))
 
 ;; application setup and wiring
 
 (defn init []
-  (trap-modal-keys! modal-keys)
-  (.keydown ($ js/window) handle-key))
+  (keys/trap-modal-keys! modal-keys)
+  (.keydown ($ js/window) (partial handle-key default-binds)))
 
 (init)
