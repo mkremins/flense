@@ -46,6 +46,9 @@
       (zip/insert-right '...)
       go-right))
 
+(defn remove-node [loc]
+  (if (zip/up loc) (zip/remove loc) loc))
+
 ;; keybinds
 
 (def default-binds
@@ -58,7 +61,9 @@
    #{:SHIFT :NUM_9} (partial insert-coll ())
    #{:SHIFT :LBRAK} (partial insert-coll {})
    :LBRAK           (partial insert-coll [])
-   :SPACE           insert-token})
+   :SPACE           insert-token
+    ;; structure editing: deletion
+   :DEL  remove-node})
 
 (def modal-keys #{:ALT :CTRL :SHIFT})
 
