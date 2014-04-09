@@ -49,6 +49,17 @@
 (defn remove-node [loc]
   (if (zip/up loc) (zip/remove loc) loc))
 
+(def templates
+  {'def  '(def ... ...)
+   'defn '(defn ... [...] ...)
+   'fn   '(fn [...] ...)
+   'let  '(let [... ...] ...)})
+
+(defn expand-node [loc]
+  (if-let [template (templates (zip/node loc))]
+    (zip/replace loc template)
+    loc))
+
 ;; keybinds
 
 (def default-binds
@@ -62,8 +73,9 @@
    #{:SHIFT :LBRAK} (partial insert-coll {})
    :LBRAK           (partial insert-coll [])
    :SPACE           insert-token
-    ;; structure editing: deletion
-   :DEL  remove-node})
+    ;; structure editing: other
+   :DEL  remove-node
+   :TAB  expand-node})
 
 (def modal-keys #{:ALT :CTRL :SHIFT})
 
