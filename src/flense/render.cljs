@@ -38,15 +38,19 @@
                       (.focus dom-node)
                       (ranges/select-contents! dom-node))))})))
 
-(defn- render [loc curr-loc]
+(defrecord SelectedWrapper [node])
+
+(defn- render [loc]
   (let [node (zip/node loc)
-        selected? (= loc curr-loc)]
+        selected? (instance? SelectedWrapper node)
+        node (if selected? (:node node) node)
+        parent (if selected? (-> loc zip/down zip/right) loc)]
     (if (coll? node)
         [render-coll {:type (cond (map? node) :map
                                   (seq? node) :seq
                                   (set? node) :set
                                   (vector? node) :vec)
-                      :children (map #(render % curr-loc) (downs loc))
+                      :children (map render (downs parent))
                       :selected? selected?}]
         [render-token {:text (if (string? node)
                                  (str "\"" node "\"")
@@ -54,5 +58,5 @@
                        :selected? selected?}])))
 
 (defn root [state]
-  (let [curr-loc @state]
-    [:div.flense (map #(render % curr-loc) (downs (top curr-loc)))]))
+  (let [curr-loc (zip/edit @state ->SelectedWrapper)]
+    [:div.flense (map render (downs (top curr-loc)))]))
