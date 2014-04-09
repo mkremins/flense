@@ -40,3 +40,6 @@ body {
 .seq:after  { content: ")"; }
 .vec:before { content: "["; }
 .vec:after  { content: "]"; }
+
+.string:before { content: "\""; }
+.string:after  { content: "\""; }

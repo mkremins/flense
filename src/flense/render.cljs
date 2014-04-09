@@ -19,16 +19,31 @@
     (recur up1)
     loc))
 
+(defn- classify [x]
+  (cond (false?   x) :bool
+        (true?    x) :bool
+        (keyword? x) :keyword
+        (map?     x) :map
+        (nil?     x) :nil
+        (number?  x) :number
+        (seq?     x) :seq
+        (set?     x) :set
+        (string?  x) :string
+        (symbol?  x) :symbol
+        (vector?  x) :vec))
+
 (declare render)
 
-(defn- render-coll [{:keys [type children selected?]}]
-  (let [classes (str (name type) (when selected? " selected"))]
-    [:div.coll {:class classes} children]))
+(defn- class-list [{:keys [type selected?]}]
+  (str (name type) (when selected? " selected")))
+
+(defn- render-coll [{:keys [children] :as coll}]
+  [:div.coll {:class (class-list coll)} children])
 
 (defn- render-token [props]
-  (letfn [(do-render [{:keys [text selected?]}]
-            [:span.token (merge {:content-editable true}
-                                (when selected? {:class "selected"}))
+  (letfn [(do-render [{:keys [text] :as token}]
+            [:span.token {:content-editable true
+                          :class (class-list token)}
                          text])]
     (with-meta do-render
                {:component-did-update
@@ -44,18 +59,11 @@
   (let [node (zip/node loc)
         selected? (instance? SelectedWrapper node)
         node (if selected? (:node node) node)
-        parent (if selected? (-> loc zip/down zip/right) loc)]
+        props {:type (classify node) :selected? selected?}]
     (if (coll? node)
-        [render-coll {:type (cond (map? node) :map
-                                  (seq? node) :seq
-                                  (set? node) :set
-                                  (vector? node) :vec)
-                      :children (map render (downs parent))
-                      :selected? selected?}]
-        [render-token {:text (if (string? node)
-                                 (str "\"" node "\"")
-                                 (str node))
-                       :selected? selected?}])))
+        (let [loc (if selected? (-> loc zip/down zip/right) loc)]
+          [render-coll (merge props {:children (map render (downs loc))})])
+        [render-token (merge props {:text (str node)})])))
 
 (defn root [state]
   (let [curr-loc (zip/edit @state ->SelectedWrapper)]
