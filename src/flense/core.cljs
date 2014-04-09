@@ -34,6 +34,18 @@
 (defn go-right [loc]
   (or (zip/right loc) (zip/leftmost loc)))
 
+(defn insert-coll [coll loc]
+  (-> loc
+      (zip/insert-right coll)
+      go-right
+      (zip/insert-child '...)
+      go-down))
+
+(defn insert-token [loc]
+  (-> loc
+      (zip/insert-right '...)
+      go-right))
+
 ;; keybinds
 
 (def default-binds
@@ -41,7 +53,12 @@
    :DOWN  go-down
    :LEFT  go-left
    :RIGHT go-right
-   :UP    go-up})
+   :UP    go-up
+    ;; structure editing: insertion
+   #{:SHIFT :NUM_9} (partial insert-coll ())
+   #{:SHIFT :LBRAK} (partial insert-coll {})
+   :LBRAK           (partial insert-coll [])
+   :SPACE           insert-token})
 
 (def modal-keys #{:ALT :CTRL :SHIFT})
 
