@@ -38,20 +38,19 @@
   (str (name type) (when selected? " selected")))
 
 (defn- render-coll [{:keys [children] :as coll}]
-  [:div.coll {:class (class-list coll)} children])
+  [:div.coll {:class (class-list coll)}
+             (for [child children]
+               ^{:key child} [render child])])
 
-(defn- render-token [props]
-  (letfn [(do-render [{:keys [text] :as token}]
-            [:span.token {:content-editable true
-                          :class (class-list token)}
-                         text])]
-    (with-meta do-render
-               {:component-did-update
-                (fn [this]
-                  (let [dom-node (reagent/dom-node this)]
-                    (when (.contains (.-classList dom-node) "selected")
-                      (.focus dom-node)
-                      (ranges/select-contents! dom-node))))})))
+(defn- render-token [{:keys [selected?]}]
+  (with-meta (fn [{:keys [text] :as token}]
+               [:span.token {:class (class-list token)
+                             :content-editable true} text])
+             {:component-did-mount
+              #(let [dom-node (reagent/dom-node %)]
+                 (when selected?
+                   (.focus dom-node)
+                   (ranges/select-contents! dom-node)))}))
 
 (defrecord SelectedWrapper [node])
 
@@ -62,9 +61,10 @@
         props {:type (classify node) :selected? selected?}]
     (if (coll? node)
         (let [loc (if selected? (-> loc zip/down zip/right) loc)]
-          [render-coll (merge props {:children (map render (downs loc))})])
+          [render-coll (merge props {:children (downs loc)})])
         [render-token (merge props {:text (str node)})])))
 
 (defn root [state]
   (let [curr-loc (zip/edit @state ->SelectedWrapper)]
-    [:div.flense (map render (downs (top curr-loc)))]))
+    [:div.flense (for [loc (downs (top curr-loc))]
+                   ^{:key loc} [render loc])]))
