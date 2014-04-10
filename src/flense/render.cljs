@@ -37,15 +37,16 @@
 (defn- class-list [{:keys [type selected?]}]
   (str (name type) (when selected? " selected")))
 
-(defn- render-coll [{:keys [children] :as coll}]
+(defn- render-coll [coll]
   [:div.coll {:class (class-list coll)}
-             (for [child children]
-               ^{:key child} [render child])])
+   (for [item (:items coll)] ^{:key item} [render item])])
 
 (defn- render-token [{:keys [selected?]}]
-  (with-meta (fn [{:keys [text] :as token}]
-               [:span.token {:class (class-list token)
-                             :content-editable true} text])
+  (with-meta (fn [token]
+               [:span.token
+                (merge {:class (class-list token)}
+                       (when (:selected? token) {:content-editable true}))
+                (:text token)])
              {:component-did-mount
               #(let [dom-node (reagent/dom-node %)]
                  (when selected?
@@ -61,10 +62,10 @@
         props {:type (classify node) :selected? selected?}]
     (if (coll? node)
         (let [loc (if selected? (-> loc zip/down zip/right) loc)]
-          [render-coll (merge props {:children (downs loc)})])
+          [render-coll (merge props {:items (downs loc)})])
         [render-token (merge props {:text (str node)})])))
 
 (defn root [state]
   (let [curr-loc (zip/edit @state ->SelectedWrapper)]
-    [:div.flense (for [loc (downs (top curr-loc))]
-                   ^{:key loc} [render loc])]))
+    [:div.flense
+     (for [loc (downs (top curr-loc))] ^{:key loc} [render loc])]))

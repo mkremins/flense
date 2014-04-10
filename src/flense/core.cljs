@@ -95,8 +95,7 @@
 ;; application setup and wiring
 
 (defn init []
-  (reagent/render-component [(partial render/root app-state)]
-                            (.-body js/document))
+  (reagent/render-component [render/root app-state] (.-body js/document))
   (keys/trap-modal-keys! modal-keys)
   (.addEventListener js/window "keydown" (partial handle-key default-binds))
   (swap! app-state go-down)) ; select the first top-level form at startup
