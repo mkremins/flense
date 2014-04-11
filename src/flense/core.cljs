@@ -1,6 +1,8 @@
 (ns flense.core
   (:require [flense.keys :as keys]
             [flense.render :as render]
+            [flense.zip
+             :refer [down* get-path left* right* sibling* update-path up*]]
             [om.core :as om]))
 
 (enable-console-print!)
@@ -29,54 +31,32 @@
      :line 0
      :path []}))
 
-(defn- sibling* [path n]
-  (when (seq path) (conj (pop path) n)))
-
-(defn- down* [path]
-  (conj path 0))
-
-(defn- left* [path]
-  (when (seq path)
-    (let [n (peek path)]
-      (when (pos? n) (sibling* path (dec n))))))
-
-(defn- right* [path]
-  (when (seq path)
-    (sibling* path (inc (peek path)))))
-
-(defn- up* [path]
-  (when (seq path) (pop path)))
-
-(defn- node-at [path tree]
-  (get-in tree (concat [:children] (interpose :children path))))
-
-(defn- update-path [tree path f & args]
-  (let [update (partial update-in tree (interpose :children path) f)]
-    (apply update args)))
-
-(defn- move-to [new-path {:keys [line path] :as state}]
-  (-> state
-      (assoc :path new-path)
-      (update-in [:lines line] update-path path dissoc :selected?)
-      (update-in [:lines line] update-path new-path assoc :selected? true)))
+(defn- move-to-path [{line :line old-path :path :as state} new-path]
+  (let [tree
+        (-> ((:lines state) line)
+            (update-path old-path dissoc :selected?)
+            (update-path new-path assoc :selected? true))]
+    (-> state
+        (assoc :path new-path)
+        (assoc-in [:lines line] tree))))
 
 (defn go-down [{:keys [line lines path] :as state}]
   (let [new-path (down* path)]
-    (if (node-at new-path (lines line))
-        (move-to new-path state)
+    (if (get-path (lines line) new-path)
+        (move-to-path state new-path)
         state)))
 
 (defn go-up [{:keys [path] :as state}]
   (if-let [new-path (up* path)]
-    (move-to new-path state)
+    (move-to-path state new-path)
     state))
 
 (defn go-left [{:keys [line lines path] :as state}]
   (if (seq path)
-      (let [new-path
-            (or (left* path)
-                (sibling* path (-> path (node-at state) :children count dec)))]
-        (move-to new-path state))
+      (let [new-path (or (left* path)
+                         (sibling* path (-> (get-path (lines line) (up* path))
+                                            :children count dec)))]
+        (move-to-path state new-path))
       (let [new-line (dec line)
             new-line (if (>= new-line 0) new-line (dec (count lines)))]
         (-> state
@@ -86,8 +66,11 @@
 
 (defn go-right [{:keys [line lines path] :as state}]
   (if (seq path)
-      (let [new-path (or (right* path) (sibling* path 0))]
-        (move-to new-path state))
+      (let [new-path (right* path)
+            new-path (if (get-path (lines line) new-path)
+                         new-path
+                         (sibling* path 0))]
+        (move-to-path state new-path))
       (let [new-line (inc line)
             new-line (if (>= new-line (count lines)) 0 new-line)]
         (-> state
@@ -157,9 +140,7 @@
 ;; application setup and wiring
 
 (defn init []
-  (let [state @app-state]
-    ;; HACK: autoselect the first top-level form at startup
-    (reset! app-state (move-to (:path state) state)))
+  (swap! app-state move-to-path (:path @app-state)) ; select first top-level form
   (om/root render/root-view app-state {:target (.-body js/document)})
   (keys/trap-modal-keys! modal-keys)
   (.addEventListener js/window "keydown" (partial handle-key default-binds)))
