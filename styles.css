@@ -30,7 +30,7 @@ body {
   margin-right: 0;
 }
 
-.coll.selected:before, .coll.selected:after, .token.selected {
+.coll.selected:before, .coll.selected:after, .atom.selected {
   color: rgb(255,0,255);
 }
 

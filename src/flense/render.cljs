@@ -1,71 +1,52 @@
 (ns flense.render
-  (:require [clojure.zip :as zip]
+  (:require [clojure.string :as string]
             [flense.ranges :as ranges]
-            [reagent.core :as reagent]))
+            [om.core :as om :include-macros true]
+            [om.dom :as dom :include-macros true]))
 
-(defn- right-locs [loc]
-  (loop [loc loc locs []]
-    (if-let [next-loc (zip/right loc)]
-      (recur next-loc (conj locs next-loc))
-      locs)))
+(defn- coll-node? [{:keys [type]}]
+  (#{:map :seq :set :vec} type))
 
-(defn- downs [loc]
-  (if-let [down1 (zip/down loc)]
-    (cons down1 (right-locs down1))
-    ()))
+(defn- class-list [{:keys [selected? type] :as node}]
+  (string/join " "
+    [(name type)
+     (if (coll-node? node) "coll" "atom")
+     (when selected? "selected")]))
 
-(defn- top [loc]
-  (if-let [up1 (zip/up loc)]
-    (recur up1)
-    loc))
+(defn- atom-view [node owner]
+  (reify
+    om/IRender
+    (render [this]
+      (dom/span #js {:className (class-list node) :contentEditable true}
+        (str (:node node))))
 
-(defn- classify [x]
-  (cond (false?   x) :bool
-        (true?    x) :bool
-        (keyword? x) :keyword
-        (map?     x) :map
-        (nil?     x) :nil
-        (number?  x) :number
-        (seq?     x) :seq
-        (set?     x) :set
-        (string?  x) :string
-        (symbol?  x) :symbol
-        (vector?  x) :vec))
+    om/IDidMount
+    (did-mount [this]
+      (when (:selected? node)
+        (doto (om/dom-node this)
+          (.focus)
+          (ranges/select-contents!))))))
 
-(declare render)
+(declare node-view)
 
-(defn- class-list [{:keys [type selected?]}]
-  (str (name type) (when selected? " selected")))
+(defn- coll-view [node owner]
+  (reify
+    om/IRender
+    (render [this]
+      (apply dom/div #js {:className (class-list node)}
+        (om/build-all node-view (:children node))))))
 
-(defn- render-coll [coll]
-  [:div.coll {:class (class-list coll)}
-   (for [item (:items coll)] ^{:key item} [render item])])
+(defn- node-view [node owner]
+  (reify
+    om/IRender
+    (render [this]
+      (om/build
+        (if (coll-node? node) coll-view atom-view)
+        node))))
 
-(defn- render-token [{:keys [selected?]}]
-  (with-meta (fn [token]
-               [:span.token
-                (merge {:class (class-list token)}
-                       (when (:selected? token) {:content-editable true}))
-                (:text token)])
-             {:component-did-mount
-              #(let [dom-node (reagent/dom-node %)]
-                 (when selected?
-                   (.focus dom-node)
-                   (ranges/select-contents! dom-node)))}))
-
-(defrecord SelectedWrapper [node])
-
-(defn- render [loc]
-  (let [node (zip/node loc)
-        selected? (instance? SelectedWrapper node)
-        node (if selected? (:node node) node)
-        props {:type (classify node) :selected? selected?}]
-    (if (coll? node)
-        (let [loc (if selected? (-> loc zip/down zip/right) loc)]
-          [render-coll (merge props {:items (downs loc)})])
-        [render-token (merge props {:text (str node)})])))
-
-(defn root [state]
-  (let [curr-loc (zip/edit @state ->SelectedWrapper)]
-    [:div.flense
-     (for [loc (downs (top curr-loc))] ^{:key loc} [render loc])]))
+(defn root-view [app-state owner]
+  (reify
+    om/IRender
+    (render [this]
+      (apply dom/div #js {:className "flense"}
+        (om/build-all node-view (:lines app-state))))))
