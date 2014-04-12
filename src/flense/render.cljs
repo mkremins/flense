@@ -20,6 +20,13 @@
       (dom/span #js {:className (class-list node) :contentEditable true}
         (str (:node node))))
 
+    om/IDidMount
+    (did-mount [this]
+      (when (:selected? node)
+        (doto (om/get-node owner)
+          (.focus)
+          (ranges/select-contents!))))
+
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (if (:selected? node)
