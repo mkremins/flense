@@ -1,4 +1,5 @@
-(ns flense.zip)
+(ns flense.zip
+  (:require [flense.util :refer [insert]]))
 
 (defn sibling* [path n]
   (when (seq path) (conj (pop path) n)))
@@ -32,9 +33,6 @@
 (defn update-path [tree path f & args]
   (let [update (partial update-in tree (full-path path) f)]
     (apply update args)))
-
-(defn- insert [v idx item]
-  (apply conj (subvec v 0 idx) item (subvec v idx)))
 
 (defn insert-right [tree path value]
   (if-let [parent-path (up* path)]
