@@ -23,6 +23,9 @@
       (concat [:children] (interpose :children path))
       path))
 
+(defn assoc-path [tree path value]
+  (assoc-in tree (full-path path) value))
+
 (defn get-path [tree path]
   (get-in tree (full-path path)))
 

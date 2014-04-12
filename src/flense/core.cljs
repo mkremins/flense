@@ -2,7 +2,8 @@
   (:require [flense.keys :as keys]
             [flense.render :as render]
             [flense.zip
-             :refer [down* get-path left* right* sibling* update-path up*]]
+             :refer [assoc-path down* get-path left* right* sibling*
+                     update-path up*]]
             [om.core :as om]))
 
 (enable-console-print!)
@@ -99,10 +100,11 @@
    'fn   '(fn [...] ...)
    'let  '(let [... ...] ...)})
 
-;(defn expand-node [loc]
-;  (if-let [template (templates (zip/node loc))]
-;    (zip/replace loc template)
-;    loc))
+(defn expand-node [{:keys [line lines path] :as state}]
+  (let [node (:node (get-path (lines line) path))]
+    (if-let [template (templates node)]
+      (update-in state [:lines line] assoc-path path (form->tree template))
+      state)))
 
 ;; keybinds
 
@@ -119,8 +121,7 @@
    ;:SPACE           insert-token
     ;; structure editing: other
    ;:DEL  remove-node
-   ;:TAB  expand-node
-   })
+   :TAB  expand-node})
 
 (def modal-keys #{:ALT :CTRL :SHIFT})
 
