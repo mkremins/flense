@@ -2,8 +2,8 @@
   (:require [flense.keys :as keys]
             [flense.render :as render]
             [flense.zip
-             :refer [assoc-path down* get-path left* right* sibling*
-                     update-path up*]]
+             :refer [assoc-path down* get-path insert-right left* right*
+                     sibling* update-path up*]]
             [om.core :as om]))
 
 (enable-console-print!)
@@ -79,17 +79,12 @@
             (update-in [:lines line] dissoc :selected?)
             (update-in [:lines new-line] assoc :selected? true)))))
 
-;(defn insert-coll [coll loc]
-;  (-> loc
-;      (zip/insert-right coll)
-;      go-right
-;      (zip/insert-child '...)
-;      go-down))
-
-;(defn insert-token [loc]
-;  (-> loc
-;      (zip/insert-right '...)
-;      go-right))
+(defn insert-form [form {:keys [line path] :as state}]
+  (if (seq path)
+      (-> state
+          (update-in [:lines line] insert-right path (form->tree form))
+          go-right go-down)
+      state)) ; TODO: allow insertion of new top-level forms
 
 ;(defn remove-node [loc]
 ;  (if (zip/up loc) (zip/remove loc) loc))
@@ -115,10 +110,10 @@
    :RIGHT go-right
    :UP    go-up
     ;; structure editing: insertion
-   ;#{:SHIFT :NUM_9} (partial insert-coll ())
-   ;#{:SHIFT :LBRAK} (partial insert-coll {})
-   ;:LBRAK           (partial insert-coll [])
-   ;:SPACE           insert-token
+   #{:SHIFT :NUM_9} (partial insert-form '(...))
+   #{:SHIFT :LBRAK} (partial insert-form '{... ...})
+   :LBRAK           (partial insert-form '[...])
+   :SPACE           (partial insert-form '...)
     ;; structure editing: other
    ;:DEL  remove-node
    :TAB  expand-node})

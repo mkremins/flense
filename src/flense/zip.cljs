@@ -19,9 +19,9 @@
   (when (seq path) (pop path)))
 
 (defn- full-path [path]
-  (if (seq path)
-      (concat [:children] (interpose :children path))
-      path))
+  (vec (if (seq path)
+           (concat [:children] (interpose :children path))
+           path)))
 
 (defn assoc-path [tree path value]
   (assoc-in tree (full-path path) value))
@@ -32,3 +32,12 @@
 (defn update-path [tree path f & args]
   (let [update (partial update-in tree (full-path path) f)]
     (apply update args)))
+
+(defn- insert [v idx item]
+  (apply conj (subvec v 0 idx) item (subvec v idx)))
+
+(defn insert-right [tree path value]
+  (if-let [parent-path (up* path)]
+    (update-in tree (conj (full-path parent-path) :children)
+               insert (inc (peek path)) value)
+    tree))
