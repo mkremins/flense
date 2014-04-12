@@ -24,7 +24,11 @@
 (defn- form->tree [form]
   (merge
     {:node form :type (classify form)}
-    (when (coll? form) {:children (mapv form->tree form)})))
+    (when (coll? form)
+      {:children (mapv form->tree
+                       (if (map? form)
+                           (interpose (keys form) (vals form))
+                           form))})))
 
 (def app-state
   (atom
