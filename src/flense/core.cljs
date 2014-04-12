@@ -140,7 +140,7 @@
 ;; application setup and wiring
 
 (defn init []
-  (swap! app-state move-to-path (:path @app-state)) ; select first top-level form
+  (swap! app-state go-right) ; select first top-level form
   (om/root render/root-view app-state {:target (.-body js/document)})
   (keys/trap-modal-keys! modal-keys)
   (.addEventListener js/window "keydown" (partial handle-key default-binds)))
