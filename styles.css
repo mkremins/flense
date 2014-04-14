@@ -42,10 +42,6 @@ body {
   display: block;
 }
 
-.flense > .coll.selected:before, .flense > .coll.selected:after {
-  color: rgb(0,0,255);
-}
-
 .map:before { content: "{"; }
 .map:after  { content: "}"; }
 .seq:before { content: "("; }

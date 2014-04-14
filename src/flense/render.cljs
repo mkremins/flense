@@ -1,6 +1,7 @@
 (ns flense.render
   (:require [clojure.string :as string]
             [flense.ranges :as ranges]
+            [flense.zip :as z]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
@@ -18,7 +19,7 @@
     om/IRender
     (render [this]
       (dom/span #js {:className (class-list node) :contentEditable true}
-        (str (:node node))))
+        (str (:form node))))
 
     om/IDidMount
     (did-mount [this]
@@ -57,5 +58,7 @@
   (reify
     om/IRender
     (render [this]
-      (apply dom/div #js {:className "flense"}
-        (om/build-all node-view (:lines app-state))))))
+      (let [{:keys [path tree]} (:loc app-state)
+            tree (update-in tree (z/full-path path) assoc :selected? true)]
+        (apply dom/div #js {:className "flense"}
+          (om/build-all node-view (:children tree)))))))
