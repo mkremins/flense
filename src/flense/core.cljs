@@ -36,7 +36,7 @@
          [(form->tree '(fn greet [name] (str "Hello, " name "!")))]}))))
 
 (defn insert-form [form loc]
-  (z/insert-right loc (form->tree form)))
+  (z/down (z/insert-right loc (form->tree form))))
 
 ;(defn remove-node [loc]
 ;  (if (zip/up loc) (zip/remove loc) loc))
