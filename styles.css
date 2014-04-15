@@ -30,8 +30,12 @@ body {
   margin-right: 0;
 }
 
-.coll.selected:before, .coll.selected:after, .atom.selected {
-  color: rgb(255,0,255);
+.selected,
+.selected *,
+.selected:before,
+.selected:after {
+  background: rgb(23,79,158);
+  color: white;
 }
 
 input.atom {
