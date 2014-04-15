@@ -51,9 +51,10 @@
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (if (:selected? node)
-          (doto (om/get-node owner)
-            (.focus)
-            (.select))
+          (when-not (:selected? prev-props)
+            (doto (om/get-node owner)
+              (.focus)
+              (.select)))
           (when (:selected? prev-props)
             (.blur (om/get-node owner)))))))
 
