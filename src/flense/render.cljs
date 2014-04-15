@@ -14,6 +14,18 @@
        (string/join " ")
        string/trimr))
 
+(defn- parse-char [text]
+  {:type :char :form (subs text 1)})
+
+(defn- parse-keyword [text]
+  {:type :keyword :form (keyword (subs text 1))})
+
+(defn- parse-regex [text]
+  {:type :regex :form (re-pattern (subs text 2 (dec (count text))))})
+
+(defn- parse-string [text]
+  {:type :string :form (subs text 1 (dec (count text)))})
+
 (defn- parse-symbol-or-number [text]
   (let [number (js/parseFloat text)]
     (if (js/isNaN number)
@@ -21,11 +33,16 @@
         {:type :number :form number})))
 
 (defn- parse-atom [text]
-  (cond
-    (= text "false") {:type :bool :form false}
-    (= text "nil")   {:type :nil  :form nil}
-    (= text "true")  {:type :bool :form true}
-    :else            (parse-symbol-or-number text)))
+  (let [init-ch (first text)]
+    (cond
+      (= text "false") {:type :bool :form false}
+      (= text "nil")   {:type :nil  :form nil}
+      (= text "true")  {:type :bool :form true}
+      (= init-ch \\)   (parse-char text)
+      (= init-ch \:)   (parse-keyword text)
+      (= init-ch \#)   (parse-regex text)
+      (= init-ch \")   (parse-string text)
+      :else            (parse-symbol-or-number text))))
 
 (defn- atom-width [form]
   (let [tester (.getElementById js/document "width-tester")]

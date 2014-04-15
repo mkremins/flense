@@ -55,9 +55,6 @@ input.atom {
 .vec:before { content: "["; }
 .vec:after  { content: "]"; }
 
-.string:before { content: "\""; }
-.string:after  { content: "\""; }
-
 #width-tester {
   left: -1000px;
   position: absolute;
