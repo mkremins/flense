@@ -14,11 +14,17 @@
         {:children
          [(form->tree '(fn greet [name] (str "Hello, " name "!")))]}))))
 
-(defn insert-form [loc]
-  (z/down (z/insert-right loc (form->tree '...))))
+(def placeholder
+  (form->tree '...))
 
-;(defn remove-node [loc]
-;  (if (zip/up loc) (zip/remove loc) loc))
+(defn insert-form [loc]
+  (z/down (z/insert-right loc placeholder)))
+
+(defn remove-node [loc]
+  (let [node (z/node loc)]
+    (if (= (:form node) '...)
+        (z/remove loc)
+        (z/replace loc placeholder))))
 
 (def templates
   {'def  '(def ... ...)
@@ -41,7 +47,7 @@
    :RIGHT z/right
    :UP    z/up
     ;; structure editing
-   ;:DEL  remove-node
+   :DEL   remove-node
    :SPACE insert-form
    :TAB   expand-node})
 

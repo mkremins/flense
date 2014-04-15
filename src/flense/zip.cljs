@@ -108,8 +108,11 @@
     (when-let [new-tree (remove* tree path)]
       (let [new-this  (assoc this :tree new-tree)
             left-path (left* path)
-            go-up?    (and left-path (node* tree left-path))]
-        (assoc new-this :path (if go-up? (up* path) left-path)))))
+            go-left?  (and left-path (node* new-tree left-path))
+            new-path  (if go-left? left-path (up* path))]
+        (if new-path
+            (assoc new-this :path new-path)
+            (throw (js/Error. "unchecked remove at root"))))))
 
   (replace [this node]
     (update this :tree replace* path node))
