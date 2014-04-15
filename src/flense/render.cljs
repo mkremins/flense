@@ -54,6 +54,13 @@
   (let [key    (.-keyCode ev)
         shift? (.-shiftKey ev)]
     (case key
+      8
+      (let [input (.-target ev)
+            text  (.-value input)]
+        (when-not (or (and (= (.-selectionStart input) 0)
+                           (= (.-selectionEnd input) (count text)))
+                      (= text "..."))
+          (.stopPropagation ev)))
       57
       (when shift?
         (.preventDefault ev)
