@@ -8,10 +8,11 @@
   (#{:map :seq :set :vec} type))
 
 (defn- class-list [{:keys [selected? type] :as node}]
-  (string/join " "
-    [(name type)
-     (if (coll-node? node) "coll" "atom")
-     (when selected? "selected")]))
+  (->> [(name type)
+        (if (coll-node? node) "coll" "atom")
+        (when selected? "selected")]
+       (string/join " ")
+       string/trimr))
 
 (defn- parse-symbol-or-number [text]
   (let [number (js/parseFloat text)]
