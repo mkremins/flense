@@ -1,5 +1,6 @@
 (ns flense.render
   (:require [clojure.string :as string]
+            [flense.util :refer [form->tree]]
             [flense.zip :as z]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
@@ -49,13 +50,27 @@
     (set! (.-textContent tester) (pr-str form))
     (str (inc (.-clientWidth tester)) "px")))
 
+(defn- handle-key [ev data]
+  (let [key    (.-keyCode ev)
+        shift? (.-shiftKey ev)]
+    (case key
+      57
+      (when shift?
+        (.preventDefault ev)
+        (om/update! data (form->tree '(...))))
+      219
+      (do (.preventDefault ev)
+          (om/update! data (form->tree (if shift? '{... ...} '[...]))))
+      nil))) ; deliberate no-op
+
 (defn- atom-view [node owner]
   (reify
     om/IRender
     (render [this]
       (dom/input
         #js {:className (class-list node)
-             :onChange #(om/update! node (parse-atom (.. % -target -value)))
+             :onChange  #(om/update! node (parse-atom (.. % -target -value)))
+             :onKeyDown #(handle-key % node)
              :style #js {:width (atom-width (:form node))}
              :value (pr-str (:form node))}))
 

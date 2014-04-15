@@ -37,27 +37,3 @@
   "Given a key event, returns a human-readable keyword naming the associated
    key."
   (comp key-name keycode))
-
-(def ^:private held-keys (atom #{}))
-
-(defn held?
-  "Returns truthy if you have registered `key` as modal with `trap-modal-keys!`
-   and `key` is currently held, else falsey."
-  [key]
-  (@held-keys key))
-
-(defn trap-modal-keys!
-  "Begins listening for keyup and keydown events on each key in `keys`. Use in
-   conjunction with the `held?` function to test if a key is currently held."
-  [keys]
-  (let [modal? (set keys)]
-    (.addEventListener js/window "keydown"
-                       (fn [ev]
-                         (let [key (ev->key ev)]
-                           (when (modal? key)
-                             (swap! held-keys conj key)))))
-    (.addEventListener js/window "keyup"
-                       (fn [ev]
-                         (let [key (ev->key ev)]
-                           (when (modal? key)
-                             (swap! held-keys disj key)))))))
