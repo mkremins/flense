@@ -34,6 +34,12 @@ body {
   color: rgb(255,0,255);
 }
 
+input.atom {
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+}
+
 .flense > * {
   margin-bottom: 1rem;
 }
@@ -51,3 +57,10 @@ body {
 
 .string:before { content: "\""; }
 .string:after  { content: "\""; }
+
+#width-tester {
+  left: -1000px;
+  position: absolute;
+  top: -1000px;
+  width: auto;
+}

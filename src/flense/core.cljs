@@ -88,7 +88,8 @@
 ;; application setup and wiring
 
 (defn init []
-  (om/root render/root-view app-state {:target (.-body js/document)})
+  (om/root render/root-view app-state
+           {:target (.getElementById js/document "flense-parent")})
   (keys/trap-modal-keys! modal-keys)
   (.addEventListener js/window "keydown" (partial handle-key default-binds)))
 
