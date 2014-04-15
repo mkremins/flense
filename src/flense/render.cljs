@@ -2,6 +2,7 @@
   (:require [clojure.string :as string]
             [flense.util :refer [form->tree]]
             [flense.zip :as z]
+            [goog.events.KeyCodes :as key]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
@@ -51,23 +52,26 @@
     (str (inc (.-clientWidth tester)) "px")))
 
 (defn- handle-key [ev data]
-  (let [key    (.-keyCode ev)
+  (let [kcode  (.-keyCode ev)
         shift? (.-shiftKey ev)]
-    (case key
-      8
+    (condp = kcode
+      key/BACKSPACE
       (let [input (.-target ev)
             text  (.-value input)]
         (when-not (or (and (= (.-selectionStart input) 0)
                            (= (.-selectionEnd input) (count text)))
                       (= text "..."))
           (.stopPropagation ev)))
-      57
+
+      key/NINE
       (when shift?
         (.preventDefault ev)
         (om/update! data (form->tree '(...))))
-      219
+
+      key/OPEN_SQUARE_BRACKET
       (do (.preventDefault ev)
           (om/update! data (form->tree (if shift? '{... ...} '[...]))))
+      
       nil))) ; deliberate no-op
 
 (defn- atom-view [node owner]

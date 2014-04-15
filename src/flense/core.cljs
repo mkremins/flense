@@ -1,8 +1,8 @@
 (ns flense.core
-  (:require [flense.keys :as keys]
-            [flense.render :as render]
+  (:require [flense.render :as render]
             [flense.util :refer [form->tree]]
             [flense.zip :as z]
+            [goog.events.KeyCodes :as key]
             [om.core :as om]))
 
 (enable-console-print!)
@@ -41,18 +41,16 @@
 ;; keybinds
 
 (def default-binds
-  { ;; simple navigation commands
-   :DOWN  z/down
-   :LEFT  z/left
-   :RIGHT z/right
-   :UP    z/up
-    ;; structure editing
-   :DEL   remove-node
-   :SPACE insert-form
-   :TAB   expand-node})
+  {key/BACKSPACE  remove-node
+   key/DOWN       z/down
+   key/LEFT       z/left
+   key/RIGHT      z/right
+   key/SPACE      insert-form
+   key/TAB        expand-node
+   key/UP         z/up})
 
 (defn handle-key [keybinds ev]
-  (when-let [exec-bind (get keybinds (keys/ev->key ev))]
+  (when-let [exec-bind (get keybinds (.-keyCode ev))]
     (.preventDefault ev)
     (swap! app-state exec-bind)))
 
