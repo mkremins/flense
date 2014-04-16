@@ -51,6 +51,14 @@
     (set! (.-textContent tester) (pr-str form))
     (str (inc (.-clientWidth tester)) "px")))
 
+(defn- wrap-coll [type node]
+  {:type type
+   :form (case type
+           :map {node '...}
+           :seq (list node)
+           :vec [node])
+   :children [node]})
+
 (defn- handle-key [ev data]
   (let [kcode  (.-keyCode ev)
         shift? (.-shiftKey ev)]
@@ -64,15 +72,13 @@
       key/NINE
       (when shift?
         (.preventDefault ev)
-        (om/update! data []
-                    (form->tree '(...))
-                    :insert-coll))
+        (om/transact! data [] (partial wrap-coll :seq) :insert-coll))
 
       key/OPEN_SQUARE_BRACKET
       (do (.preventDefault ev)
-          (om/update! data []
-                      (form->tree (if shift? '{... ...} '[...]))
-                      :insert-coll))
+          (om/transact! data []
+                        (partial wrap-coll (if shift? :map :vec))
+                        :insert-coll))
       
       nil))) ; deliberate no-op
 
