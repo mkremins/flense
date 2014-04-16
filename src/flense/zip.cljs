@@ -124,8 +124,8 @@
 
   (rightmost [this]
     (if (seq path)
-        (let [siblings (node* tree (up* path))]
-          (assoc this :path (sibling* path (count siblings))))
+        (let [siblings (:children (node* tree (up* path)))]
+          (assoc this :path (sibling* path (dec (count siblings)))))
         this))
 
   (up [this]
