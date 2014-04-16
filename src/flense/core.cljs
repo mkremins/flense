@@ -43,6 +43,7 @@
 (def default-binds
   {key/BACKSPACE  remove-node
    key/DOWN       z/down
+   key/ENTER      (comp insert-form z/up)
    key/LEFT       z/left
    key/RIGHT      z/right
    key/SPACE      insert-form
