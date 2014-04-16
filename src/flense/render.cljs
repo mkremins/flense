@@ -56,11 +56,9 @@
         shift? (.-shiftKey ev)]
     (condp = kcode
       key/BACKSPACE
-      (let [input (.-target ev)
-            text  (.-value input)]
-        (when-not (or (and (= (.-selectionStart input) 0)
-                           (= (.-selectionEnd input) (count text)))
-                      (= text "..."))
+      (let [input (.-target ev)]
+        (when (or (not= (.-selectionStart input) 0)
+                  (not= (.-selectionEnd input) (count (.-value input))))
           (.stopPropagation ev)))
 
       key/NINE
@@ -99,7 +97,7 @@
     om/IDidUpdate
     (did-update [this prev-props prev-state]
       (if (:selected? node)
-          (when-not (:selected? prev-props)
+          (when (or (not (:selected? prev-props)) (= (:form node) '...))
             (doto (om/get-node owner)
               (.focus)
               (.select)))
