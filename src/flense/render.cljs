@@ -66,11 +66,15 @@
       key/NINE
       (when shift?
         (.preventDefault ev)
-        (om/update! data (form->tree '(...))))
+        (om/update! data []
+                    (form->tree '(...))
+                    :insert-coll))
 
       key/OPEN_SQUARE_BRACKET
       (do (.preventDefault ev)
-          (om/update! data (form->tree (if shift? '{... ...} '[...]))))
+          (om/update! data []
+                      (form->tree (if shift? '{... ...} '[...]))
+                      :insert-coll))
       
       nil))) ; deliberate no-op
 

@@ -59,7 +59,9 @@
 
 (defn init []
   (om/root render/root-view app-state
-           {:target (.getElementById js/document "flense-parent")})
+           {:target (.getElementById js/document "flense-parent")
+            :tx-listen #(when (= (:tag %1) :insert-coll)
+                          (swap! app-state z/down))})
   (.addEventListener js/window "keydown" (partial handle-key default-binds)))
 
 (init)
