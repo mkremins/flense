@@ -52,21 +52,24 @@
 ;; keybinds
 
 (def default-binds
-  {key/ALT        raise-sexp
-   key/BACKSPACE  remove-node
+  {key/BACKSPACE  remove-node
    key/DOWN       z/down
    key/ENTER      (comp insert-form z/up)
    key/LEFT       z/left
-   key/META       splice-sexp
    key/RIGHT      z/right
    key/SPACE      insert-form
    key/TAB        expand-node
    key/UP         z/up})
 
-(defn handle-key [keybinds ev]
-  (when-let [exec-bind (get keybinds (.-keyCode ev))]
-    (.preventDefault ev)
-    (swap! app-state exec-bind)))
+(def ctrl-binds
+  {key/R raise-sexp
+   key/S splice-sexp})
+
+(defn handle-key [ev]
+  (let [keybinds (if (.-ctrlKey ev) ctrl-binds default-binds)]
+    (when-let [exec-bind (get keybinds (.-keyCode ev))]
+      (.preventDefault ev)
+      (swap! app-state exec-bind))))
 
 ;; application setup and wiring
 
@@ -75,6 +78,6 @@
            {:target (.getElementById js/document "flense-parent")
             :tx-listen #(when (= (:tag %1) :insert-coll)
                           (swap! app-state z/down))})
-  (.addEventListener js/window "keydown" (partial handle-key default-binds)))
+  (.addEventListener js/window "keydown" handle-key))
 
 (init)
