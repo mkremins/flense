@@ -46,7 +46,7 @@
       (let [nodes   (:children (z/node loc))
             new-loc (reduce z/insert-right loc nodes)
             new-loc (nth (iterate z/left new-loc) (count nodes))]
-        (z/remove new-loc))
+        (-> new-loc z/remove z/right))
       loc))
 
 ;; keybinds
