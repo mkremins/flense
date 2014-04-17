@@ -9,6 +9,7 @@
 (defprotocol IZipper
   (down [this])
   (edit [this f args])
+  (insert-left [this node])
   (insert-right [this node])
   (left [this])
   (leftmost [this])
@@ -60,6 +61,12 @@
   (let [edit-f (partial update-in tree (full-path path) f)]
     (apply edit-f args)))
 
+(defn- insert-left* [tree path value]
+  (if-let [parent-path (up* path)]
+    (update-in tree (conj (full-path parent-path) :children)
+               insert (peek path) value)
+    tree))
+
 (defn- insert-right* [tree path value]
   (if-let [parent-path (up* path)]
     (update-in tree (conj (full-path parent-path) :children)
@@ -90,6 +97,9 @@
 
   (edit [this f args]
     (update this :tree edit* path f args))
+
+  (insert-left [this node]
+    (update this :tree insert-left* path node))
 
   (insert-right [this node]
     (update this :tree insert-right* path node))
@@ -139,6 +149,9 @@
 
   (edit [this f args]
     (update this :loc edit f args))
+
+  (insert-left [this node]
+    (update this :loc insert-left node))
 
   (insert-right [this node]
     (update this :loc #(-> % (insert-right node) right)))
