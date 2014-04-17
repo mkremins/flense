@@ -38,6 +38,23 @@
       (z/replace loc (form->tree template))
       loc)))
 
+(defn slurp-left [loc]
+  (let [coll-loc (if (coll-node? (z/node loc)) loc (z/up loc))
+        left-loc (z/left coll-loc)]
+    (cond
+      ;; if we wrapped all the way to the right, there's nothing to slurp
+      (= left-loc (z/rightmost coll-loc)) loc
+      ;; if we're all the way to the left, z/remove takes us up a level
+      (= left-loc (z/leftmost coll-loc))
+      (-> left-loc
+          z/remove z/down z/down z/leftmost
+          (z/insert-left (z/node left-loc)))
+      ;; if we're not, then z/remove only takes us to the left
+      :else
+      (-> left-loc
+          z/remove z/right z/down z/leftmost
+          (z/insert-left (z/node left-loc))))))
+
 (defn slurp-right [loc]
   (let [coll-loc  (if (coll-node? (z/node loc)) loc (z/up loc))
         right-loc (z/right coll-loc)]
@@ -72,6 +89,7 @@
 
 (def ctrl-binds
   {key/R     raise-sexp
+   key/NINE  slurp-left
    key/ZERO  slurp-right
    key/S     splice-sexp})
 
