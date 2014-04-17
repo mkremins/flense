@@ -1,6 +1,6 @@
 (ns flense.core
   (:require [flense.render :as render]
-            [flense.util :refer [form->tree]]
+            [flense.util :refer [coll-node? form->tree]]
             [flense.zip :as z]
             [goog.events.KeyCodes :as key]
             [om.core :as om]))
@@ -38,13 +38,26 @@
       (z/replace loc (form->tree template))
       loc)))
 
+(defn raise-sexp [loc]
+  (-> loc z/up (z/replace (z/node loc))))
+
+(defn splice-sexp [loc]
+  (if (coll-node? (z/node loc))
+      (let [nodes   (:children (z/node loc))
+            new-loc (reduce z/insert-right loc nodes)
+            new-loc (nth (iterate z/left new-loc) (count nodes))]
+        (z/remove new-loc))
+      loc))
+
 ;; keybinds
 
 (def default-binds
-  {key/BACKSPACE  remove-node
+  {key/ALT        raise-sexp
+   key/BACKSPACE  remove-node
    key/DOWN       z/down
    key/ENTER      (comp insert-form z/up)
    key/LEFT       z/left
+   key/META       splice-sexp
    key/RIGHT      z/right
    key/SPACE      insert-form
    key/TAB        expand-node

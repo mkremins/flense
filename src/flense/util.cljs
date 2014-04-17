@@ -30,3 +30,6 @@
                        (if (map? form)
                            (interpose (keys form) (vals form))
                            form))})))
+
+(defn coll-node? [{:keys [type]}]
+  (#{:map :seq :set :vec} type))

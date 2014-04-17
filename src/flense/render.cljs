@@ -1,13 +1,10 @@
 (ns flense.render
   (:require [clojure.string :as string]
-            [flense.util :refer [form->tree]]
+            [flense.util :refer [coll-node? form->tree]]
             [flense.zip :as z]
             [goog.events.KeyCodes :as key]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
-
-(defn- coll-node? [{:keys [type]}]
-  (#{:map :seq :set :vec} type))
 
 (defn- class-list [{:keys [selected? type] :as node}]
   (->> [(name type)
