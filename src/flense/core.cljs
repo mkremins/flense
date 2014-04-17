@@ -38,6 +38,15 @@
       (z/replace loc (form->tree template))
       loc)))
 
+(defn slurp-right [loc]
+  (let [coll-loc  (if (coll-node? (z/node loc)) loc (z/up loc))
+        right-loc (z/right coll-loc)]
+    (if (= right-loc (z/leftmost coll-loc))
+        loc
+        (-> right-loc
+            z/remove z/down z/rightmost
+            (z/insert-right (z/node right-loc))))))
+
 (defn raise-sexp [loc]
   (-> loc z/up (z/replace (z/node loc))))
 
@@ -62,8 +71,9 @@
    key/UP         z/up})
 
 (def ctrl-binds
-  {key/R raise-sexp
-   key/S splice-sexp})
+  {key/R     raise-sexp
+   key/ZERO  slurp-right
+   key/S     splice-sexp})
 
 (defn handle-key [ev]
   (let [keybinds (if (.-ctrlKey ev) ctrl-binds default-binds)]
