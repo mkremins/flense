@@ -60,32 +60,30 @@
    :children [node]})
 
 (defn- handle-key [ev data]
-  (let [kcode  (.-keyCode ev)
-        shift? (.-shiftKey ev)]
-    (condp = kcode
-      key/BACKSPACE
-      (let [input (.-target ev)]
-        (when (or (not= (.-selectionStart input) 0)
-                  (not= (.-selectionEnd input) (count (.-value input))))
-          (.stopPropagation ev)))
+  (condp = (.-keyCode ev)
+    key/BACKSPACE
+    (let [input (.-target ev)]
+      (when (or (not= (.-selectionStart input) 0)
+                (not= (.-selectionEnd input) (count (.-value input))))
+        (.stopPropagation ev)))
 
-      key/NINE
-      (when shift?
-        (.preventDefault ev)
-        (om/transact! data [] (partial wrap-coll :seq) :insert-coll))
+    key/NINE
+    (when (.-shiftKey ev)
+      (.preventDefault ev)
+      (om/transact! data [] (partial wrap-coll :seq) :insert-coll))
 
-      key/OPEN_SQUARE_BRACKET
-      (do (.preventDefault ev)
-          (om/transact! data []
-                        (partial wrap-coll (if shift? :map :vec))
-                        :insert-coll))
-      
-      nil))) ; deliberate no-op
+    key/OPEN_SQUARE_BRACKET
+    (do (.preventDefault ev)
+        (om/transact! data []
+                      (partial wrap-coll (if (.-shiftKey ev) :map :vec))
+                      :insert-coll))
+    
+    nil)) ; deliberate no-op
 
 (defn- atom-view [node owner]
   (reify
     om/IRender
-    (render [this]
+    (render [_]
       (dom/input
         #js {:className (class-list node)
              :onChange  #(om/update! node (parse-atom (.. % -target -value)))
@@ -94,14 +92,14 @@
              :value (pr-str (:form node))}))
 
     om/IDidMount
-    (did-mount [this]
+    (did-mount [_]
       (when (:selected? node)
         (doto (om/get-node owner)
           (.focus)
           (.select))))
 
     om/IDidUpdate
-    (did-update [this prev-props prev-state]
+    (did-update [_ prev-props prev-state]
       (if (:selected? node)
           (when (or (not (:selected? prev-props)) (= (:form node) '...))
             (doto (om/get-node owner)
