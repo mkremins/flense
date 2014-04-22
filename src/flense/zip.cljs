@@ -47,7 +47,7 @@
 
 (defn full-path [path]
   (vec (if (seq path)
-           (concat [:children] (interpose :children path))
+           (interleave (repeat :children) path)
            path)))
 
 ;; ====================================
