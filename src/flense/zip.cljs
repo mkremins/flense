@@ -1,181 +1,113 @@
 (ns flense.zip
-  (:refer-clojure :exclude [remove replace])
-  (:require [flense.util :refer [delete insert update]]))
+  (:require [flense.util :refer [lconj update]]))
 
-;; ====================================
-;; public API (protocols)
-;; ====================================
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; path movement
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defprotocol IZipper
-  (down [this])
-  (edit [this f args])
-  (insert-left [this node])
-  (insert-right [this node])
-  (left [this])
-  (leftmost [this])
-  (node [this])
-  (remove [this])
-  (replace [this node])
-  (right [this])
-  (rightmost [this])
-  (up [this]))
-
-;; ====================================
-;; private helpers (path manipulation)
-;; ====================================
-
-(defn- sibling* [path n]
-  (when (seq path) (conj (pop path) n)))
+(defn- sibling [path n]
+  (when (>= n 0) (conj (pop path) n)))
 
 (defn- down* [path]
   (conj path 0))
 
 (defn- left* [path]
-  (when (seq path)
-    (let [n (peek path)]
-      (when (pos? n) (sibling* path (dec n))))))
+  (when (seq path) (sibling path (dec (peek path)))))
 
 (defn leftmost* [path]
-  (or (sibling* path 0) path))
+  (when (seq path) (sibling path 0)))
 
 (defn- right* [path]
-  (when (seq path)
-    (sibling* path (inc (peek path)))))
+  (when (seq path) (sibling path (inc (peek path)))))
 
 (defn- up* [path]
   (when (seq path) (pop path)))
 
-(defn full-path [path]
-  (vec (if (seq path)
-           (interleave (repeat :children) path)
-           path)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; path and zipper helpers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; ====================================
-;; private helpers (tree manipulation)
-;; ====================================
+(defn- full-path [path]
+  (vec (interleave (repeat :children) path)))
 
-(defn- node* [tree path]
+(defn node [{:keys [tree path]}]
   (get-in tree (full-path path)))
 
-(defn- edit* [tree path f args]
-  (let [edit-f (partial update-in tree (full-path path) f)]
-    (apply edit-f args)))
+(defn branch?
+  "Tests whether `node` is a branch node (i.e. permitted to have children)."
+  [node]
+  (some? (:children node)))
 
-(defn- insert-left* [tree path value]
-  (if-let [parent-path (up* path)]
-    (update-in tree (conj (full-path parent-path) :children)
-               insert (peek path) value)
-    tree))
+(defn- check
+  "Tests whether `(:path loc)` points to an extant node in `(:tree loc)`,
+   returning `loc` if the test passes and `nil` if it does not."
+  [loc]
+  (when (and (:path loc) (node loc)) loc))
 
-(defn- insert-right* [tree path value]
-  (if-let [parent-path (up* path)]
-    (update-in tree (conj (full-path parent-path) :children)
-               insert (inc (peek path)) value)
-    tree))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; simple zipper movement
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- remove* [tree path]
-  (when-let [parent-path (up* path)]
-    (let [child-idx    (peek path)
-          children-ks  (conj (full-path parent-path) :children)
-          old-children (get-in tree children-ks)
-          new-children (delete old-children child-idx)]
-      (assoc-in tree children-ks new-children))))
+(defn down [loc]
+  (check (update loc :path down*)))
 
-(defn- replace* [tree path node]
-  (assoc-in tree (full-path path) node))
+(defn left [loc]
+  (check (update loc :path left*)))
 
-;; ====================================
-;; public API (implementations)
-;; ====================================
+(defn leftmost [loc]
+  (check (update loc :path leftmost*)))
 
-(defrecord SimpleZipper [path tree]
-  IZipper
-  (down [this]
-    (let [new-path (down* path)]
-      (when (node* tree new-path)
-        (assoc this :path new-path))))
+(defn right [loc]
+  (check (update loc :path right*)))
 
-  (edit [this f args]
-    (update this :tree edit* path f args))
+(defn up [loc]
+  (check (update loc :path up*)))
 
-  (insert-left [this node]
-    (update this :tree insert-left* path node))
+(defn rightmost [loc]
+  (when-let [parent (node (up loc))]
+    (check (update loc :path
+            sibling (-> parent :children count dec)))))
 
-  (insert-right [this node]
-    (update this :tree insert-right* path node))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; wrapping zipper movement
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (left [this]
-    (when-let [new-path (left* path)]
-      (assoc this :path new-path)))
+(defn down-or-stay
+  "Returns the location immediately below `loc` (if it exists), or `loc` itself
+   (if it doesn't)."
+  [loc]
+  (or (down loc) loc))
 
-  (leftmost [this]
-    (update this :path leftmost*))
+(defn left-or-wrap
+  "Returns the location immediately to the left of `loc` (if it exists), or the
+   rightmost sibling of `loc` (if it doesn't)."
+  [loc]
+  (or (left loc) (rightmost loc)))
 
-  (node [this]
-    (node* tree path))
+(defn right-or-wrap
+  "Returns the location immediately to the right of `loc` (if it exists), or
+   the leftmost sibling of `loc` (if it doesn't)."
+  [loc]
+  (or (right loc) (leftmost loc)))
 
-  (remove [this]
-    (when-let [new-tree (remove* tree path)]
-      (let [new-this  (assoc this :tree new-tree)
-            left-path (left* path)
-            go-left?  (and left-path (node* new-tree left-path))
-            new-path  (if go-left? left-path (up* path))]
-        (if new-path
-            (assoc new-this :path new-path)
-            (throw (js/Error. "unchecked remove at root"))))))
+(defn up-or-stay
+  "Returns the location immediately above `loc` (if it exists), or `loc` itself
+   (if it doesn't)."
+  [loc]
+  (or (up loc) loc))
 
-  (replace [this node]
-    (update this :tree replace* path node))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; in-place zipper modification
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (right [this]
-    (let [new-path (right* path)]
-      (when (node* tree new-path)
-        (assoc this :path new-path))))
+(defn replace [loc new-node]
+  (check (assoc-in loc
+          (lconj (full-path (:path loc)) :tree)
+          new-node)))
 
-  (rightmost [this]
-    (if (seq path)
-        (let [siblings (:children (node* tree (up* path)))]
-          (assoc this :path (sibling* path (dec (count siblings)))))
-        this))
+(defn edit [loc f & args]
+  (replace loc (apply f (node loc) args)))
 
-  (up [this]
-    (when-let [new-path (up* path)]
-      (assoc this :path new-path))))
-
-(defrecord BoundedZipper [loc]
-  IZipper
-  (down [this]
-    (assoc this :loc (or (down loc) loc)))
-
-  (edit [this f args]
-    (update this :loc edit f args))
-
-  (insert-left [this node]
-    (update this :loc insert-left node))
-
-  (insert-right [this node]
-    (update this :loc #(-> % (insert-right node) right)))
-
-  (left [this]
-    (assoc this :loc (or (left loc) (rightmost loc))))
-
-  (leftmost [this]
-    (update this :loc leftmost))
-
-  (node [this]
-    (node loc))
-
-  (remove [this]
-    (update this :loc remove))
-
-  (replace [this node]
-    (update this :loc replace node))
-
-  (right [this]
-    (assoc this :loc (or (right loc) (leftmost loc))))
-
-  (rightmost [this]
-    (update this :loc rightmost))
-
-  (up [this]
-    (assoc this :loc (or (up loc) loc))))
+(defn edit-parent [loc f & args]
+  (when-let [parent-loc (up loc)]
+    (apply edit parent-loc f (peek (:path loc)) args)))
