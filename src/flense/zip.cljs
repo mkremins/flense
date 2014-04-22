@@ -1,4 +1,5 @@
 (ns flense.zip
+  (:refer-clojure :exclude [replace])
   (:require [flense.util :refer [lconj update]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,7 +37,7 @@
 (defn branch?
   "Tests whether `node` is a branch node (i.e. permitted to have children)."
   [node]
-  (some? (:children node)))
+  (not (nil? (:children node))))
 
 (defn- check
   "Tests whether `(:path loc)` points to an extant node in `(:tree loc)`,
