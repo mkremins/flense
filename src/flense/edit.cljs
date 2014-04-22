@@ -7,6 +7,18 @@
 ;;   ex: `(om/transact! app-state edit wrap-round)`
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn delete-leftmost [parent]
+  (update parent :children (fempty delete [nil]) 0))
+
+(defn delete-rightmost [parent]
+  (update parent :children (fempty pop [nil])))
+
+(defn insert-leftmost [parent child]
+  (update parent :children lconj child))
+
+(defn insert-rightmost [parent child]
+  (update parent :children conj child))
+
 (defn toggle-dispatch [node]
   (update node :type
    #(or ({:map    :set
@@ -31,20 +43,8 @@
 (defn delete-child [parent i]
   (update parent :children delete i))
 
-(defn delete-leftmost [parent]
-  (update parent :children (fempty delete [nil]) 0))
-
-(defn delete-rightmost [parent]
-  (update parent :children (fempty pop [nil])))
-
 (defn insert-child [parent i child]
   (update parent :children insert i child))
-
-(defn insert-leftmost [parent child]
-  (update parent :children lconj child))
-
-(defn insert-rightmost [parent child]
-  (update parent :children conj child))
 
 (defn barf-child-left [parent i]
   (if-let [barfed (first (get-in parent [:children i :children]))]
