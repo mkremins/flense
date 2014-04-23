@@ -31,7 +31,7 @@
   (let [keybinds (if (.-shiftKey ev) shift-binds default-binds)]
     (when-let [exec-bind (get keybinds (.-keyCode ev))]
       (.preventDefault ev)
-      (swap! app-state exec-bind))))
+      (om/transact! render/*root-cursor* exec-bind))))
 
 ;; application setup and wiring
 
@@ -39,7 +39,7 @@
   (om/root render/root-view app-state
            {:target (.getElementById js/document "flense-parent")
             :tx-listen #(when (= (:tag %) :insert-coll)
-                          (swap! app-state z/down))})
+                          (om/transact! render/*root-cursor* z/down))})
   (.addEventListener js/window "keydown" handle-key))
 
 (init)

@@ -7,6 +7,8 @@
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]))
 
+(def ^:dynamic *root-cursor*)
+
 (defn- class-list [{:keys [selected? type] :as node}]
   (->> [(name type)
         (if (coll-node? node) "coll" "atom")
@@ -118,7 +120,8 @@
 (defn root-view [app-state owner]
   (reify
     om/IRender
-    (render [this]
+    (render [_]
+      (set! *root-cursor* app-state)
       (let [{:keys [tree]} (z/edit app-state assoc :selected? true)]
         (apply dom/div #js {:className "flense"}
           (om/build-all node-view (:children tree)))))))
