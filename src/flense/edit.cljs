@@ -87,15 +87,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn barf-left [loc]
-  (let [new-loc (z/edit-parent loc barf-child-left*)]
-    (if (and new-loc (not= new-loc loc))
-        (z/child new-loc (-> loc :path peek inc))
-        loc)))
+  (if (let [node (z/node loc)]
+        (and (z/branch? node) (seq (:children node))))
+      (let [new-loc (z/edit-parent loc barf-child-left*)]
+        (if (and new-loc (not= new-loc loc))
+            (z/child new-loc (-> loc :path peek inc))
+            loc))
+      loc))
 
 (defn barf-right [loc]
-  (-> loc
-      (z/edit-parent barf-child-right*)
-      (z/child (-> loc :path peek))))
+  (if (let [node (z/node loc)]
+        (and (z/branch? node) (seq (:children node))))
+      (-> loc
+          (z/edit-parent barf-child-right*)
+          (z/child (-> loc :path peek)))
+      loc))
 
 (defn delete-sexp [loc]
   (if (p/placeholder-node? (z/node loc))
@@ -113,15 +119,19 @@
           (-> loc (z/edit-parent insert-rightmost* node) z/down z/rightmost)))
 
 (defn slurp-left [loc]
-  (let [new-loc (z/edit-parent loc slurp-child-left*)]
-    (if (and new-loc (not= new-loc loc))
-        (z/child new-loc (max (-> loc :path peek dec) 0))
-        loc)))
+  (if (-> loc z/node z/branch?)
+      (let [new-loc (z/edit-parent loc slurp-child-left*)]
+        (if (and new-loc (not= new-loc loc))
+            (z/child new-loc (max (-> loc :path peek dec) 0))
+            loc))
+      loc))
 
 (defn slurp-right [loc]
-  (-> loc
-      (z/edit-parent slurp-child-right*)
-      (z/child (-> loc :path peek))))
+  (if (-> loc z/node z/branch?)
+      (-> loc
+          (z/edit-parent slurp-child-right*)
+          (z/child (-> loc :path peek)))
+      loc))
 
 (defn toggle-dispatch [loc]
   (z/edit loc toggle-dispatch*))
