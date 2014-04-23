@@ -73,6 +73,21 @@
             sibling (-> parent :children count dec)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; walking zipper movement
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- walk [direction postwalk loc]
+  (if-let [down-loc (down loc)]
+          (postwalk down-loc)
+          (loop [next-loc loc]
+            (cond (direction next-loc) (direction next-loc)
+                  (up next-loc) (recur (up next-loc))
+                  :else next-loc))))
+
+(def backward (partial walk left rightmost))
+(def forward  (partial walk right leftmost))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; wrapping zipper movement
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

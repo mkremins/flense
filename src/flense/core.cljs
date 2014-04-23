@@ -25,7 +25,9 @@
    key/UP         z/up-or-stay})
 
 (def shift-binds
-  {key/THREE  e/toggle-dispatch})
+  {key/LEFT   z/backward
+   key/RIGHT  z/forward
+   key/THREE  e/toggle-dispatch})
 
 (defn handle-key [ev]
   (let [keybinds (if (.-shiftKey ev) shift-binds default-binds)]
