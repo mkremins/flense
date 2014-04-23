@@ -29,6 +29,14 @@
   {key/Y  hist/redo
    key/Z  hist/undo})
 
+(def meta-ctrl-binds
+  {key/LEFT   e/barf-left
+   key/RIGHT  e/barf-right})
+
+(def meta-shift-binds
+  {key/LEFT   e/slurp-left
+   key/RIGHT  e/slurp-right})
+
 (def shift-binds
   {key/LEFT   z/backward
    key/RIGHT  z/forward
@@ -36,7 +44,9 @@
 
 (defn handle-key [ev]
   (let [keybinds
-        (cond (.-metaKey ev) meta-binds
+        (cond (and (.-metaKey ev) (.-ctrlKey ev))  meta-ctrl-binds
+              (and (.-metaKey ev) (.-shiftKey ev)) meta-shift-binds
+              (.-metaKey ev)  meta-binds
               (.-shiftKey ev) shift-binds
               :else default-binds)]
     (when-let [exec-bind (get keybinds (.-keyCode ev))]

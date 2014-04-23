@@ -1,6 +1,6 @@
 (ns flense.edit
   (:require [flense.parse :as p]
-            [flense.util :refer [delete fempty insert lconj update]]
+            [flense.util :refer [delete insert lconj update]]
             [flense.zip :as z]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,10 +26,10 @@
   (update parent :children delete i))
 
 (defn- delete-leftmost* [parent]
-  (update parent :children (fempty delete [nil]) 0))
+  (update parent :children delete 0))
 
 (defn- delete-rightmost* [parent]
-  (update parent :children (fempty pop [nil])))
+  (update parent :children #(if (empty? %) % (pop %))))
 
 (defn- insert-child* [parent i child]
   (update parent :children insert i child))
@@ -41,10 +41,10 @@
   (update parent :children conj child))
 
 (defn- barf-child-left* [parent i]
-  (if-let [barfed (first (get-in parent [:children i :children]))]
+  (if-let [barfed (get-in parent [:children i :children 0])]
           (-> parent
               (insert-child* i barfed)
-              (update-in [:children i] delete-leftmost*))
+              (update-in [:children (inc i)] delete-leftmost*))
           parent))
 
 (defn- barf-child-right* [parent i]
@@ -61,7 +61,7 @@
   (let [slurped (get-in parent [:children (dec i)])]
     (if (and slurped (z/branch? (get-in parent [:children i])))
         (-> parent
-            (update-in [:children i] insert-leftmost* slurped)
+            (update-in [:children i] insert-leftmost* nil slurped)
             (delete-child* (dec i)))
         parent)))
 
@@ -69,7 +69,7 @@
   (let [slurped (get-in parent [:children (inc i)])]
     (if (and slurped (z/branch? (get-in parent [:children i])))
         (-> parent
-            (update-in [:children i] insert-rightmost* slurped)
+            (update-in [:children i] insert-rightmost* nil slurped)
             (delete-child* (inc i)))
         parent)))
 
@@ -86,6 +86,17 @@
 ;; public API wrapping the above
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn barf-left [loc]
+  (let [new-loc (z/edit-parent loc barf-child-left*)]
+    (if (and new-loc (not= new-loc loc))
+        (z/child new-loc (-> loc :path peek inc))
+        loc)))
+
+(defn barf-right [loc]
+  (-> loc
+      (z/edit-parent barf-child-right*)
+      (z/child (-> loc :path peek))))
+
 (defn delete-sexp [loc]
   (if (p/placeholder-node? (z/node loc))
       (let [new-loc (z/edit-parent loc delete-child*)]
@@ -100,6 +111,17 @@
               (z/edit-parent insert-child* node)
               (z/child (-> loc :path peek inc)))
           (-> loc (z/edit-parent insert-rightmost* node) z/down z/rightmost)))
+
+(defn slurp-left [loc]
+  (let [new-loc (z/edit-parent loc slurp-child-left*)]
+    (if (and new-loc (not= new-loc loc))
+        (z/child new-loc (max (-> loc :path peek dec) 0))
+        loc)))
+
+(defn slurp-right [loc]
+  (-> loc
+      (z/edit-parent slurp-child-right*)
+      (z/child (-> loc :path peek))))
 
 (defn toggle-dispatch [loc]
   (z/edit loc toggle-dispatch*))
