@@ -59,3 +59,6 @@
 
 (defn coll-node? [{:keys [type]}]
   (#{:map :seq :set :vec} type))
+
+(def placeholder
+  (form->tree '...))

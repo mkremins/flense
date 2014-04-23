@@ -52,6 +52,9 @@
 (defn down [loc]
   (check (update loc :path down*)))
 
+(defn child [loc n]
+  (check (-> loc down (update :path sibling n))))
+
 (defn left [loc]
   (check (update loc :path left*)))
 
