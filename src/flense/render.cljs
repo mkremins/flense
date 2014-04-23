@@ -126,7 +126,6 @@
   (reify
     om/IRender
     (render [this]
-      (let [{:keys [path tree]} (:loc app-state)
-            tree (update-in tree (z/full-path path) assoc :selected? true)]
+      (let [{:keys [tree]} (z/edit app-state assoc :selected? true)]
         (apply dom/div #js {:className "flense"}
           (om/build-all node-view (:children tree)))))))
