@@ -1,6 +1,6 @@
 (ns flense.core
   (:require [flense.edit :as e]
-            [flense.render :as render]
+            [flense.ui :as ui]
             [flense.util :refer [form->tree placeholder]]
             [flense.zip :as z]
             [goog.events.KeyCodes :as key]
@@ -31,15 +31,15 @@
   (let [keybinds (if (.-shiftKey ev) shift-binds default-binds)]
     (when-let [exec-bind (get keybinds (.-keyCode ev))]
       (.preventDefault ev)
-      (om/transact! render/*root-cursor* exec-bind))))
+      (om/transact! ui/*root-cursor* exec-bind))))
 
 ;; application setup and wiring
 
 (defn init []
-  (om/root render/root-view app-state
+  (om/root ui/root-view app-state
            {:target (.getElementById js/document "flense-parent")
             :tx-listen #(when (= (:tag %) :insert-coll)
-                          (om/transact! render/*root-cursor* z/down))})
+                          (om/transact! ui/*root-cursor* z/down))})
   (.addEventListener js/window "keydown" handle-key))
 
 (init)

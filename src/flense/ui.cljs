@@ -1,4 +1,4 @@
-(ns flense.render
+(ns flense.ui
   (:require [clojure.string :as string]
             [flense.edit :as e]
             [flense.util :refer [coll-node? form->tree]]
