@@ -1,5 +1,6 @@
 (ns flense.render
   (:require [clojure.string :as string]
+            [flense.edit :as e]
             [flense.util :refer [coll-node? form->tree]]
             [flense.zip :as z]
             [goog.events.KeyCodes :as key]
@@ -48,14 +49,6 @@
     (set! (.-textContent tester) (pr-str form))
     (str (inc (.-clientWidth tester)) "px")))
 
-(defn- wrap-coll [type node]
-  {:type type
-   :form (case type
-           :map {node '...}
-           :seq (list node)
-           :vec [node])
-   :children [node]})
-
 (defn- handle-key [ev data]
   (condp = (.-keyCode ev)
     key/BACKSPACE
@@ -67,12 +60,12 @@
     key/NINE
     (when (.-shiftKey ev)
       (.preventDefault ev)
-      (om/transact! data [] (partial wrap-coll :seq) :insert-coll))
+      (om/transact! data [] (partial e/wrap-sexp :seq) :insert-coll))
 
     key/OPEN_SQUARE_BRACKET
     (do (.preventDefault ev)
         (om/transact! data []
-                      (partial wrap-coll (if (.-shiftKey ev) :map :vec))
+                      (partial e/wrap-sexp (if (.-shiftKey ev) :map :vec))
                       :insert-coll))
     
     nil)) ; deliberate no-op

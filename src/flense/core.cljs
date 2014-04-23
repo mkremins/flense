@@ -14,12 +14,16 @@
     :tree {:children
            [(form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
 
+(def ^:private placeholder
+  (form->tree '...))
+
 ;; keybinds
 
 (def default-binds
   {key/DOWN   z/down-or-stay
    key/LEFT   z/left-or-wrap
    key/RIGHT  z/right-or-wrap
+   key/SPACE  #(e/insert-right % placeholder)
    key/UP     z/up-or-stay})
 
 (defn handle-key [ev]
@@ -32,7 +36,9 @@
 
 (defn init []
   (om/root render/root-view app-state
-           {:target (.getElementById js/document "flense-parent")})
+           {:target (.getElementById js/document "flense-parent")
+            :tx-listen #(when (= (:tag %) :insert-coll)
+                          (swap! app-state z/down))})
   (.addEventListener js/window "keydown" handle-key))
 
 (init)
