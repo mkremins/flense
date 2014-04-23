@@ -52,12 +52,23 @@ input.atom {
   display: block;
 }
 
-.map:before { content: "{"; }
-.map:after  { content: "}"; }
-.seq:before { content: "("; }
-.seq:after  { content: ")"; }
-.vec:before { content: "["; }
-.vec:after  { content: "]"; }
+.fn:before  { content: "#("; }
+.fn:after   { content:  ")"; }
+.map:before { content:  "{"; }
+.map:after  { content:  "}"; }
+.seq:before { content:  "("; }
+.seq:after  { content:  ")"; }
+.set:before { content: "#{"; }
+.set:after  { content:  "}"; }
+.vec:before { content:  "["; }
+.vec:after  { content:  "]"; }
+
+.fn .fn,
+.fn .fn *,
+.fn .fn:before,
+.fn .fn:after {
+  color: red;
+}
 
 #width-tester {
   left: -1000px;

@@ -24,8 +24,11 @@
    key/SPACE      #(e/insert-right % placeholder)
    key/UP         z/up-or-stay})
 
+(def shift-binds
+  {key/THREE  e/toggle-dispatch})
+
 (defn handle-key [ev]
-  (let [keybinds default-binds]
+  (let [keybinds (if (.-shiftKey ev) shift-binds default-binds)]
     (when-let [exec-bind (get keybinds (.-keyCode ev))]
       (.preventDefault ev)
       (swap! app-state exec-bind))))
