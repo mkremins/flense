@@ -1,6 +1,6 @@
 (ns flense.edit
-  (:require [flense.util
-             :refer [delete fempty insert lconj placeholder update]]
+  (:require [flense.parse :as p]
+            [flense.util :refer [delete fempty insert lconj update]]
             [flense.zip :as z]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -87,12 +87,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn delete-sexp [loc]
-  (if (= (:form (z/node loc)) (:form placeholder))
+  (if (p/placeholder-node? (z/node loc))
       (let [new-loc (z/edit-parent loc delete-child*)]
         (if (empty? (:children (z/node new-loc)))
             new-loc
             (z/child new-loc (max (-> loc :path peek dec) 0))))
-      (z/replace loc placeholder)))
+      (z/replace loc p/placeholder)))
 
 (defn insert-right [loc node]
   (if-let [right-loc (z/right loc)]

@@ -1,7 +1,7 @@
 (ns flense.ui
   (:require [clojure.string :as string]
             [flense.edit :as e]
-            [flense.util :refer [coll-node? form->tree]]
+            [flense.parse :as p]
             [flense.zip :as z]
             [goog.events.KeyCodes :as key]
             [om.core :as om :include-macros true]
@@ -11,40 +11,10 @@
 
 (defn- class-list [{:keys [selected? type] :as node}]
   (->> [(name type)
-        (if (coll-node? node) "coll" "atom")
+        (if (p/coll-node? node) "coll" "atom")
         (when selected? "selected")]
        (string/join " ")
        string/trimr))
-
-(defn- parse-char [text]
-  {:type :char :form (subs text 1)})
-
-(defn- parse-keyword [text]
-  {:type :keyword :form (keyword (subs text 1))})
-
-(defn- parse-regex [text]
-  {:type :regex :form (re-pattern (subs text 2 (dec (count text))))})
-
-(defn- parse-string [text]
-  {:type :string :form (subs text 1 (dec (count text)))})
-
-(defn- parse-symbol-or-number [text]
-  (let [number (js/parseFloat text)]
-    (if (js/isNaN number)
-        {:type :symbol :form (symbol text)}
-        {:type :number :form number})))
-
-(defn- parse-atom [text]
-  (let [init-ch (first text)]
-    (cond
-      (= text "false") {:type :bool :form false}
-      (= text "nil")   {:type :nil  :form nil}
-      (= text "true")  {:type :bool :form true}
-      (= init-ch \\)   (parse-char text)
-      (= init-ch \:)   (parse-keyword text)
-      (= init-ch \#)   (parse-regex text)
-      (= init-ch \")   (parse-string text)
-      :else            (parse-symbol-or-number text))))
 
 (defn- atom-width [form]
   (let [tester (.getElementById js/document "width-tester")]
@@ -78,7 +48,7 @@
     (render [_]
       (dom/input
         #js {:className (class-list node)
-             :onChange  #(om/update! node (parse-atom (.. % -target -value)))
+             :onChange  #(om/update! node (p/parse-atom (.. % -target -value)))
              :onKeyDown #(handle-key % node)
              :style #js {:width (atom-width (:form node))}
              :value (pr-str (:form node))}))
@@ -114,7 +84,7 @@
     om/IRender
     (render [this]
       (om/build
-        (if (coll-node? node) coll-view atom-view)
+        (if (p/coll-node? node) coll-view atom-view)
         node))))
 
 (defn root-view [app-state owner]

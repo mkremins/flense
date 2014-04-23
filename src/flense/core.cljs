@@ -1,7 +1,7 @@
 (ns flense.core
   (:require [flense.edit :as e]
+            [flense.parse :as p]
             [flense.ui :as ui]
-            [flense.util :refer [form->tree placeholder]]
             [flense.zip :as z]
             [goog.events.KeyCodes :as key]
             [om.core :as om]))
@@ -12,7 +12,7 @@
   (atom
    {:path [0]
     :tree {:children
-           [(form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
+           [(p/form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
 
 ;; keybinds
 
@@ -21,7 +21,7 @@
    key/DOWN       z/down-or-stay
    key/LEFT       z/left-or-wrap
    key/RIGHT      z/right-or-wrap
-   key/SPACE      #(e/insert-right % placeholder)
+   key/SPACE      #(e/insert-right % p/placeholder)
    key/UP         z/up-or-stay})
 
 (def shift-binds

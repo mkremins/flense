@@ -1,9 +1,5 @@
 (ns flense.util)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; generic helpers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defn delete
   "Deletes the item at `idx` in the vector `v`."
   [v idx]
@@ -30,35 +26,3 @@
    of a key sequence."
   [m k f & args]
   (apply (partial update-in m [k] f) args))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; more app-specific helpers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn classify [x]
-  (cond (false?   x) :bool
-        (true?    x) :bool
-        (keyword? x) :keyword
-        (map?     x) :map
-        (nil?     x) :nil
-        (number?  x) :number
-        (seq?     x) :seq
-        (set?     x) :set
-        (string?  x) :string
-        (symbol?  x) :symbol
-        (vector?  x) :vec))
-
-(defn form->tree [form]
-  (merge
-    {:form form :type (classify form)}
-    (when (coll? form)
-      {:children (mapv form->tree
-                       (if (map? form)
-                           (interpose (keys form) (vals form))
-                           form))})))
-
-(defn coll-node? [{:keys [type]}]
-  (#{:fn :map :seq :set :vec} type))
-
-(def placeholder
-  (form->tree '...))
