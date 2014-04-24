@@ -29,6 +29,7 @@
 (def meta-binds
   {key/C  e/copy-sexp!
    key/V  e/paste-sexp
+   key/X  (comp e/delete-sexp e/copy-sexp!)
    key/Y  hist/redo
    key/Z  hist/undo})
 
