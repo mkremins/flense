@@ -1,4 +1,12 @@
-(ns flense.parse)
+(ns flense.parse
+  (:require [cljs.reader :as rdr]))
+
+(defn string->forms [string]
+  (let [reader (rdr/push-back-reader string)]
+    (loop [forms []]
+      (if-let [form (rdr/read reader false nil false)]
+              (recur (conj forms form))
+              forms))))
 
 (defn classify [x]
   (cond (false?   x) :bool
