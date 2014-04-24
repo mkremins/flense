@@ -69,6 +69,26 @@
               (update-in [:children i] delete-rightmost*))
           parent))
 
+(defn- join-child-left* [parent i]
+  (let [joiner (get-in parent [:children i])
+        joined (get-in parent [:children (dec i)])]
+    (when (and joiner (z/branch? joiner)
+               joined (z/branch? joined))
+      (-> parent
+          (update-in [:children i :children]
+                     #(vec (concat (:children joined) %)))
+          (update :children delete (dec i))))))
+
+(defn- join-child-right* [parent i]
+  (let [joiner (get-in parent [:children i])
+        joined (get-in parent [:children (inc i)])]
+    (when (and joiner (z/branch? joiner)
+               joined (z/branch? joined))
+      (-> parent
+          (update-in [:children i :children]
+                     #(vec (concat % (:children joined))))
+          (update :children delete (inc i))))))
+
 (defn- raise-child* [parent i]
   (get-in parent [:children i]))
 
@@ -139,6 +159,18 @@
               (z/edit-parent insert-child* node)
               (z/child (-> loc :path peek inc)))
           (-> loc (z/edit-parent insert-rightmost* node) z/down z/rightmost)))
+
+(defn join-left [loc]
+  (or (-> loc
+          (z/edit-parent join-child-left*)
+          (z/child (-> loc :path peek dec)))
+      loc))
+
+(defn join-right [loc]
+  (or (-> loc
+          (z/edit-parent join-child-right*)
+          (z/child (-> loc :path peek)))
+      loc))
 
 (defn raise-sexp [loc]
   (z/edit-parent loc raise-child*))

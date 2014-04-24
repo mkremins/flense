@@ -34,8 +34,10 @@
    key/Z  hist/undo})
 
 (def meta-ctrl-binds
-  {key/LEFT   e/barf-left
+  {key/A      e/join-left
+   key/LEFT   e/barf-left
    key/RIGHT  e/barf-right
+   key/S      e/join-right
    key/UP     e/splice-sexp})
 
 (def meta-shift-binds
