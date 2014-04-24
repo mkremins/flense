@@ -42,6 +42,7 @@
 (def shift-binds
   {key/LEFT   z/backward
    key/RIGHT  z/forward
+   key/SPACE  #(e/insert-left % p/placeholder)
    key/THREE  e/toggle-dispatch})
 
 (defn handle-key [ev]

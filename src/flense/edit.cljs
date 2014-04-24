@@ -126,6 +126,11 @@
             (z/child new-loc (max (-> loc :path peek dec) 0))))
       (z/replace loc p/placeholder)))
 
+(defn insert-left [loc node]
+  (-> loc
+      (z/edit-parent insert-child* node)
+      (z/child (-> loc :path peek))))
+
 (defn insert-right [loc node]
   (if-let [right-loc (z/right loc)]
           (-> right-loc
