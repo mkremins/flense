@@ -4,6 +4,21 @@
             [flense.zip :as z]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; clipboard functionality
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def ^{:dynamic true :private true} *clipboard* nil)
+
+(defn copy-sexp! [loc]
+  (set! *clipboard* (z/node loc))
+  loc)
+
+(defn paste-sexp [loc]
+  (if (and *clipboard* (p/placeholder-node? (z/node loc)))
+      (z/replace loc *clipboard*)
+      loc))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; use these with `edit`
 ;;   ex: `(om/transact! app-state edit wrap-round)`
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

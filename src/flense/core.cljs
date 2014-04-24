@@ -26,7 +26,9 @@
    key/UP         z/up-or-stay})
 
 (def meta-binds
-  {key/Y  hist/redo
+  {key/C  e/copy-sexp!
+   key/V  e/paste-sexp
+   key/Y  hist/redo
    key/Z  hist/undo})
 
 (def meta-ctrl-binds
