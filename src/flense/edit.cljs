@@ -91,10 +91,9 @@
 (defn- splice-child* [parent i]
   (let [child (get-in parent [:children i])]
     (if (z/branch? child)
-        (-> (reduce (fn [node grandchild]
-                      (insert-child* node (inc i) grandchild))
-                    parent (reverse (:children child)))
-            (delete-child* i))
+        (-> parent
+            (update-in [:children i] :children)
+            (update :children (comp vec flatten)))
         parent)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -138,6 +137,9 @@
               (z/child (-> loc :path peek inc)))
           (-> loc (z/edit-parent insert-rightmost* node) z/down z/rightmost)))
 
+(defn raise-sexp [loc]
+  (z/edit-parent loc raise-child*))
+
 (defn slurp-left [loc]
   (if (-> loc z/node z/branch?)
       (let [new-loc (z/edit-parent loc slurp-child-left*)]
@@ -152,6 +154,11 @@
           (z/edit-parent slurp-child-right*)
           (z/child (-> loc :path peek)))
       loc))
+
+(defn splice-sexp [loc]
+  (-> loc
+      (z/edit-parent splice-child*)
+      (z/child (-> loc :path peek))))
 
 (defn toggle-dispatch [loc]
   (z/edit loc toggle-dispatch*))

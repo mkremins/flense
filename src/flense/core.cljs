@@ -33,11 +33,13 @@
 
 (def meta-ctrl-binds
   {key/LEFT   e/barf-left
-   key/RIGHT  e/barf-right})
+   key/RIGHT  e/barf-right
+   key/UP     e/splice-sexp})
 
 (def meta-shift-binds
   {key/LEFT   e/slurp-left
-   key/RIGHT  e/slurp-right})
+   key/RIGHT  e/slurp-right
+   key/UP     e/raise-sexp})
 
 (def shift-binds
   {key/LEFT   z/backward
