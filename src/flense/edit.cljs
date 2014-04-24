@@ -56,34 +56,28 @@
   (update parent :children conj child))
 
 (defn- barf-child-left* [parent i]
-  (if-let [barfed (get-in parent [:children i :children 0])]
-          (-> parent
-              (insert-child* i barfed)
-              (update-in [:children (inc i)] delete-leftmost*))
-          parent))
+  (when-let [barfed (get-in parent [:children i :children 0])]
+    (-> parent
+        (insert-child* i barfed)
+        (update-in [:children (inc i)] delete-leftmost*))))
 
 (defn- barf-child-right* [parent i]
-  (if-let [barfed (last (get-in parent [:children i :children]))]
-          (-> parent
-              (insert-child* (inc i) barfed)
-              (update-in [:children i] delete-rightmost*))
-          parent))
+  (when-let [barfed (peek (get-in parent [:children i :children]))]
+    (-> parent
+        (insert-child* (inc i) barfed)
+        (update-in [:children i] delete-rightmost*))))
 
 (defn- join-child-left* [parent i]
-  (let [joiner (get-in parent [:children i])
-        joined (get-in parent [:children (dec i)])]
-    (when (and joiner (z/branch? joiner)
-               joined (z/branch? joined))
+  (let [joined (get-in parent [:children (dec i)])]
+    (when (every? z/branch? [(get-in parent [:children i]) joined])
       (-> parent
           (update-in [:children i :children]
                      #(vec (concat (:children joined) %)))
           (update :children delete (dec i))))))
 
 (defn- join-child-right* [parent i]
-  (let [joiner (get-in parent [:children i])
-        joined (get-in parent [:children (inc i)])]
-    (when (and joiner (z/branch? joiner)
-               joined (z/branch? joined))
+  (let [joined (get-in parent [:children (inc i)])]
+    (when (every? z/branch? [(get-in parent [:children i]) joined])
       (-> parent
           (update-in [:children i :children]
                      #(vec (concat % (:children joined))))
@@ -94,45 +88,36 @@
 
 (defn- slurp-child-left* [parent i]
   (let [slurped (get-in parent [:children (dec i)])]
-    (if (and slurped (z/branch? (get-in parent [:children i])))
-        (-> parent
-            (update-in [:children i] insert-leftmost* nil slurped)
-            (delete-child* (dec i)))
-        parent)))
+    (when (and (z/branch? (get-in parent [:children i])) slurped)
+      (-> parent
+          (update-in [:children i] insert-leftmost* nil slurped)
+          (delete-child* (dec i))))))
 
 (defn- slurp-child-right* [parent i]
   (let [slurped (get-in parent [:children (inc i)])]
-    (if (and slurped (z/branch? (get-in parent [:children i])))
-        (-> parent
-            (update-in [:children i] insert-rightmost* nil slurped)
-            (delete-child* (inc i)))
-        parent)))
+    (when (and (z/branch? (get-in parent [:children i])) slurped)
+      (-> parent
+          (update-in [:children i] insert-rightmost* nil slurped)
+          (delete-child* (inc i))))))
 
 (defn- splice-child* [parent i]
-  (let [child (get-in parent [:children i])]
-    (if (z/branch? child)
-        (-> parent
-            (update-in [:children i] :children)
-            (update :children (comp vec flatten)))
-        parent)))
+  (when (z/branch? (get-in parent [:children i]))
+    (-> parent
+        (update-in [:children i] :children)
+        (update :children (comp vec flatten)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public API wrapping the above
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn barf-left [loc]
-  (if (let [node (z/node loc)]
-        (and (z/branch? node) (seq (:children node))))
-      (let [new-loc (z/edit-parent loc barf-child-left*)]
-        (if (and new-loc (not= new-loc loc))
-            (z/child new-loc (-> loc :path peek inc))
-            loc))
+  (or (-> loc
+          (z/edit-parent barf-child-left*)
+          (z/child (-> loc :path peek inc)))
       loc))
 
 (defn barf-right [loc]
-  (if (let [node (z/node loc)]
-        (and (z/branch? node) (seq (:children node))))
-      (-> loc
+  (or (-> loc
           (z/edit-parent barf-child-right*)
           (z/child (-> loc :path peek)))
       loc))
@@ -176,24 +161,22 @@
   (z/edit-parent loc raise-child*))
 
 (defn slurp-left [loc]
-  (if (-> loc z/node z/branch?)
-      (let [new-loc (z/edit-parent loc slurp-child-left*)]
-        (if (and new-loc (not= new-loc loc))
-            (z/child new-loc (max (-> loc :path peek dec) 0))
-            loc))
+  (or (-> loc
+          (z/edit-parent slurp-child-left*)
+          (z/child (max (-> loc :path peek dec) 0)))
       loc))
 
 (defn slurp-right [loc]
-  (if (-> loc z/node z/branch?)
-      (-> loc
+  (or (-> loc
           (z/edit-parent slurp-child-right*)
           (z/child (-> loc :path peek)))
       loc))
 
 (defn splice-sexp [loc]
-  (-> loc
-      (z/edit-parent splice-child*)
-      (z/child (-> loc :path peek))))
+  (or (-> loc
+          (z/edit-parent splice-child*)
+          (z/child (-> loc :path peek)))
+      loc))
 
 (defn toggle-dispatch [loc]
   (z/edit loc toggle-dispatch*))
