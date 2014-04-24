@@ -125,6 +125,9 @@
             (z/child new-loc (max (-> loc :path peek dec) 0))))
       (z/replace loc p/placeholder)))
 
+(defn expand-sexp [loc]
+  (z/edit loc p/expand-sexp))
+
 (defn insert-left [loc node]
   (-> loc
       (z/edit-parent insert-child* node)

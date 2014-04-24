@@ -31,6 +31,17 @@
 (defn placeholder-node? [{:keys [form]}]
   (= form (:form placeholder)))
 
+(def expanders
+  {'def  (form->tree '(def ... ...))
+   'defn (form->tree '(defn ... [...] ...))
+   'fn   (form->tree '(fn [...] ...))
+   'if   (form->tree '(if ... ... ...))
+   'let  (form->tree '(let [... ...] ...))
+   'when (form->tree '(when ... ...))})
+
+(defn expand-sexp [{:keys [type form] :as sexp}]
+  (or (when (= type :symbol) (expanders form)) sexp))
+
 (defn- parse-char [text]
   {:type :char :form (subs text 1)})
 

@@ -23,6 +23,7 @@
    key/LEFT       z/left-or-wrap
    key/RIGHT      z/right-or-wrap
    key/SPACE      #(e/insert-right % p/placeholder)
+   key/TAB        e/expand-sexp
    key/UP         z/up-or-stay})
 
 (def meta-binds
