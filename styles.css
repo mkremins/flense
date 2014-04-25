@@ -63,6 +63,11 @@ input.atom {
 .vec:before { content:  "["; }
 .vec:after  { content:  "]"; }
 
+.regex:before  { content: "#\""; }
+.regex:after   { content:  "\""; }
+.string:before { content:  "\""; }
+.string:after  { content:  "\""; }
+
 .fn .fn,
 .fn .fn *,
 .fn .fn:before,

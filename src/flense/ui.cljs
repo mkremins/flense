@@ -16,6 +16,10 @@
        (string/join " ")
        string/trimr))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; atom views
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- atom-width [form]
   (let [tester (.getElementById js/document "width-tester")]
     (set! (.-textContent tester) (pr-str form))
@@ -32,13 +36,18 @@
     key/NINE
     (when (.-shiftKey ev)
       (.preventDefault ev)
-      (om/transact! data [] (partial e/wrap-sexp :seq) :insert-coll))
+      (om/transact! data [] (partial e/wrap-sexp :seq) :wrap-coll))
 
     key/OPEN_SQUARE_BRACKET
     (do (.preventDefault ev)
         (om/transact! data []
                       (partial e/wrap-sexp (if (.-shiftKey ev) :map :vec))
-                      :insert-coll))
+                      :wrap-coll))
+
+    key/SINGLE_QUOTE
+    (when (.-shiftKey ev)
+      (.preventDefault ev)
+      (om/transact! data [] e/wrap-string :wrap-coll))
     
     nil)) ; deliberate no-op
 
@@ -70,6 +79,69 @@
           (when (:selected? prev-props)
             (.blur (om/get-node owner)))))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; string content views
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- string-content-width [string-content]
+  (let [tester (.getElementById js/document "width-tester")]
+    (set! (.-textContent tester) string-content)
+    (str (inc (.-clientWidth tester)) "px")))
+
+(defn- handle-string-key [ev data]
+  (condp = (.-keyCode ev)
+    key/BACKSLASH
+    (do (.preventDefault ev)
+        (om/transact! data :text #(str % "\\")))
+
+    key/BACKSPACE
+    (let [input (.-target ev)]
+      (when (or (not= (.-selectionStart input) 0)
+                (not= (.-selectionEnd input) (count (.-value input))))
+        (.stopPropagation ev)))
+
+    key/SPACE ; allow default behavior (insert space) instead of keybound
+    (.stopPropagation ev)
+
+    key/SINGLE_QUOTE
+    (when (.-shiftKey ev)
+      (.preventDefault ev)
+      (om/transact! data :text #(str % "\"")))
+
+    nil)) ; deliberate no-op
+
+(defn- string-content-view [node owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/input
+        #js {:className (class-list node)
+             :onChange  #(om/update! node :text (.. % -target -value))
+             :onKeyDown #(handle-string-key % node)
+             :style #js {:width (string-content-width (:text node))}
+             :value (:text node)}))
+
+    om/IDidMount
+    (did-mount [_]
+      (when (:selected? node)
+        (doto (om/get-node owner)
+          (.focus)
+          (.select))))
+
+    om/IDidUpdate
+    (did-update [_ prev-props prev-state]
+      (if (:selected? node)
+          (when (or (not (:selected? prev-props)) (= (:text node) "..."))
+            (doto (om/get-node owner)
+              (.focus)
+              (.select)))
+          (when (:selected? prev-props)
+            (.blur (om/get-node owner)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; collection, generic, root views
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (declare node-view)
 
 (defn- coll-view [node owner]
@@ -84,7 +156,10 @@
     om/IRender
     (render [this]
       (om/build
-        (if (p/coll-node? node) coll-view atom-view)
+        (cond
+          (p/coll-node? node) coll-view
+          (= (:type node) :string-content) string-content-view
+          :else atom-view)
         node))))
 
 (defn root-view [app-state owner]

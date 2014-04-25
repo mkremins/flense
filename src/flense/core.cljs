@@ -66,7 +66,7 @@
 ;; application setup and wiring
 
 (defn- handle-tx [{:keys [new-state tag]}]
-  (when (= tag :insert-coll)
+  (when (= tag :wrap-coll)
     (om/transact! ui/*root-cursor* [] z/down ::hist/ignore))
   (when-not (= tag ::hist/ignore)
     (hist/push-state! new-state)))

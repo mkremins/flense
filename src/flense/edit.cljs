@@ -183,3 +183,9 @@
 
 (defn wrap-sexp [type wrapped]
   {:type type :children [wrapped]})
+
+(defn wrap-string [wrapped]
+  {:type :string
+   :children [(assoc wrapped
+                :type :string-content
+                :text (:form wrapped))]})
