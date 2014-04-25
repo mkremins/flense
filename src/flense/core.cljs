@@ -52,6 +52,8 @@
    key/THREE  e/toggle-dispatch})
 
 (defn handle-key [ev]
+  (when (and (.-ctrlKey ev) (= (.-keyCode ev) key/X))
+    (.. js/document (getElementById "command-bar") focus))
   (let [keybinds
         (cond (and (.-metaKey ev) (.-ctrlKey ev))  meta-ctrl-binds
               (and (.-metaKey ev) (.-shiftKey ev)) meta-shift-binds
@@ -76,6 +78,8 @@
   (om/root ui/root-view app-state
            {:target (.getElementById js/document "flense-parent")
             :tx-listen handle-tx})
+  (om/root ui/command-bar-view nil
+           {:target (.getElementById js/document "command-bar-parent")})
   (.addEventListener js/window "keydown" handle-key))
 
 (init)

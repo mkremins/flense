@@ -170,3 +170,25 @@
       (let [{:keys [tree]} (z/edit app-state assoc :selected? true)]
         (apply dom/div #js {:className "flense"}
           (om/build-all node-view (:children tree)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; command bar view
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- exec-command! [command-text]
+  (println command-text)) ; TODO make this actually do stuff
+
+(defn- handle-command-bar-key [ev]
+  (when (= (.-keyCode ev) key/ENTER)
+    (let [input (.-target ev)]
+      (exec-command! (.-value input))
+      (set! (.-value input) "")
+      (.blur input)))
+  (.stopPropagation ev)) ; allow default behavior instead of keybound
+
+(defn command-bar-view [app-state owner]
+  (reify om/IRender
+    (render [_]
+      (dom/input
+        #js {:id "command-bar"
+             :onKeyDown handle-command-bar-key}))))
