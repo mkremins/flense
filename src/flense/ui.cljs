@@ -179,11 +179,17 @@
   (println command-text)) ; TODO make this actually do stuff
 
 (defn- handle-command-bar-key [ev]
-  (when (= (.-keyCode ev) key/ENTER)
+  (condp = (.-keyCode ev)
+    key/ENTER
     (let [input (.-target ev)]
       (exec-command! (.-value input))
       (set! (.-value input) "")
-      (.blur input)))
+      (.blur input))
+
+    key/ESC
+    (.. ev -target blur)
+
+    nil)
   (.stopPropagation ev)) ; allow default behavior instead of keybound
 
 (defn command-bar-view [app-state owner]
