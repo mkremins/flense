@@ -18,13 +18,13 @@
 ;; keybinds
 
 (def default-binds
-  {key/BACKSPACE  e/delete-sexp
-   key/DOWN       z/down-or-stay
-   key/LEFT       z/left-or-wrap
-   key/RIGHT      z/right-or-wrap
-   key/SPACE      #(e/insert-right % p/placeholder)
-   key/TAB        e/expand-sexp
-   key/UP         z/up-or-stay})
+  {key/BACKSPACE e/delete-sexp
+   key/DOWN   z/down-or-stay
+   key/LEFT   z/left-or-wrap
+   key/RIGHT  z/right-or-wrap
+   key/SPACE  #(e/insert-right % p/placeholder)
+   key/TAB    e/expand-sexp
+   key/UP     z/up-or-stay})
 
 (def meta-binds
   {key/C  e/copy-sexp!
@@ -41,7 +41,9 @@
    key/UP     e/splice-sexp})
 
 (def meta-shift-binds
-  {key/LEFT   e/slurp-left
+  {key/K      e/find-placeholder-left
+   key/L      e/find-placeholder-right
+   key/LEFT   e/slurp-left
    key/RIGHT  e/slurp-right
    key/UP     e/raise-sexp})
 

@@ -133,6 +133,15 @@
 (defn expand-sexp [loc]
   (z/edit loc p/expand-sexp))
 
+(defn- find-placeholder [direction loc]
+  (let [p-locs (z/find loc (comp p/placeholder-node? z/node) direction)
+        p-loc  (first p-locs)
+        p-loc  (if (= p-loc loc) (second p-locs) p-loc)]
+    (or p-loc loc)))
+
+(def find-placeholder-left  (partial find-placeholder z/backward))
+(def find-placeholder-right (partial find-placeholder z/forward))
+
 (defn insert-left [loc node]
   (-> loc
       (z/edit-parent insert-child* node)
