@@ -78,6 +78,7 @@ input.atom {
   position: absolute;
   top: -1000px;
   width: auto;
+  white-space: pre;
 }
 
 #command-bar {
