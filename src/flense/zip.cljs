@@ -1,5 +1,5 @@
 (ns flense.zip
-  (:refer-clojure :exclude [replace])
+  (:refer-clojure :exclude [find replace])
   (:require [flense.util :refer [lconj update]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -86,6 +86,17 @@
 
 (def backward (partial walk left rightmost))
 (def forward  (partial walk right leftmost))
+
+(defn find
+  "Returns a lazy sequence of locations following `loc` in `direction` (default
+   `forward`) for which `(pred location)` returns truthy."
+  ([loc pred]
+    (find loc pred forward))
+  ([loc pred direction]
+    (->> loc
+         (iterate direction)
+         (take-while identity)
+         (filter pred))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; wrapping zipper movement
