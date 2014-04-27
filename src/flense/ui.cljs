@@ -176,7 +176,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- exec-command! [command-text]
-  (println command-text)) ; TODO make this actually do stuff
+  (let [[command & args] (string/split command-text #"\s+")]
+    (when (= command "load")
+      (flense.core/load! (first args)))))
 
 (defn- handle-command-bar-key [ev]
   (condp = (.-keyCode ev)

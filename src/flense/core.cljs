@@ -4,6 +4,7 @@
             [flense.parse :as p]
             [flense.ui :as ui]
             [flense.zip :as z]
+            [fs]
             [goog.events.KeyCodes :as key]
             [om.core :as om]))
 
@@ -14,6 +15,14 @@
    {:path [0]
     :tree {:children
            [(p/form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
+
+(defn load! [fpath]
+  (reset! app-state
+   {:path [0]
+    :tree {:children
+           (->> (fs/slurp fpath)
+                p/string->forms
+                (mapv p/form->tree))}}))
 
 ;; keybinds
 

@@ -2,7 +2,8 @@
   :dependencies
   [[org.clojure/clojure "1.6.0"]
    [org.clojure/clojurescript "0.0-2202"]
-   [om "0.6.1"]]
+   [om "0.6.1"]
+   [mkremins/fs "0.1.0"]]
 
   :plugins
   [[lein-cljsbuild "1.0.3"]]
