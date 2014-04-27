@@ -1,6 +1,7 @@
 pom.xml
 *jar
 /lib/
+/node_modules/
 /classes/
 /out/
 /target/
