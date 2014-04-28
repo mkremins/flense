@@ -10,21 +10,37 @@
 
 (def ^:dynamic *root-cursor*)
 
-(defn- class-list [{:keys [selected? type] :as node}]
+(defn- class-list [{:keys [right selected? type] :as node}]
   (->> [(name type)
         (if (p/coll-node? node) "coll" "atom")
-        (when selected? "selected")]
+        (when selected? "selected")
+        (when right "break-after")]
        (string/join " ")
        string/trimr))
+
+(defn- px [n]
+  (str n "px"))
+
+(defn- raw-render-width [raw-string]
+  (let [tester (.getElementById js/document "width-tester")]
+    (set! (.-textContent tester) raw-string)
+    (inc (.-clientWidth tester))))
+
+(def ^:private char-width
+  (raw-render-width " "))
+
+(def ^:private max-width
+  (raw-render-width (string/join (repeat 60 " "))))
+
+(def ^:private wrap-width
+  (raw-render-width (string/join (repeat 60 " "))))
+
+(defn- render-width [node]
+  (raw-render-width (p/tree->str node)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; atom views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn- atom-width [form]
-  (let [tester (.getElementById js/document "width-tester")]
-    (set! (.-textContent tester) (pr-str form))
-    (str (inc (.-clientWidth tester)) "px")))
 
 (defn- handle-key [ev data]
   (condp = (.-keyCode ev)
@@ -60,7 +76,11 @@
         #js {:className (class-list node)
              :onChange  #(om/update! node (p/parse-atom (.. % -target -value)))
              :onKeyDown #(handle-key % node)
-             :style #js {:width (atom-width (:form node))}
+             :style (clj->js
+                     (merge
+                      {:width (px (render-width node))}
+                       (when (:right node)
+                         {:margin-right (px (:right node))})))
              :value (pr-str (:form node))}))
 
     om/IDidMount
@@ -83,11 +103,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; string content views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn- string-content-width [string-content]
-  (let [tester (.getElementById js/document "width-tester")]
-    (set! (.-textContent tester) string-content)
-    (str (inc (.-clientWidth tester)) "px")))
 
 (defn- handle-string-key [ev data]
   (condp = (.-keyCode ev)
@@ -119,7 +134,7 @@
         #js {:className (class-list node)
              :onChange  #(om/update! node :text (.. % -target -value))
              :onKeyDown #(handle-string-key % node)
-             :style #js {:width (string-content-width (:text node))}
+             :style #js {:width (px (raw-render-width (:text node)))}
              :value (:text node)}))
 
     om/IDidMount
@@ -151,6 +166,34 @@
     (render [this]
       (apply dom/div #js {:className (class-list node)}
         (om/build-all node-view (:children node))))))
+
+(defn- coll-view [node owner]
+  (reify om/IRender
+    (render [_]
+      (apply dom/div
+        #js {:className (class-list node)
+             :style (clj->js
+                     (if (:right node) {:margin-right (px (:right node))} {}))}
+        (loop [rendered []
+               horiz char-width
+               children (:children node)]
+          (if-let [child (first children)]
+                  (let [width (+ (render-width child) char-width)
+                        sib   (second children)
+                        right (when (and sib
+                                         (> (+ (render-width sib) width horiz)
+                                            wrap-width))
+                                (- max-width (+ horiz width)))
+                        right (if (neg? right) 100 right)]
+                    (recur
+                     (conj rendered
+                      (om/build node-view
+                       (if right
+                           (assoc child :right right)
+                           child)))
+                     (if right (+ horiz width) 0)
+                     (rest children)))
+                  rendered))))))
 
 (defn- node-view [node owner]
   (reify

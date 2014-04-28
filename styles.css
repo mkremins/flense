@@ -39,6 +39,10 @@ body {
   color: white;
 }
 
+.break-after + * {
+  margin-left: 1.5rem;
+}
+
 input.atom {
   border: none;
   font-family: inherit;

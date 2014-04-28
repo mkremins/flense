@@ -1,5 +1,6 @@
 (ns flense.parse
-  (:require [cljs.reader :as rdr]))
+  (:require [cljs.reader :as rdr]
+            [clojure.string :as string]))
 
 (defn string->forms [string]
   (let [reader (rdr/push-back-reader string)]
@@ -35,6 +36,23 @@
                        (if (map? form)
                            (interpose (keys form) (vals form))
                            form))})))
+
+(defn tree->str [tree]
+  (if-let [form (:form tree)]
+          (pr-str form)
+          (let [delims
+                (condp = (:type tree)
+                  :fn     ["#("   ")"]
+                  :map    ["{"    "}"]
+                  :regex  ["#\"" "\""]
+                  :seq    ["("    ")"]
+                  :set    ["#{"   "}"]
+                  :string ["\""  "\""]
+                  :vec    ["["    "]"]
+                          [""      ""])]
+            (str (first delims)
+                 (string/join " " (:children tree))
+                 (last delims)))))
 
 (defn coll-node? [{:keys [type]}]
   (#{:fn :map :regex :seq :set :string :vec} type))
