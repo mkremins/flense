@@ -15,9 +15,12 @@ body {
   margin-top: 40px;
 }
 
+#flense-parent {
+  margin-bottom: 80px;
+}
+
 .coll {
-  display: flex;
-  flex-flow: row wrap;
+  display: inline-block;
 }
 
 .coll > * {
@@ -43,11 +46,8 @@ input.atom {
 }
 
 .flense > * {
-  margin-bottom: 1rem;
-}
-
-.flense > .atom {
   display: block;
+  margin-bottom: 1rem;
 }
 
 .fn:before  { content: "#("; }
