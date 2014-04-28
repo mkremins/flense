@@ -161,13 +161,6 @@
 (declare node-view)
 
 (defn- coll-view [node owner]
-  (reify
-    om/IRender
-    (render [this]
-      (apply dom/div #js {:className (class-list node)}
-        (om/build-all node-view (:children node))))))
-
-(defn- coll-view [node owner]
   (reify om/IRender
     (render [_]
       (apply dom/div
