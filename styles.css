@@ -54,6 +54,8 @@ input.atom {
 
 .flense > * {
   clear: left;
+  display: inline-block;
+  float: left;
   margin-bottom: 1rem;
 }
 
