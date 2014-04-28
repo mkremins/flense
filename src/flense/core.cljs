@@ -1,12 +1,14 @@
 (ns flense.core
-  (:require [flense.edit :as e]
+  (:require [cljs.core.async :as async]
+            [flense.edit :as e]
             [flense.history :as hist]
             [flense.parse :as p]
             [flense.ui :as ui]
             [flense.zip :as z]
             [fs]
             [goog.events.KeyCodes :as key]
-            [om.core :as om]))
+            [om.core :as om])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (enable-console-print!)
 
@@ -76,6 +78,12 @@
       (om/transact! ui/*root-cursor* [] exec-bind
                     (when (#{hist/redo hist/undo} exec-bind) ::hist/ignore)))))
 
+;; text commands
+
+(defn- handle-command [command & args]
+  (when (and (= command "load") (first args))
+    (load! (first args))))
+
 ;; application setup and wiring
 
 (defn- handle-tx [{:keys [new-state tag]}]
@@ -85,12 +93,18 @@
     (hist/push-state! new-state)))
 
 (defn init []
-  (hist/push-state! @app-state)
-  (om/root ui/root-view app-state
-           {:target (.getElementById js/document "flense-parent")
-            :tx-listen handle-tx})
-  (om/root ui/command-bar-view nil
-           {:target (.getElementById js/document "command-bar-parent")})
-  (.addEventListener js/window "keydown" handle-key))
+  (let [command-chan (async/chan)]
+    (hist/push-state! @app-state)
+    (om/root ui/root-view app-state
+             {:target (.getElementById js/document "flense-parent")
+              :tx-listen handle-tx})
+    (om/root ui/command-bar-view nil
+             {:target (.getElementById js/document "command-bar-parent")
+              :shared {:command-chan command-chan}})
+    (go-loop []
+      (let [[command & args] (<! command-chan)]
+        (apply handle-command command args))
+      (recur))
+    (.addEventListener js/window "keydown" handle-key)))
 
 (init)

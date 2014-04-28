@@ -1,5 +1,6 @@
 (ns flense.ui
-  (:require [clojure.string :as string]
+  (:require [cljs.core.async :as async]
+            [clojure.string :as string]
             [flense.edit :as e]
             [flense.parse :as p]
             [flense.zip :as z]
@@ -175,16 +176,13 @@
 ;; command bar view
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- exec-command! [command-text]
-  (let [[command & args] (string/split command-text #"\s+")]
-    (when (= command "load")
-      (flense.core/load! (first args)))))
-
-(defn- handle-command-bar-key [ev]
+(defn- handle-command-bar-key [owner ev]
   (condp = (.-keyCode ev)
     key/ENTER
     (let [input (.-target ev)]
-      (exec-command! (.-value input))
+      (async/put!
+       (om/get-shared owner :command-chan)
+       (string/split (.-value input) #"\s+"))
       (set! (.-value input) "")
       (.blur input))
 
@@ -199,4 +197,4 @@
     (render [_]
       (dom/input
         #js {:id "command-bar"
-             :onKeyDown handle-command-bar-key}))))
+             :onKeyDown (partial handle-command-bar-key owner)}))))
