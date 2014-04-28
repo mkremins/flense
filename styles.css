@@ -15,16 +15,14 @@ body {
   margin-top: 40px;
 }
 
-#flense-parent {
-  margin-bottom: 80px;
-}
-
 .coll {
   display: inline-block;
+  float: left;
 }
 
 .coll > * {
-  margin-right: 0.75rem;
+  float: left;
+  margin-right: 0.625rem;
 }
 
 .coll > :last-child {
@@ -39,8 +37,13 @@ body {
   color: white;
 }
 
+.break-after {
+  clear: right;
+}
+
 .break-after + * {
-  margin-left: 1.5rem;
+  clear: left;
+  margin-left: 1.25rem;
 }
 
 input.atom {
@@ -50,8 +53,12 @@ input.atom {
 }
 
 .flense > * {
-  display: block;
+  clear: left;
   margin-bottom: 1rem;
+}
+
+.flense > :last-child {
+  margin-bottom: 80px;
 }
 
 .fn:before  { content: "#("; }
@@ -69,6 +76,9 @@ input.atom {
 .regex:after   { content:  "\""; }
 .string:before { content:  "\""; }
 .string:after  { content:  "\""; }
+
+.coll:before,
+.coll:after { float: left; }
 
 .fn .fn,
 .fn .fn *,

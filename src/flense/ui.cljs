@@ -10,13 +10,12 @@
 
 (def ^:dynamic *root-cursor*)
 
-(defn- class-list [{:keys [right selected? type] :as node}]
-  (->> [(name type)
-        (if (p/coll-node? node) "coll" "atom")
-        (when selected? "selected")
-        (when right "break-after")]
-       (string/join " ")
-       string/trimr))
+(defn- class-list [{:keys [break-after? selected? type] :as node}]
+  (string/join " "
+   [(name type)
+    (if (p/coll-node? node) "coll" "atom")
+    (when break-after? "break-after")
+    (when selected? "selected")]))
 
 (defn- px [n]
   (str n "px"))
@@ -30,9 +29,6 @@
   (raw-render-width " "))
 
 (def ^:private max-width
-  (raw-render-width (string/join (repeat 60 " "))))
-
-(def ^:private wrap-width
   (raw-render-width (string/join (repeat 60 " "))))
 
 (defn- render-width [node]
@@ -76,11 +72,7 @@
         #js {:className (class-list node)
              :onChange  #(om/update! node (p/parse-atom (.. % -target -value)))
              :onKeyDown #(handle-key % node)
-             :style (clj->js
-                     (merge
-                      {:width (px (render-width node))}
-                       (when (:right node)
-                         {:margin-right (px (:right node))})))
+             :style #js {:width (px (render-width node))}
              :value (pr-str (:form node))}))
 
     om/IDidMount
@@ -163,28 +155,20 @@
 (defn- coll-view [node owner]
   (reify om/IRender
     (render [_]
-      (apply dom/div
-        #js {:className (class-list node)
-             :style (clj->js
-                     (if (:right node) {:margin-right (px (:right node))} {}))}
+      (apply dom/div #js {:className (class-list node)}
         (loop [rendered []
                horiz char-width
                children (:children node)]
           (if-let [child (first children)]
-                  (let [width (+ (render-width child) char-width)
-                        sib   (second children)
-                        right (when (and sib
-                                         (> (+ (render-width sib) width horiz)
-                                            wrap-width))
-                                (- max-width (+ horiz width)))
-                        right (if (neg? right) 100 right)]
+                  (let [width   (+ (render-width child) char-width)
+                        sibling (second children)
+                        break?  (when sibling
+                                  (> (+ horiz width (render-width sibling))
+                                     max-width))]
                     (recur
                      (conj rendered
-                      (om/build node-view
-                       (if right
-                           (assoc child :right right)
-                           child)))
-                     (if right (+ horiz width) 0)
+                      (om/build node-view (assoc child :break-after? break?)))
+                     (if break? (+ horiz width) 0)
                      (rest children)))
                   rendered))))))
 
