@@ -109,16 +109,18 @@
   (or (down loc) loc))
 
 (defn left-or-wrap
-  "Returns the location immediately to the left of `loc` (if it exists), or the
-   rightmost sibling of `loc` (if it doesn't)."
+  "Returns the location immediately to the left of `loc` (if it exists), the
+   rightmost sibling of `loc` (if it doesn't), or `loc` itself (if `loc` is at
+   the top of the tree)."
   [loc]
-  (or (left loc) (rightmost loc)))
+  (or (left loc) (rightmost loc) loc))
 
 (defn right-or-wrap
-  "Returns the location immediately to the right of `loc` (if it exists), or
-   the leftmost sibling of `loc` (if it doesn't)."
+  "Returns the location immediately to the right of `loc` (if it exists), the
+   leftmost sibling of `loc` (if it doesn't), or `loc` itself (if `loc` is at
+   the top of the tree)."
   [loc]
-  (or (right loc) (leftmost loc)))
+  (or (right loc) (leftmost loc) loc))
 
 (defn up-or-stay
   "Returns the location immediately above `loc` (if it exists), or `loc` itself
