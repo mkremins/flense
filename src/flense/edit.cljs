@@ -197,4 +197,4 @@
   {:type :string
    :children [(assoc wrapped
                 :type :string-content
-                :text (:form wrapped))]})
+                :text (str (:form wrapped)))]})
