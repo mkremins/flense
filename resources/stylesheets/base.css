@@ -81,6 +81,10 @@ body {
   color: red;
 }
 
+.map > :nth-child(odd):last-child {
+  color: red;
+}
+
 #width-tester {
   left: -1000px;
   position: absolute;
