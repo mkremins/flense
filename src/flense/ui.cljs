@@ -179,7 +179,7 @@
                     (recur
                      (conj rendered
                       (om/build node-view (assoc child :break-after? break?)))
-                     (if break? (+ horiz width) 0)
+                     (if break? (* 2 char-width) (+ horiz width))
                      (rest children)))
                   rendered))))))
 

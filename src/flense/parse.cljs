@@ -51,7 +51,7 @@
                   :vec    ["["    "]"]
                           [""      ""])]
             (str (first delims)
-                 (string/join " " (:children tree))
+                 (string/join " " (map tree->str (:children tree)))
                  (last delims)))))
 
 (defn coll-node? [{:keys [type]}]
