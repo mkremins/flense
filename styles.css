@@ -29,14 +29,6 @@ body {
   margin-right: 0;
 }
 
-.selected,
-.selected *,
-.selected:before,
-.selected:after {
-  background: rgb(23,79,158);
-  color: white;
-}
-
 .break-after {
   clear: right;
 }

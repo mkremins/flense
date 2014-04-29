@@ -1,0 +1,19 @@
+.selected.atom,
+.selected.coll:before,
+.selected.coll:after {
+  background: rgb(170,203,249);
+}
+
+.keyword {
+  color: rgb(198,115,91);
+}
+
+.string,
+.string-content {
+  color: rgb(21,144,155);
+}
+
+.seq > .symbol:first-child {
+  color: rgb(119,39,6);
+  font-weight: bold;
+}
