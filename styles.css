@@ -38,7 +38,7 @@ body {
   margin-left: 1.25rem;
 }
 
-input.atom {
+.atom {
   border: none;
   font-family: inherit;
   font-size: inherit;

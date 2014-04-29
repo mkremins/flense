@@ -17,6 +17,13 @@
     (when break-after? "break-after")
     (when selected? "selected")]))
 
+(def ^:private max-chars 60)
+
+(defn- line-count [text]
+  (reduce (fn [linec line]
+            (+ linec (inc (int (/ (count line) (- max-chars 2))))))
+          0 (string/split text #"\n")))
+
 (defn- px [n]
   (str n "px"))
 
@@ -29,7 +36,7 @@
   (raw-render-width " "))
 
 (def ^:private max-width
-  (raw-render-width (string/join (repeat 60 " "))))
+  (raw-render-width (string/join (repeat max-chars " "))))
 
 (defn- render-width [node]
   (raw-render-width (p/tree->str node)))
@@ -122,12 +129,16 @@
   (reify
     om/IRender
     (render [_]
-      (dom/input
-        #js {:className (class-list node)
-             :onChange  #(om/update! node :text (.. % -target -value))
-             :onKeyDown #(handle-string-key % node)
-             :style #js {:width (px (raw-render-width (:text node)))}
-             :value (:text node)}))
+      (let [text (:text node)]
+        (dom/textarea
+          #js {:className (class-list node)
+               :onChange  #(om/update! node :text (.. % -target -value))
+               :onKeyDown #(handle-string-key % node)
+               :style #js {:height (str (* 1.3 (line-count text)) "rem")
+                           :width  (px (if (<= (count text) (- max-chars 2))
+                                           (raw-render-width text)
+                                           max-width))}
+               :value text})))
 
     om/IDidMount
     (did-mount [_]
