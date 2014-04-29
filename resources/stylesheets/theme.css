@@ -8,7 +8,6 @@
   color: rgb(198,115,91);
 }
 
-.string,
 .string-content {
   color: rgb(21,144,155);
 }
@@ -16,4 +15,9 @@
 .seq > .symbol:first-child {
   color: rgb(119,39,6);
   font-weight: bold;
+}
+
+.coll:before,
+.coll:after {
+  color: #777;
 }
