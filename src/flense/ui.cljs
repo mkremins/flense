@@ -10,36 +10,28 @@
 
 (def ^:dynamic *root-cursor*)
 
-(defn- class-list [{:keys [break-after? selected? type] :as node}]
+(defn- class-list [{:keys [selected? type] :as node}]
   (string/join " "
    [(name type)
     (if (p/coll-node? node) "coll" "atom")
-    (when break-after? "break-after")
+    (when (> (count (p/tree->str node)) 40) "break-before")
     (when selected? "selected")]))
 
 (def ^:private max-chars 60)
 
 (defn- line-count [text]
-  (reduce (fn [linec line]
-            (+ linec (inc (int (/ (count line) (- max-chars 2))))))
-          0 (string/split text #"\n")))
+  (inc (int (/ (count text) (- max-chars 2)))))
 
 (defn- px [n]
   (str n "px"))
 
-(defn- raw-render-width [raw-string]
+(defn- render-width [content]
   (let [tester (.getElementById js/document "width-tester")]
-    (set! (.-textContent tester) raw-string)
+    (set! (.-textContent tester) content)
     (inc (.-clientWidth tester))))
 
-(def ^:private char-width
-  (raw-render-width " "))
-
 (def ^:private max-width
-  (raw-render-width (string/join (repeat max-chars " "))))
-
-(defn- render-width [node]
-  (raw-render-width (p/tree->str node)))
+  (render-width (string/join (repeat max-chars " "))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; atom views
@@ -79,7 +71,7 @@
         #js {:className (class-list node)
              :onChange  #(om/update! node (p/parse-atom (.. % -target -value)))
              :onKeyDown #(handle-key % node)
-             :style #js {:width (px (render-width node))}
+             :style #js {:width (px (render-width (p/tree->str node)))}
              :value (pr-str (:form node))}))
 
     om/IDidMount
@@ -129,15 +121,13 @@
   (reify
     om/IRender
     (render [_]
-      (let [text (:text node)]
+      (let [text (string/replace (:text node) #"\s+" " ")]
         (dom/textarea
           #js {:className (class-list node)
                :onChange  #(om/update! node :text (.. % -target -value))
                :onKeyDown #(handle-string-key % node)
                :style #js {:height (str (* 1.3 (line-count text)) "rem")
-                           :width  (px (if (<= (count text) (- max-chars 2))
-                                           (raw-render-width text)
-                                           max-width))}
+                           :width  (px (min (render-width text) max-width))}
                :value text})))
 
     om/IDidMount
@@ -167,21 +157,7 @@
   (reify om/IRender
     (render [_]
       (apply dom/div #js {:className (class-list node)}
-        (loop [rendered []
-               horiz char-width
-               children (:children node)]
-          (if-let [child (first children)]
-                  (let [width   (+ (render-width child) char-width)
-                        sibling (second children)
-                        break?  (when sibling
-                                  (> (+ horiz width (render-width sibling))
-                                     max-width))]
-                    (recur
-                     (conj rendered
-                      (om/build node-view (assoc child :break-after? break?)))
-                     (if break? (* 2 char-width) (+ horiz width))
-                     (rest children)))
-                  rendered))))))
+        (om/build-all node-view (:children node))))))
 
 (defn- node-view [node owner]
   (reify

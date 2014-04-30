@@ -1,5 +1,7 @@
 @import url(http://fonts.googleapis.com/css?family=Source+Code+Pro);
 
+/* generic styles applying to the entire page */
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -15,27 +17,11 @@ body {
   margin-top: 40px;
 }
 
-.coll {
-  display: inline-block;
-  float: left;
-}
+/* main editor view styles */
 
-.coll > * {
-  float: left;
-  margin-right: 0.625rem;
-}
-
-.coll > :last-child {
-  margin-right: 0;
-}
-
-.break-after {
+.atom, .coll {
   clear: right;
-}
-
-.break-after + * {
-  clear: left;
-  margin-left: 1.25rem;
+  float: left;
 }
 
 .atom {
@@ -44,11 +30,29 @@ body {
   font-size: inherit;
 }
 
-.flense > * {
-  clear: left;
+.coll {
   display: inline-block;
+}
+
+.coll:before,
+.coll:after {
   float: left;
+}
+
+.coll > :not(:last-child) {
+  margin-right: 0.625rem;
+}
+
+.break-before,
+.break-before + * {
+  clear: both;
+  margin-left: 1.25rem;
+}
+
+.flense > * {
+  clear: both;
   margin-bottom: 1rem;
+  margin-left: 0;
 }
 
 .flense > :last-child {
@@ -71,8 +75,7 @@ body {
 .string:before { content:  "\""; }
 .string:after  { content:  "\""; }
 
-.coll:before,
-.coll:after { float: left; }
+/* match invalid structures and display in red */
 
 .fn .fn,
 .fn .fn *,
@@ -84,6 +87,8 @@ body {
 .map > :nth-child(odd):last-child {
   color: red;
 }
+
+/* styles for stuff other than the main editor view */
 
 #width-tester {
   left: -1000px;
