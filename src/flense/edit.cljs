@@ -56,55 +56,67 @@
   (update parent :children conj child))
 
 (defn- barf-child-left* [parent i]
-  (when-let [barfed (get-in parent [:children i :children 0])]
-    (-> parent
-        (insert-child* i barfed)
-        (update-in [:children (inc i)] delete-leftmost*))))
+  (let [barfer (get-in parent [:children i])]
+    (when-not (p/stringish-node? barfer)
+      (when-let [barfed (get-in barfer [:children 0])]
+        (-> parent
+            (insert-child* i barfed)
+            (update-in [:children (inc i)] delete-leftmost*))))))
 
 (defn- barf-child-right* [parent i]
-  (when-let [barfed (peek (get-in parent [:children i :children]))]
-    (-> parent
-        (insert-child* (inc i) barfed)
-        (update-in [:children i] delete-rightmost*))))
+  (let [barfer (get-in parent [:children i])]
+    (when-not (p/stringish-node? barfer)
+      (when-let [barfed (peek (:children barfer))]
+        (-> parent
+            (insert-child* (inc i) barfed)
+            (update-in [:children i] delete-rightmost*))))))
 
 (defn- join-child-left* [parent i]
-  (let [joined (get-in parent [:children (dec i)])]
-    (when (every? z/branch? [(get-in parent [:children i]) joined])
+  (let [joiner (get-in parent [:children i])
+        joined (get-in parent [:children (dec i)])]
+    (when (and (z/branch? joiner) (not (p/stringish-node? joiner))
+               (z/branch? joined) (not (p/stringish-node? joined)))
       (-> parent
           (update-in [:children i :children]
                      #(vec (concat (:children joined) %)))
           (update :children delete (dec i))))))
 
 (defn- join-child-right* [parent i]
-  (let [joined (get-in parent [:children (inc i)])]
-    (when (every? z/branch? [(get-in parent [:children i]) joined])
+  (let [joiner (get-in parent [:children i])
+        joined (get-in parent [:children (inc i)])]
+    (when (and (z/branch? joiner) (not (p/stringish-node? joiner))
+               (z/branch? joined) (not (p/stringish-node? joined)))
       (-> parent
           (update-in [:children i :children]
                      #(vec (concat % (:children joined))))
           (update :children delete (inc i))))))
 
 (defn- raise-child* [parent i]
-  (get-in parent [:children i]))
+  (when-not (p/stringish-node? parent)
+    (get-in parent [:children i])))
 
 (defn- slurp-child-left* [parent i]
-  (let [slurped (get-in parent [:children (dec i)])]
-    (when (and (z/branch? (get-in parent [:children i])) slurped)
+  (let [slurper (get-in parent [:children i])
+        slurped (get-in parent [:children (dec i)])]
+    (when (and (z/branch? slurper) (not (p/stringish-node? slurper)) slurped)
       (-> parent
           (update-in [:children i] insert-leftmost* nil slurped)
           (delete-child* (dec i))))))
 
 (defn- slurp-child-right* [parent i]
-  (let [slurped (get-in parent [:children (inc i)])]
-    (when (and (z/branch? (get-in parent [:children i])) slurped)
+  (let [slurper (get-in parent [:children i])
+        slurped (get-in parent [:children (inc i)])]
+    (when (and (z/branch? slurper) (not (p/stringish-node? slurper)) slurped)
       (-> parent
           (update-in [:children i] insert-rightmost* nil slurped)
           (delete-child* (inc i))))))
 
 (defn- splice-child* [parent i]
-  (when (z/branch? (get-in parent [:children i]))
-    (-> parent
-        (update-in [:children i] :children)
-        (update :children (comp vec flatten)))))
+  (let [spliced (get-in parent [:children i])]
+    (when (and (z/branch? spliced) (not (p/stringish-node? spliced)))
+      (-> parent
+          (update-in [:children i] :children)
+          (update :children (comp vec flatten))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public API wrapping the above

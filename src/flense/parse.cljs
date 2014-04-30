@@ -57,6 +57,9 @@
 (defn coll-node? [{:keys [type]}]
   (#{:fn :map :regex :seq :set :string :vec} type))
 
+(defn stringish-node? [{:keys [type]}]
+  (#{:regex :string} type))
+
 (def placeholder
   (form->tree '...))
 
