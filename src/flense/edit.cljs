@@ -181,6 +181,11 @@
 (defn raise-sexp [loc]
   (z/edit-parent loc raise-child*))
 
+(defn set-sexp-type [type sexp]
+  (if (and (p/coll-node? sexp) (not (p/stringish-node? sexp)))
+      (assoc sexp :type type)
+      sexp))
+
 (defn slurp-left [loc]
   (or (-> loc
           (z/edit-parent slurp-child-left*)

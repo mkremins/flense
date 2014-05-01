@@ -37,6 +37,16 @@
    key/TAB    e/expand-sexp
    key/UP     z/up-or-stay})
 
+(def ctrl-binds
+  {key/OPEN_SQUARE_BRACKET
+   #(z/edit % (partial e/set-sexp-type :vec))})
+
+(def ctrl-shift-binds
+  {key/NINE
+   #(z/edit % (partial e/set-sexp-type :seq))
+   key/OPEN_SQUARE_BRACKET
+   #(z/edit % (partial e/set-sexp-type :map))})
+
 (def meta-binds
   {key/C  e/copy-sexp!
    key/V  e/paste-sexp
@@ -68,8 +78,10 @@
   (when (and (.-ctrlKey ev) (= (.-keyCode ev) key/X))
     (.. js/document (getElementById "command-bar") focus))
   (let [keybinds
-        (cond (and (.-metaKey ev) (.-ctrlKey ev))  meta-ctrl-binds
+        (cond (and (.-ctrlKey ev) (.-shiftKey ev)) ctrl-shift-binds
+              (and (.-metaKey ev) (.-ctrlKey ev))  meta-ctrl-binds
               (and (.-metaKey ev) (.-shiftKey ev)) meta-shift-binds
+              (.-ctrlKey ev)  ctrl-binds
               (.-metaKey ev)  meta-binds
               (.-shiftKey ev) shift-binds
               :else default-binds)]
