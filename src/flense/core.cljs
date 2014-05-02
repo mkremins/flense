@@ -59,9 +59,11 @@
    key/K      e/swap-left
    key/L      e/swap-right
    key/LEFT   e/barf-left
+   key/NINE   e/split-left
    key/RIGHT  e/barf-right
    key/S      e/join-right
-   key/UP     e/splice-sexp})
+   key/UP     e/splice-sexp
+   key/ZERO   e/split-right})
 
 (def meta-shift-binds
   {key/K      e/find-placeholder-left

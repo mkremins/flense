@@ -118,6 +118,26 @@
           (update-in [:children i] :children)
           (update :children (comp vec flatten))))))
 
+(defn- split-child-left* [split-idx parent i]
+  (let [split          (get-in parent [:children i])
+        [lefts rights] (map vec (split-at split-idx (:children split)))
+        left-node      (assoc split :children lefts)
+        right-node     (assoc split :children rights)]
+    (-> parent
+        (update :children insert i right-node)
+        (update :children insert i left-node)
+        (update :children delete (+ i 2)))))
+
+(defn- split-child-right* [split-idx parent i]
+  (let [split          (get-in parent [:children i])
+        [lefts rights] (map vec (split-at (inc split-idx) (:children split)))
+        left-node      (assoc split :children lefts)
+        right-node     (assoc split :children rights)]
+    (-> parent
+        (update :children insert i right-node)
+        (update :children insert i left-node)
+        (update :children delete (+ i 2)))))
+
 (defn- swap-child-left* [parent i]
   (when (get-in parent [:children (dec i)])
     (update parent :children exchange i (dec i))))
@@ -210,6 +230,22 @@
   (or (-> loc
           (z/edit-parent splice-child*)
           (z/child (-> loc :path peek)))
+      loc))
+
+(defn split-left [loc]
+  (or (let [parent-loc (z/up loc)]
+        (-> parent-loc
+            (z/edit-parent (partial split-child-left* (-> loc :path peek)))
+            (z/child (-> parent-loc :path peek inc))
+            z/down))
+      loc))
+
+(defn split-right [loc]
+  (or (let [parent-loc (z/up loc)]
+        (-> parent-loc
+            (z/edit-parent (partial split-child-right* (-> loc :path peek)))
+            (z/child (-> parent-loc :path peek))
+            z/down z/rightmost))
       loc))
 
 (defn swap-left [loc]
