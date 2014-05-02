@@ -1,6 +1,6 @@
 (ns flense.edit
   (:require [flense.parse :as p]
-            [flense.util :refer [delete insert lconj update]]
+            [flense.util :refer [delete exchange insert lconj update]]
             [flense.zip :as z]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -118,6 +118,14 @@
           (update-in [:children i] :children)
           (update :children (comp vec flatten))))))
 
+(defn- swap-child-left* [parent i]
+  (when (get-in parent [:children (dec i)])
+    (update parent :children exchange i (dec i))))
+
+(defn- swap-child-right* [parent i]
+  (when (get-in parent [:children (inc i)])
+    (update parent :children exchange i (inc i))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public API wrapping the above
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -202,6 +210,18 @@
   (or (-> loc
           (z/edit-parent splice-child*)
           (z/child (-> loc :path peek)))
+      loc))
+
+(defn swap-left [loc]
+  (or (-> loc
+          (z/edit-parent swap-child-left*)
+          (z/child (-> loc :path peek dec)))
+      loc))
+
+(defn swap-right [loc]
+  (or (-> loc
+          (z/edit-parent swap-child-right*)
+          (z/child (-> loc :path peek inc)))
       loc))
 
 (defn toggle-dispatch [loc]

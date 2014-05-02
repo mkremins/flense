@@ -56,6 +56,8 @@
 
 (def meta-ctrl-binds
   {key/A      e/join-left
+   key/K      e/swap-left
+   key/L      e/swap-right
    key/LEFT   e/barf-left
    key/RIGHT  e/barf-right
    key/S      e/join-right

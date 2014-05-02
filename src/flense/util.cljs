@@ -7,6 +7,11 @@
       (empty v)
       (vec (concat (subvec v 0 idx) (subvec v (inc idx))))))
 
+(defn exchange
+  "Swaps the values at keys `k1` and `k2` in associative data structure `m`."
+  [m k1 k2]
+  (assoc m k1 (get m k2) k2 (get m k1)))
+
 (defn insert
   "Inserts `item` into vector `v` at `idx`, pushing whatever was already at
    `idx` one slot to the right."
