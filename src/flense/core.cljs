@@ -73,8 +73,8 @@
    key/UP     e/raise-sexp})
 
 (def shift-binds
-  {key/LEFT   z/backward
-   key/RIGHT  z/forward
+  {key/LEFT   z/backward-or-stay
+   key/RIGHT  z/forward-or-stay
    key/SPACE  #(e/insert-left % p/placeholder)
    key/THREE  e/toggle-dispatch})
 

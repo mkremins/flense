@@ -82,10 +82,16 @@
           (loop [next-loc loc]
             (cond (direction next-loc) (direction next-loc)
                   (up next-loc) (recur (up next-loc))
-                  :else next-loc))))
+                  :else nil))))
 
 (def backward (partial walk left rightmost))
 (def forward  (partial walk right leftmost))
+
+(defn- walk-or-stay [direction postwalk loc]
+  (or (walk direction postwalk loc) loc))
+
+(def backward-or-stay (partial walk-or-stay left rightmost))
+(def forward-or-stay  (partial walk-or-stay right leftmost))
 
 (defn find
   "Returns a lazy sequence of locations following `loc` in `direction` (default
