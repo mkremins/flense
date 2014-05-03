@@ -4,6 +4,7 @@
             [flense.history :as hist]
             [flense.parse :as p]
             [flense.ui :as ui]
+            [flense.util :refer [maybe]]
             [flense.zip :as z]
             [fs]
             [goog.events.KeyCodes :as key]
@@ -30,12 +31,12 @@
 
 (def default-binds
   {key/BACKSPACE e/delete-sexp
-   key/DOWN   z/down-or-stay
+   key/DOWN   z/down
    key/LEFT   z/left-or-wrap
    key/RIGHT  z/right-or-wrap
    key/SPACE  #(e/insert-right % p/placeholder)
    key/TAB    e/expand-sexp
-   key/UP     z/up-or-stay})
+   key/UP     z/up})
 
 (def ctrl-binds
   {key/OPEN_SQUARE_BRACKET
@@ -73,8 +74,8 @@
    key/UP     e/raise-sexp})
 
 (def shift-binds
-  {key/LEFT   z/backward-or-stay
-   key/RIGHT  z/forward-or-stay
+  {key/LEFT   z/backward
+   key/RIGHT  z/forward
    key/SPACE  #(e/insert-left % p/placeholder)
    key/THREE  e/toggle-dispatch})
 
@@ -91,7 +92,7 @@
               :else default-binds)]
     (when-let [exec-bind (get keybinds (.-keyCode ev))]
       (.preventDefault ev)
-      (om/transact! ui/*root-cursor* [] exec-bind
+      (om/transact! ui/*root-cursor* [] (partial maybe exec-bind)
                     (when (#{hist/redo hist/undo} exec-bind) ::hist/ignore)))))
 
 ;; text commands

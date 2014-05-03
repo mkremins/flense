@@ -151,16 +151,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn barf-left [loc]
-  (or (-> loc
-          (z/edit-parent barf-child-left*)
-          (z/child (-> loc :path peek inc)))
-      loc))
+  (-> loc
+      (z/edit-parent barf-child-left*)
+      (z/child (-> loc :path peek inc))))
 
 (defn barf-right [loc]
-  (or (-> loc
-          (z/edit-parent barf-child-right*)
-          (z/child (-> loc :path peek)))
-      loc))
+  (-> loc
+      (z/edit-parent barf-child-right*)
+      (z/child (-> loc :path peek))))
 
 (defn delete-sexp [loc]
   (if (p/placeholder-node? (z/node loc))
@@ -175,9 +173,8 @@
 
 (defn- find-placeholder [direction loc]
   (let [p-locs (z/find loc (comp p/placeholder-node? z/node) direction)
-        p-loc  (first p-locs)
-        p-loc  (if (= p-loc loc) (second p-locs) p-loc)]
-    (or p-loc loc)))
+        p-loc  (first p-locs)]
+    (if (= p-loc loc) (second p-locs) p-loc)))
 
 (def find-placeholder-left  (partial find-placeholder z/backward))
 (def find-placeholder-right (partial find-placeholder z/forward))
@@ -195,70 +192,60 @@
           (-> loc (z/edit-parent insert-rightmost* node) z/down z/rightmost)))
 
 (defn join-left [loc]
-  (or (-> loc
-          (z/edit-parent join-child-left*)
-          (z/child (-> loc :path peek dec)))
-      loc))
+  (-> loc
+      (z/edit-parent join-child-left*)
+      (z/child (-> loc :path peek dec))))
 
 (defn join-right [loc]
-  (or (-> loc
-          (z/edit-parent join-child-right*)
-          (z/child (-> loc :path peek)))
-      loc))
+  (-> loc
+      (z/edit-parent join-child-right*)
+      (z/child (-> loc :path peek))))
 
 (defn raise-sexp [loc]
   (z/edit-parent loc raise-child*))
 
 (defn set-sexp-type [type sexp]
-  (if (and (p/coll-node? sexp) (not (p/stringish-node? sexp)))
-      (assoc sexp :type type)
-      sexp))
+  (when (and (p/coll-node? sexp) (not (p/stringish-node? sexp)))
+    (assoc sexp :type type)))
 
 (defn slurp-left [loc]
-  (or (-> loc
-          (z/edit-parent slurp-child-left*)
-          (z/child (max (-> loc :path peek dec) 0)))
-      loc))
+  (-> loc
+      (z/edit-parent slurp-child-left*)
+      (z/child (max (-> loc :path peek dec) 0))))
 
 (defn slurp-right [loc]
-  (or (-> loc
-          (z/edit-parent slurp-child-right*)
-          (z/child (-> loc :path peek)))
-      loc))
+  (-> loc
+      (z/edit-parent slurp-child-right*)
+      (z/child (-> loc :path peek))))
 
 (defn splice-sexp [loc]
-  (or (-> loc
-          (z/edit-parent splice-child*)
-          (z/child (-> loc :path peek)))
-      loc))
+  (-> loc
+      (z/edit-parent splice-child*)
+      (z/child (-> loc :path peek))))
 
 (defn split-left [loc]
-  (or (let [parent-loc (z/up loc)]
-        (-> parent-loc
-            (z/edit-parent (partial split-child-left* (-> loc :path peek)))
-            (z/child (-> parent-loc :path peek inc))
-            z/down))
-      loc))
+  (let [parent-loc (z/up loc)]
+    (-> parent-loc
+        (z/edit-parent (partial split-child-left* (-> loc :path peek)))
+        (z/child (-> parent-loc :path peek inc))
+        z/down)))
 
 (defn split-right [loc]
-  (or (let [parent-loc (z/up loc)]
-        (-> parent-loc
-            (z/edit-parent (partial split-child-right* (-> loc :path peek)))
-            (z/child (-> parent-loc :path peek))
-            z/down z/rightmost))
-      loc))
+  (let [parent-loc (z/up loc)]
+    (-> parent-loc
+        (z/edit-parent (partial split-child-right* (-> loc :path peek)))
+        (z/child (-> parent-loc :path peek))
+        z/down z/rightmost)))
 
 (defn swap-left [loc]
-  (or (-> loc
-          (z/edit-parent swap-child-left*)
-          (z/child (-> loc :path peek dec)))
-      loc))
+  (-> loc
+      (z/edit-parent swap-child-left*)
+      (z/child (-> loc :path peek dec))))
 
 (defn swap-right [loc]
-  (or (-> loc
-          (z/edit-parent swap-child-right*)
-          (z/child (-> loc :path peek inc)))
-      loc))
+  (-> loc
+      (z/edit-parent swap-child-right*)
+      (z/child (-> loc :path peek inc))))
 
 (defn toggle-dispatch [loc]
   (z/edit loc toggle-dispatch*))

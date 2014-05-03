@@ -23,6 +23,11 @@
   [v item]
   (vec (concat [item] v)))
 
+(defn maybe
+  "Returns `(f x)` if its value is non-nil, `x` otherwise."
+  [f x]
+  (or (f x) x))
+
 (defn update
   "Like `update-in`, but takes a single key `k` as its second argument instead
    of a key sequence."

@@ -87,12 +87,6 @@
 (def backward (partial walk left rightmost))
 (def forward  (partial walk right leftmost))
 
-(defn- walk-or-stay [direction postwalk loc]
-  (or (walk direction postwalk loc) loc))
-
-(def backward-or-stay (partial walk-or-stay left rightmost))
-(def forward-or-stay  (partial walk-or-stay right leftmost))
-
 (defn find
   "Returns a lazy sequence of locations following `loc` in `direction` (default
    `forward`) for which `(pred location)` returns truthy."
@@ -108,12 +102,6 @@
 ;; wrapping zipper movement
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn down-or-stay
-  "Returns the location immediately below `loc` (if it exists), or `loc` itself
-   (if it doesn't)."
-  [loc]
-  (or (down loc) loc))
-
 (defn left-or-wrap
   "Returns the location immediately to the left of `loc` (if it exists), the
    rightmost sibling of `loc` (if it doesn't), or `loc` itself (if `loc` is at
@@ -127,12 +115,6 @@
    the top of the tree)."
   [loc]
   (or (right loc) (leftmost loc) loc))
-
-(defn up-or-stay
-  "Returns the location immediately above `loc` (if it exists), or `loc` itself
-   (if it doesn't)."
-  [loc]
-  (or (up loc) loc))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; in-place zipper modification
