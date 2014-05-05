@@ -1,7 +1,8 @@
 (ns flense.edit
   (:require [flense.parse :as p]
-            [flense.util :refer [delete exchange insert lconj update]]
-            [flense.zip :as z]))
+            [flense.util :refer [delete exchange insert update]]
+            [flense.zip :as z]
+            [flense.zip.util :as zu]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; clipboard functionality
@@ -37,39 +38,21 @@
 ;;   ex: `(om/transact! app-state edit-parent slurp-child-right)`
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- delete-child* [parent i]
-  (update parent :children delete i))
-
-(defn- delete-leftmost* [parent]
-  (update parent :children delete 0))
-
-(defn- delete-rightmost* [parent]
-  (update parent :children #(if (empty? %) % (pop %))))
-
-(defn- insert-child* [parent i child]
-  (update parent :children insert i child))
-
-(defn- insert-leftmost* [parent _ child]
-  (update parent :children lconj child))
-
-(defn- insert-rightmost* [parent _ child]
-  (update parent :children conj child))
-
 (defn- barf-child-left* [parent i]
   (let [barfer (get-in parent [:children i])]
     (when-not (p/stringish-node? barfer)
       (when-let [barfed (get-in barfer [:children 0])]
         (-> parent
-            (insert-child* i barfed)
-            (update-in [:children (inc i)] delete-leftmost*))))))
+            (zu/insert-child i barfed)
+            (update-in [:children (inc i)] zu/delete-leftmost))))))
 
 (defn- barf-child-right* [parent i]
   (let [barfer (get-in parent [:children i])]
     (when-not (p/stringish-node? barfer)
       (when-let [barfed (peek (:children barfer))]
         (-> parent
-            (insert-child* (inc i) barfed)
-            (update-in [:children i] delete-rightmost*))))))
+            (zu/insert-child (inc i) barfed)
+            (update-in [:children i] zu/delete-rightmost))))))
 
 (defn- join-child-left* [parent i]
   (let [joiner (get-in parent [:children i])
@@ -100,16 +83,16 @@
         slurped (get-in parent [:children (dec i)])]
     (when (and (z/branch? slurper) (not (p/stringish-node? slurper)) slurped)
       (-> parent
-          (update-in [:children i] insert-leftmost* nil slurped)
-          (delete-child* (dec i))))))
+          (update-in [:children i] zu/insert-leftmost nil slurped)
+          (zu/delete-child (dec i))))))
 
 (defn- slurp-child-right* [parent i]
   (let [slurper (get-in parent [:children i])
         slurped (get-in parent [:children (inc i)])]
     (when (and (z/branch? slurper) (not (p/stringish-node? slurper)) slurped)
       (-> parent
-          (update-in [:children i] insert-rightmost* nil slurped)
-          (delete-child* (inc i))))))
+          (update-in [:children i] zu/insert-rightmost nil slurped)
+          (zu/delete-child (inc i))))))
 
 (defn- splice-child* [parent i]
   (let [spliced (get-in parent [:children i])]
