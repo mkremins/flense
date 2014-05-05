@@ -32,6 +32,7 @@
 (def default-binds
   {key/BACKSPACE e/delete-sexp
    key/DOWN   z/down
+   key/ENTER  (comp #(e/insert-right % p/placeholder) z/up)
    key/LEFT   z/left-or-wrap
    key/RIGHT  z/right-or-wrap
    key/SPACE  #(e/insert-right % p/placeholder)
