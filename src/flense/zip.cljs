@@ -1,6 +1,6 @@
 (ns flense.zip
-  (:refer-clojure :exclude [find replace])
-  (:require [flense.util :refer [insert lconj update]]))
+  (:refer-clojure :exclude [find remove replace])
+  (:require [flense.util :refer [delete insert lconj update]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; path movement
@@ -153,3 +153,12 @@
               (edit-parent insert-child* node)
               (child (-> loc :path peek inc)))
           (-> loc (edit-parent insert-rightmost* node) down rightmost)))
+
+(defn- remove-child* [parent i]
+  (update parent :children delete i))
+
+(defn remove [loc]
+  (let [new-loc (edit-parent loc remove-child*)]
+    (if (empty? (:children (node new-loc)))
+        new-loc
+        (child new-loc (max (-> loc :path peek dec) 0)))))
