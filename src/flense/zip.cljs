@@ -150,7 +150,7 @@
           (-> loc (edit-parent zu/insert-rightmost node) down rightmost)))
 
 (defn remove [loc]
-  (let [new-loc (edit-parent loc zu/remove-child)]
+  (let [new-loc (edit-parent loc zu/delete-child)]
     (if (empty? (:children (node new-loc)))
         new-loc
         (child new-loc (max (-> loc :path peek dec) 0)))))
