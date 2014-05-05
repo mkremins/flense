@@ -32,10 +32,10 @@
 (def default-binds
   {key/BACKSPACE e/delete-sexp
    key/DOWN   z/down
-   key/ENTER  (comp #(e/insert-right % p/placeholder) z/up)
+   key/ENTER  (comp #(z/insert-right % p/placeholder) z/up)
    key/LEFT   z/left-or-wrap
    key/RIGHT  z/right-or-wrap
-   key/SPACE  #(e/insert-right % p/placeholder)
+   key/SPACE  #(z/insert-right % p/placeholder)
    key/TAB    e/expand-sexp
    key/UP     z/up})
 
@@ -77,7 +77,7 @@
 (def shift-binds
   {key/LEFT   z/backward
    key/RIGHT  z/forward
-   key/SPACE  #(e/insert-left % p/placeholder)
+   key/SPACE  #(z/insert-left % p/placeholder)
    key/THREE  e/toggle-dispatch})
 
 (defn handle-key [ev]

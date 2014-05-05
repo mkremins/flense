@@ -179,18 +179,6 @@
 (def find-placeholder-left  (partial find-placeholder z/backward))
 (def find-placeholder-right (partial find-placeholder z/forward))
 
-(defn insert-left [loc node]
-  (-> loc
-      (z/edit-parent insert-child* node)
-      (z/child (-> loc :path peek))))
-
-(defn insert-right [loc node]
-  (if-let [right-loc (z/right loc)]
-          (-> right-loc
-              (z/edit-parent insert-child* node)
-              (z/child (-> loc :path peek inc)))
-          (-> loc (z/edit-parent insert-rightmost* node) z/down z/rightmost)))
-
 (defn join-left [loc]
   (-> loc
       (z/edit-parent join-child-left*)
