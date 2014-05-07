@@ -1,5 +1,5 @@
 (ns flense.core
-  (:require [cljs.core.async :as async]
+  (:require [cljs.core.async :as async :refer [<! put!]]
             [flense.edit :as e]
             [flense.history :as hist]
             [flense.parse :as p]
@@ -80,7 +80,7 @@
    key/SPACE  #(z/insert-left % p/placeholder)
    key/THREE  e/toggle-dispatch})
 
-(defn handle-key [ev]
+(defn handle-key [tx-chan ev]
   (when (and (.-ctrlKey ev) (= (.-keyCode ev) key/X))
     (.. js/document (getElementById "command-bar") focus))
   (let [keybinds
@@ -93,8 +93,9 @@
               :else default-binds)]
     (when-let [exec-bind (get keybinds (.-keyCode ev))]
       (.preventDefault ev)
-      (om/transact! ui/*root-cursor* [] (partial maybe exec-bind)
-                    (when (#{hist/redo hist/undo} exec-bind) ::hist/ignore)))))
+      (put! tx-chan {:fn  (partial maybe exec-bind)
+                     :tag (when (#{hist/redo hist/undo} exec-bind)
+                            ::hist/ignore)}))))
 
 ;; text commands
 
@@ -104,18 +105,20 @@
 
 ;; application setup and wiring
 
-(defn- handle-tx [{:keys [new-state tag]}]
+(defn- handle-tx [tx-chan {:keys [new-state tag]}]
   (when (= tag :wrap-coll)
-    (om/transact! ui/*root-cursor* [] z/down ::hist/ignore))
+    (put! tx-chan [] {:fn z/down :tag ::hist/ignore}))
   (when-not (= tag ::hist/ignore)
     (hist/push-state! new-state)))
 
 (defn init []
-  (let [command-chan (async/chan)]
+  (let [command-chan (async/chan)
+             tx-chan (async/chan)]
     (hist/push-state! @app-state)
     (om/root ui/root-view app-state
              {:target (.getElementById js/document "flense-parent")
-              :tx-listen handle-tx})
+              :shared {:tx-chan tx-chan}
+              :tx-listen (partial handle-tx tx-chan)})
     (om/root ui/command-bar-view nil
              {:target (.getElementById js/document "command-bar-parent")
               :shared {:command-chan command-chan}})
@@ -123,6 +126,6 @@
       (let [[command & args] (<! command-chan)]
         (apply handle-command command args))
       (recur))
-    (.addEventListener js/window "keydown" handle-key)))
+    (.addEventListener js/window "keydown" (partial handle-key tx-chan))))
 
 (init)

@@ -6,9 +6,8 @@
             [flense.zip :as z]
             [goog.events.KeyCodes :as key]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]))
-
-(def ^:dynamic *root-cursor*)
+            [om.dom :as dom :include-macros true])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (defn- class-list [{:keys [selected? type] :as node}]
   (string/join " "
@@ -172,9 +171,15 @@
 
 (defn root-view [app-state owner]
   (reify
+    om/IWillMount
+    (will-mount [_]
+      (let [tx-chan (om/get-shared owner :tx-chan)]
+        (go-loop []
+          (let [tx (<! tx-chan)]
+            (om/transact! app-state (or (:path tx) []) (:fn tx) (:tag tx)))
+          (recur))))
     om/IRender
     (render [_]
-      (set! *root-cursor* app-state)
       (let [{:keys [tree]} (z/edit app-state assoc :selected? true)]
         (apply dom/div #js {:className "flense"}
           (om/build-all node-view (:children tree)))))))
