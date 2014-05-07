@@ -107,7 +107,7 @@
 
 (defn- handle-tx [tx-chan {:keys [new-state tag]}]
   (when (= tag :wrap-coll)
-    (put! tx-chan [] {:fn z/down :tag ::hist/ignore}))
+    (put! tx-chan {:fn z/down :tag ::hist/ignore}))
   (when-not (= tag ::hist/ignore)
     (hist/push-state! new-state)))
 
