@@ -23,13 +23,8 @@
     :tree {:children
            [(p/form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
 
-(defn load! [fpath]
-  (reset! app-state
-   {:path [0]
-    :tree {:children
-           (->> (fs/slurp fpath)
-                p/string->forms
-                (mapv p/form->tree))}}))
+(defn open! [fpath]
+  (reset! app-state (p/load-source fpath)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keybinds
@@ -101,8 +96,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-command [command & args]
-  (when (and (= command "load") (first args))
-    (load! (first args))))
+  (when (and (= command "open") (first args))
+    (open! (first args))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; application setup and wiring

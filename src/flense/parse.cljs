@@ -3,16 +3,6 @@
             [clojure.string :as string]
             [fs]))
 
-(defn string->forms [string]
-  (let [reader (rdr/push-back-reader string)]
-    (loop [forms []]
-      (if-let [form (rdr/read reader false nil false)]
-              (recur (conj forms form))
-              forms))))
-
-(defn load-config [fpath]
-  (rdr/read-string (fs/slurp fpath)))
-
 (defn- regex? [x]
   (instance? js/RegExp x))
 
@@ -40,6 +30,20 @@
                        (if (map? form)
                            (interpose (keys form) (vals form))
                            form))})))
+
+(defn- string->forms [string]
+  (let [reader (rdr/push-back-reader string)]
+    (loop [forms []]
+      (if-let [form (rdr/read reader false nil false)]
+              (recur (conj forms form))
+              forms))))
+
+(defn load-config [fpath]
+  (rdr/read-string (fs/slurp fpath)))
+
+(defn load-source [fpath]
+  {:path [0]
+   :tree {:children (->> (fs/slurp fpath) string->forms (mapv form->tree))}})
 
 (defn tree->str [tree]
   (if-let [form (:form tree)]
