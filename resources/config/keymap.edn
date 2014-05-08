@@ -1,5 +1,5 @@
 {; naked --------------------------------------------------------------------
- #{:BACKSPACE}           :edit/delete
+ #{:BKSPACE}             :edit/delete
  #{:DOWN}                :nav/down
  #{:ENTER}               :edit/insert-outside
  #{:LEFT}                :nav/left
