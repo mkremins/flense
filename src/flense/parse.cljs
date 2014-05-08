@@ -1,6 +1,7 @@
 (ns flense.parse
   (:require [cljs.reader :as rdr]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [fs]))
 
 (defn string->forms [string]
   (let [reader (rdr/push-back-reader string)]
@@ -8,6 +9,9 @@
       (if-let [form (rdr/read reader false nil false)]
               (recur (conj forms form))
               forms))))
+
+(defn load-config [fpath]
+  (rdr/read-string (fs/slurp fpath)))
 
 (defn- regex? [x]
   (instance? js/RegExp x))

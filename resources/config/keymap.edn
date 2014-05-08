@@ -1,0 +1,45 @@
+{; naked --------------------------------------------------------------------
+ #{:BACKSPACE}           :edit/delete
+ #{:DOWN}                :nav/down
+ #{:ENTER}               :edit/insert-outside
+ #{:LEFT}                :nav/left
+ #{:RIGHT}               :nav/right
+ #{:SPACE}               :edit/insert-right
+ #{:TAB}                 :clj/expand-template
+ #{:UP}                  :nav/up
+
+ ; CTRL, CTRL+SHIFT ---------------------------------------------------------
+ #{:CTRL :LBRAK}         :par/make-square
+ #{:CTRL :SHIFT :NINE}   :par/make-round
+ #{:CTRL :SHIFT :LBRAK}  :par/make-curly
+
+ ; CMD ----------------------------------------------------------------------
+ #{:CMD :C}              :clip/copy
+ #{:CMD :V}              :clip/paste
+ #{:CMD :X}              :clip/cut
+ #{:CMD :Y}              :hist/redo
+ #{:CMD :Z}              :hist/undo
+
+ ; CMD+CTRL -----------------------------------------------------------------
+ #{:CMD :CTRL :A}        :par/join-left
+ #{:CMD :CTRL :K}        :par/swap-left
+ #{:CMD :CTRL :L}        :par/swap-right
+ #{:CMD :CTRL :LEFT}     :par/barf-left
+ #{:CMD :CTRL :NINE}     :par/split-left
+ #{:CMD :CTRL :RIGHT}    :par/barf-right
+ #{:CMD :CTRL :S}        :par/join-right
+ #{:CMD :CTRL :UP}       :par/splice
+ #{:CMD :CTRL :ZERO}     :par/split-right
+
+ ; CMD+SHIFT ----------------------------------------------------------------
+ #{:CMD :SHIFT :K}       :find/prev-placeholder
+ #{:CMD :SHIFT :L}       :find/next-placeholder
+ #{:CMD :SHIFT :LEFT}    :par/slurp-left
+ #{:CMD :SHIFT :RIGHT}   :par/slurp-right
+ #{:CMD :SHIFT :UP}      :par/raise
+
+ ; SHIFT --------------------------------------------------------------------
+ #{:SHIFT :LEFT}         :nav/backward
+ #{:SHIFT :RIGHT}        :nav/forward
+ #{:SHIFT :SPACE}        :edit/insert-left
+ #{:SHIFT :THREE}        :clj/toggle-dispatch}
