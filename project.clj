@@ -15,5 +15,6 @@
   {:builds
    [{:source-paths ["src"]
      :compiler {:output-to "target/flense.js"
+                :source-map "target/flense.js.map"
                 :optimizations :whitespace
                 :pretty-print true}}]})
