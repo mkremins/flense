@@ -13,7 +13,6 @@
   (string/join " "
    [(name type)
     (if (p/coll-node? node) "coll" "atom")
-    (when (> (count (p/tree->str node)) 40) "break-before")
     (when selected? "selected")]))
 
 (def ^:private max-chars 60)
@@ -28,6 +27,9 @@
   (let [tester (.getElementById js/document "width-tester")]
     (set! (.-textContent tester) content)
     (inc (.-clientWidth tester))))
+
+(def ^:private char-width
+  (render-width "_"))
 
 (def ^:private max-width
   (render-width (string/join (repeat max-chars " "))))
@@ -135,6 +137,26 @@
 
 (declare node-view)
 
+(defn- head-size [items]
+  (let [itemc (count items)]
+    (loop [offset char-width
+           idxs (range itemc)]
+      (if-let [idx (first idxs)]
+        (let [item-width (render-width (p/tree->str (nth items idx)))
+              offset' (+ offset char-width item-width)]
+          (if (> offset' max-width) idx (recur offset' (rest idxs))))
+        itemc))))
+
+(defn- seq-view [data owner]
+  (reify om/IRender
+    (render [_]
+      (let [children (:children data)
+            headc (head-size children)]
+        (apply dom/div #js {:className (class-list data)}
+          (concat (om/build-all node-view (take headc children))
+                  [(apply dom/div #js {:className "runoff-children"}
+                    (om/build-all node-view (drop headc children)))]))))))
+
 (defn- coll-view [node owner]
   (reify om/IRender
     (render [_]
@@ -147,6 +169,7 @@
     (render [this]
       (om/build
         (cond
+          (= (:type node) :seq) seq-view
           (p/coll-node? node) coll-view
           (= (:type node) :string-content) string-content-view
           :else atom-view)

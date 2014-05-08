@@ -19,11 +19,6 @@ body {
 
 /* main editor view styles */
 
-.atom, .coll {
-  clear: right;
-  float: left;
-}
-
 .atom {
   border: none;
   font-family: inherit;
@@ -31,32 +26,35 @@ body {
 }
 
 .coll {
-  display: inline-block;
+  display: flex;
+  flex-flow: row wrap;
 }
 
-.coll:before,
-.coll:after {
-  float: left;
-}
-
-.coll > :not(:last-child) {
+.coll:not(.seq) > :not(:last-child),
+.seq > :not(:last-child):not(:nth-last-child(2)),
+.runoff-children > :not(:last-child) {
   margin-right: 0.625rem;
 }
 
-.break-before,
-.break-before + * {
-  clear: both;
+.runoff-children {
   margin-left: 1.25rem;
+  margin-top: -1.3rem;
+}
+.runoff-children:before {
+  content: " ";
+  margin-right: 1000px;
+}
+.runoff-children:empty {
+  display: none;
+}
+
+.flense {
+  margin-bottom: 80px;
 }
 
 .flense > * {
-  clear: both;
   margin-bottom: 1rem;
   margin-left: 0;
-}
-
-.flense > :last-child {
-  margin-bottom: 80px;
 }
 
 .fn:before  { content: "#("; }
