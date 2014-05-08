@@ -27,11 +27,11 @@ Since only this layer is tied to Clojure semantics in particular, long-term futu
 
 * Most of the structural editing commands implemented by Paredit
 * Robust structural editing API providing support for custom editing commands
+* User-configurable keybinds
 
 ### Planned
 
 * Declarative structural find-and-replace
-* User-configurable keybinds
 * Various Clojure-specific semantic editing commands
 * Inline code analysis, linting and refactoring suggestions
 * Inline code evaluation at arbitrary levels of granularity
