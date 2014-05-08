@@ -2,9 +2,9 @@
   (:require [cljs.core.async :as async]
             [clojure.string :as string]
             [flense.edit :as e]
+            [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
             [flense.zip :as z]
-            [goog.events.KeyCodes :as key]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
@@ -37,30 +37,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-key [ev data]
-  (condp = (.-keyCode ev)
-    key/BACKSPACE
-    (let [input (.-target ev)]
-      (when (or (not= (.-selectionStart input) 0)
-                (not= (.-selectionEnd input) (count (.-value input))))
-        (.stopPropagation ev)))
-
-    key/NINE
-    (when (.-shiftKey ev)
-      (.preventDefault ev)
-      (om/transact! data [] (partial e/wrap-sexp :seq) :wrap-coll))
-
-    key/OPEN_SQUARE_BRACKET
-    (do (.preventDefault ev)
-        (om/transact! data []
-                      (partial e/wrap-sexp (if (.-shiftKey ev) :map :vec))
-                      :wrap-coll))
-
-    key/SINGLE_QUOTE
-    (when (.-shiftKey ev)
-      (.preventDefault ev)
-      (om/transact! data [] e/wrap-string :wrap-coll))
-    
-    nil)) ; deliberate no-op
+  (let [ks (key-data ev)]
+    (if (= ks #{:BKSPACE})
+        (let [input (.-target ev)]
+          (when (or (not= (.-selectionStart input) 0)
+                    (not= (.-selectionEnd input) (count (.-value input))))
+            (.stopPropagation ev)))
+        (when-let [wrap ({#{:LBRAK}        (partial e/wrap-sexp :vec)
+                          #{:SHIFT :LBRAK} (partial e/wrap-sexp :map)
+                          #{:SHIFT :NINE}  (partial e/wrap-sexp :seq)
+                          #{:SHIFT :QUOTE} e/wrap-string} ks)]
+          (.preventDefault ev)
+          (om/transact! data [] wrap :wrap-coll)))))
 
 (defn- atom-view [node owner]
   (reify
@@ -95,25 +83,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-string-key [ev data]
-  (condp = (.-keyCode ev)
-    key/BACKSLASH
+  (condp = (key-data ev)
+    #{:BKSLASH}
     (do (.preventDefault ev)
         (om/transact! data :text #(str % "\\")))
-
-    key/BACKSPACE
+    #{:BKSPACE}
     (let [input (.-target ev)]
       (when (or (not= (.-selectionStart input) 0)
                 (not= (.-selectionEnd input) (count (.-value input))))
         (.stopPropagation ev)))
-
-    key/SPACE ; allow default behavior (insert space) instead of keybound
+    #{:SPACE} ; allow default behavior (insert space) instead of keybound
     (.stopPropagation ev)
-
-    key/SINGLE_QUOTE
-    (when (.-shiftKey ev)
-      (.preventDefault ev)
-      (om/transact! data :text #(str % "\"")))
-
+    #{:SHIFT :QUOTE}
+    (do (.preventDefault ev)
+        (om/transact! data :text #(str % "\"")))
     nil)) ; deliberate no-op
 
 (defn- string-content-view [node owner]
@@ -189,19 +172,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-command-bar-key [owner ev]
-  (condp = (.-keyCode ev)
-    key/ENTER
-    (let [input (.-target ev)]
-      (async/put!
-       (om/get-shared owner :command-chan)
-       (string/split (.-value input) #"\s+"))
-      (set! (.-value input) "")
-      (.blur input))
-
-    key/ESC
-    (.. ev -target blur)
-
-    nil)
+  (condp = (key-data ev)
+    #{:ENTER} (let [input (.-target ev)]
+                (async/put!
+                 (om/get-shared owner :command-chan)
+                 (string/split (.-value input) #"\s+"))
+                (set! (.-value input) "")
+                (.blur input))
+    #{:ESC} (.. ev -target blur) nil)
   (.stopPropagation ev)) ; allow default behavior instead of keybound
 
 (defn command-bar-view [app-state owner]
