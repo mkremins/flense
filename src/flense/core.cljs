@@ -7,7 +7,6 @@
             [flense.ui :as ui]
             [flense.util :refer [maybe]]
             [flense.zip :as z]
-            [fs]
             [om.core :as om])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
