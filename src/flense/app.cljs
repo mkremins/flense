@@ -1,4 +1,4 @@
-(ns flense.core
+(ns flense.app
   (:require [cljs.core.async :as async :refer [<!]]
             [flense.commands :refer [commands]]
             [flense.history :as hist]
