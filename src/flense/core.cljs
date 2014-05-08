@@ -35,58 +35,107 @@
 ;; keybinds
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def commands
+  {; navigation ---------------------------------------------------------------
+   :nav/backward           z/backward
+   :nav/down               z/down
+   :nav/forward            z/forward
+   :nav/left               z/left-or-wrap
+   :nav/right              z/right-or-wrap
+   :nav/up                 z/up
+
+   ; insertion & deletion -----------------------------------------------------
+   :edit/delete            e/delete-sexp
+   :edit/insert-left       #(z/insert-left  % p/placeholder)
+   :edit/insert-outside    (comp #(z/insert-right % p/placeholder) z/up)
+   :edit/insert-right      #(z/insert-right % p/placeholder)
+
+   ; paredit ------------------------------------------------------------------
+   :par/barf-left          e/barf-left
+   :par/barf-right         e/barf-right
+   :par/join-left          e/join-left
+   :par/join-right         e/join-right
+   :par/make-curly         #(z/edit % (partial e/set-sexp-type :map))
+   :par/make-round         #(z/edit % (partial e/set-sexp-type :seq))
+   :par/make-square        #(z/edit % (partial e/set-sexp-type :vec))
+   :par/raise              e/raise-sexp
+   :par/slurp-left         e/slurp-left
+   :par/slurp-right        e/slurp-right
+   :par/splice             e/splice-sexp
+   :par/split-left         e/split-left
+   :par/split-right        e/split-right
+   :par/swap-left          e/swap-left
+   :par/swap-right         e/swap-right
+
+   ; semantic editing ---------------------------------------------------------
+   :clj/expand-template    e/expand-sexp
+   :clj/toggle-dispatch    e/toggle-dispatch
+
+   ; search & replace ---------------------------------------------------------
+   :find/next-placeholder  e/find-placeholder-right
+   :find/prev-placeholder  e/find-placeholder-left
+
+   ; clipboard ----------------------------------------------------------------
+   :clip/copy              e/copy-sexp!
+   :clip/cut               (comp e/delete-sexp e/copy-sexp!)
+   :clip/paste             e/paste-sexp
+
+   ; history ------------------------------------------------------------------
+   :hist/redo              hist/redo
+   :hist/undo              hist/undo})
+
 (def keybinds
   {; naked --------------------------------------------------------------------
-   #{:BACKSPACE}          e/delete-sexp
-   #{:DOWN}               z/down
-   #{:ENTER}              (comp #(z/insert-right % p/placeholder) z/up)
-   #{:LEFT}               z/left-or-wrap
-   #{:RIGHT}              z/right-or-wrap
-   #{:SPACE}              #(z/insert-right % p/placeholder)
-   #{:TAB}                e/expand-sexp
-   #{:UP}                 z/up
+   #{:BACKSPACE}           :edit/delete
+   #{:DOWN}                :nav/down
+   #{:ENTER}               :edit/insert-outside
+   #{:LEFT}                :nav/left
+   #{:RIGHT}               :nav/right
+   #{:SPACE}               :edit/insert-right
+   #{:TAB}                 :clj/expand-template
+   #{:UP}                  :nav/up
 
    ; CTRL, CTRL+SHIFT ---------------------------------------------------------
-   #{:CTRL :LBRAK}        #(z/edit % (partial e/set-sexp-type :vec))
-   #{:CTRL :SHIFT :NINE}  #(z/edit % (partial e/set-sexp-type :seq))
-   #{:CTRL :SHIFT :LBRAK} #(z/edit % (partial e/set-sexp-type :map))
+   #{:CTRL :LBRAK}         :par/make-square
+   #{:CTRL :SHIFT :NINE}   :par/make-round
+   #{:CTRL :SHIFT :LBRAK}  :par/make-curly
 
    ; CMD ----------------------------------------------------------------------
-   #{:CMD :C}             e/copy-sexp!
-   #{:CMD :V}             e/paste-sexp
-   #{:CMD :X}             (comp e/delete-sexp e/copy-sexp!)
-   #{:CMD :Y}             hist/redo
-   #{:CMD :Z}             hist/undo
+   #{:CMD :C}              :clip/copy
+   #{:CMD :V}              :clip/paste
+   #{:CMD :X}              :clip/cut
+   #{:CMD :Y}              :hist/redo
+   #{:CMD :Z}              :hist/undo
 
    ; CMD+CTRL -----------------------------------------------------------------
-   #{:CMD :CTRL :A}       e/join-left
-   #{:CMD :CTRL :K}       e/swap-left
-   #{:CMD :CTRL :L}       e/swap-right
-   #{:CMD :CTRL :LEFT}    e/barf-left
-   #{:CMD :CTRL :NINE}    e/split-left
-   #{:CMD :CTRL :RIGHT}   e/barf-right
-   #{:CMD :CTRL :S}       e/join-right
-   #{:CMD :CTRL :UP}      e/splice-sexp
-   #{:CMD :CTRL :ZERO}    e/split-right
+   #{:CMD :CTRL :A}        :par/join-left
+   #{:CMD :CTRL :K}        :par/swap-left
+   #{:CMD :CTRL :L}        :par/swap-right
+   #{:CMD :CTRL :LEFT}     :par/barf-left
+   #{:CMD :CTRL :NINE}     :par/split-left
+   #{:CMD :CTRL :RIGHT}    :par/barf-right
+   #{:CMD :CTRL :S}        :par/join-right
+   #{:CMD :CTRL :UP}       :par/splice
+   #{:CMD :CTRL :ZERO}     :par/split-right
 
    ; CMD+SHIFT ----------------------------------------------------------------
-   #{:CMD :SHIFT :K}      e/find-placeholder-left
-   #{:CMD :SHIFT :L}      e/find-placeholder-right
-   #{:CMD :SHIFT :LEFT}   e/slurp-left
-   #{:CMD :SHIFT :RIGHT}  e/slurp-right
-   #{:CMD :SHIFT :UP}     e/raise-sexp
+   #{:CMD :SHIFT :K}       :find/prev-placeholder
+   #{:CMD :SHIFT :L}       :find/next-placeholder
+   #{:CMD :SHIFT :LEFT}    :par/slurp-left
+   #{:CMD :SHIFT :RIGHT}   :par/slurp-right
+   #{:CMD :SHIFT :UP}      :par/raise
 
    ; SHIFT --------------------------------------------------------------------
-   #{:SHIFT :LEFT}        z/forward
-   #{:SHIFT :RIGHT}       z/backward
-   #{:SHIFT :SPACE}       #(z/insert-left % p/placeholder)
-   #{:SHIFT :THREE}       e/toggle-dispatch})
+   #{:SHIFT :LEFT}         :nav/backward
+   #{:SHIFT :RIGHT}        :nav/forward
+   #{:SHIFT :SPACE}        :edit/insert-left
+   #{:SHIFT :THREE}        :clj/toggle-dispatch})
 
 (defn- handle-key [tx-chan ev]
   (let [ks (key-data ev)]
     (when (= ks #{:CTRL :X})
       (.. js/document (getElementById "command-bar") focus))
-    (when-let [exec-bind (get keybinds ks)]
+    (when-let [exec-bind (-> ks keybinds commands)]
       (.preventDefault ev)
       (put! tx-chan
        {:fn  (partial maybe exec-bind)
