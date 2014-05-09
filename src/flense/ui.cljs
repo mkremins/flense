@@ -80,6 +80,8 @@
 (defn- handle-string-key [ev]
   (when (#{#{:BKSPACE}
            #{:LBRAK}
+           #{:LEFT}
+           #{:RIGHT}
            #{:SPACE}
            #{:SHIFT :LBRAK}
            #{:SHIFT :NINE}
