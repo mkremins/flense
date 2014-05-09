@@ -24,6 +24,10 @@
 ;;   ex: `(om/transact! app-state edit wrap-round)`
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn- make-sexp-type* [sexp type]
+  (when (and (p/coll-node? sexp) (not (p/stringish-node? sexp)))
+    (assoc sexp :type type)))
+
 (defn- toggle-dispatch* [node]
   (update node :type
    #(or ({:map    :set
@@ -32,6 +36,24 @@
           :fn     :seq
           :string :regex
           :regex  :string} %) %)))
+
+(defn- wrap-sexp-type* [sexp type]
+  {:type type :children [sexp]})
+
+(defn wrap-curly [sexp]
+  (wrap-sexp-type* sexp :map))
+
+(defn wrap-round [sexp]
+  (wrap-sexp-type* sexp :seq))
+
+(defn wrap-square [sexp]
+  (wrap-sexp-type* sexp :vec))
+
+(defn wrap-string [sexp]
+  {:type :string
+   :children [(assoc sexp
+                :type :string-content
+                :text (str (:form sexp)))]})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; use these with `edit-parent`
@@ -169,12 +191,17 @@
       (z/edit-parent join-child-right*)
       (z/child (-> loc :path peek))))
 
+(defn make-curly [loc]
+  (z/edit loc make-sexp-type* :map))
+
+(defn make-round [loc]
+  (z/edit loc make-sexp-type* :seq))
+
+(defn make-square [loc]
+  (z/edit loc make-sexp-type* :vec))
+
 (defn raise-sexp [loc]
   (z/edit-parent loc raise-child*))
-
-(defn set-sexp-type [type sexp]
-  (when (and (p/coll-node? sexp) (not (p/stringish-node? sexp)))
-    (assoc sexp :type type)))
 
 (defn slurp-left [loc]
   (-> loc
@@ -217,12 +244,3 @@
 
 (defn toggle-dispatch [loc]
   (z/edit loc toggle-dispatch*))
-
-(defn wrap-sexp [type wrapped]
-  {:type type :children [wrapped]})
-
-(defn wrap-string [wrapped]
-  {:type :string
-   :children [(assoc wrapped
-                :type :string-content
-                :text (str (:form wrapped)))]})

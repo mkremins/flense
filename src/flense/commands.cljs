@@ -24,9 +24,9 @@
    :par/barf-right         e/barf-right
    :par/join-left          e/join-left
    :par/join-right         e/join-right
-   :par/make-curly         #(z/edit % (partial e/set-sexp-type :map))
-   :par/make-round         #(z/edit % (partial e/set-sexp-type :seq))
-   :par/make-square        #(z/edit % (partial e/set-sexp-type :vec))
+   :par/make-curly         e/make-curly
+   :par/make-round         e/make-round
+   :par/make-square        e/make-square
    :par/raise              e/raise-sexp
    :par/slurp-left         e/slurp-left
    :par/slurp-right        e/slurp-right

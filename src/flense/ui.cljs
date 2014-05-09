@@ -45,9 +45,9 @@
           (when (or (not= (.-selectionStart input) 0)
                     (not= (.-selectionEnd input) (count (.-value input))))
             (.stopPropagation ev)))
-        (when-let [wrap ({#{:LBRAK}        (partial e/wrap-sexp :vec)
-                          #{:SHIFT :LBRAK} (partial e/wrap-sexp :map)
-                          #{:SHIFT :NINE}  (partial e/wrap-sexp :seq)
+        (when-let [wrap ({#{:LBRAK}        e/wrap-square
+                          #{:SHIFT :LBRAK} e/wrap-curly
+                          #{:SHIFT :NINE}  e/wrap-round
                           #{:SHIFT :QUOTE} e/wrap-string} ks)]
           (.preventDefault ev)
           (om/transact! data [] wrap :wrap-coll)))))
