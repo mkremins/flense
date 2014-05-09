@@ -9,10 +9,10 @@
             [om.dom :as dom :include-macros true])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
-(defn- class-list [{:keys [selected? type] :as node}]
+(defn- class-list [{:keys [selected? type] :as data}]
   (string/join " "
    [(name type)
-    (if (p/coll-node? node) "coll" "atom")
+    (if (p/coll-node? data) "coll" "atom")
     (when selected? "selected")]))
 
 (defn- move-caret-to-end [input]
@@ -47,44 +47,37 @@
 ;; atom views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- handle-key [ev data]
+(defn- handle-key [ev]
   (when (and (= (key-data ev) #{:BKSPACE})
              (not (fully-selected? (.-target ev))))
     (.stopPropagation ev)))
 
-(defn- atom-view [node owner]
+(defn- atom-view [data owner]
   (reify
     om/IRender
     (render [_]
       (dom/input
-        #js {:className (class-list node)
-             :onChange  #(om/update! node (p/parse-atom (.. % -target -value)))
-             :onKeyDown #(handle-key % node)
-             :style #js {:width (px (render-width (p/tree->str node)))}
-             :value (pr-str (:form node))}))
-
+        #js {:className (class-list data)
+             :onChange #(om/update! data (p/parse-atom (.. % -target -value)))
+             :onKeyDown handle-key
+             :style #js {:width (px (render-width (p/tree->str data)))}
+             :value (pr-str (:form data))}))
     om/IDidMount
     (did-mount [_]
-      (when (:selected? node)
-        (doto (om/get-node owner)
-          (.focus)
-          (.select))))
-
+      (when (:selected? data) (doto (om/get-node owner) .focus .select)))
     om/IDidUpdate
-    (did-update [_ prev-props prev-state]
-      (if (:selected? node)
-          (when (or (not (:selected? prev-props)) (= (:form node) '...))
-            (doto (om/get-node owner)
-              (.focus)
-              (.select)))
-          (when (:selected? prev-props)
-            (.blur (om/get-node owner)))))))
+    (did-update [_ prev _]
+      (let [input (om/get-node owner)]
+        (if (:selected? data)
+            (when (or (not (:selected? prev)) (p/placeholder-node? data))
+              (doto input .focus .select))
+            (when (:selected? prev) (.blur input)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; string content views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- handle-string-key [ev data]
+(defn- handle-string-key [ev]
   (when (#{#{:BKSPACE}
            #{:LBRAK}
            #{:SPACE}
@@ -93,31 +86,27 @@
            #{:SHIFT :QUOTE}} (key-data ev))
     (.stopPropagation ev)))
 
-(defn- string-content-view [node owner]
+(defn- string-content-view [data owner]
   (reify
     om/IRender
     (render [_]
-      (let [text (string/replace (:text node) #"\s+" " ")]
+      (let [text (string/replace (:text data) #"\s+" " ")]
         (dom/textarea
-          #js {:className (class-list node)
-               :onChange  #(om/update! node :text (.. % -target -value))
-               :onKeyDown #(handle-string-key % node)
+          #js {:className (class-list data)
+               :onChange #(om/update! data :text (.. % -target -value))
+               :onKeyDown handle-string-key
                :style #js {:height (str (* 1.3 (line-count text)) "rem")
                            :width  (px (min (render-width text) max-width))}
                :value text})))
-
     om/IDidMount
     (did-mount [_]
-      (when (:selected? node)
-        (move-caret-to-end (om/get-node owner))))
-
+      (when (:selected? data) (move-caret-to-end (om/get-node owner))))
     om/IDidUpdate
-    (did-update [_ prev-props prev-state]
-      (if (:selected? node)
-          (when (or (not (:selected? prev-props)) (= (:text node) "..."))
-            (move-caret-to-end (om/get-node owner)))
-          (when (:selected? prev-props)
-            (.blur (om/get-node owner)))))))
+    (did-update [_ prev _]
+      (let [input (om/get-node owner)]
+        (if (:selected? data)
+            (when-not (:selected? prev) (move-caret-to-end input))
+            (when (:selected? prev) (.blur input)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; collection, generic, root views
@@ -145,23 +134,23 @@
                   [(apply dom/div #js {:className "runoff-children"}
                     (om/build-all node-view (drop headc children)))]))))))
 
-(defn- coll-view [node owner]
+(defn- coll-view [data owner]
   (reify om/IRender
     (render [_]
-      (apply dom/div #js {:className (class-list node)}
-        (om/build-all node-view (:children node))))))
+      (apply dom/div #js {:className (class-list data)}
+        (om/build-all node-view (:children data))))))
 
-(defn- node-view [node owner]
+(defn- node-view [data owner]
   (reify
     om/IRender
     (render [this]
       (om/build
         (cond
-          (= (:type node) :seq) seq-view
-          (p/coll-node? node) coll-view
-          (= (:type node) :string-content) string-content-view
+          (= (:type data) :seq) seq-view
+          (p/coll-node? data) coll-view
+          (= (:type data) :string-content) string-content-view
           :else atom-view)
-        node))))
+        data))))
 
 (defn root-view [app-state owner]
   (reify
@@ -182,20 +171,19 @@
 ;; command bar view
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- handle-command-bar-key [owner ev]
+(defn- handle-command-bar-key [command-chan ev]
   (condp = (key-data ev)
     #{:ENTER} (let [input (.-target ev)]
-                (async/put!
-                 (om/get-shared owner :command-chan)
-                 (string/split (.-value input) #"\s+"))
+                (async/put! command-chan (string/split (.-value input) #"\s+"))
                 (set! (.-value input) "")
                 (.blur input))
     #{:ESC} (.. ev -target blur) nil)
   (.stopPropagation ev)) ; allow default behavior instead of keybound
 
-(defn command-bar-view [app-state owner]
+(defn command-bar-view [_ owner]
   (reify om/IRender
     (render [_]
       (dom/input
         #js {:id "command-bar"
-             :onKeyDown (partial handle-command-bar-key owner)}))))
+             :onKeyDown (partial handle-command-bar-key
+                         (om/get-shared owner :command-chan))}))))
