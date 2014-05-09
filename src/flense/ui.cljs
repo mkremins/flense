@@ -100,7 +100,11 @@
                :value text})))
     om/IDidMount
     (did-mount [_]
-      (when (:selected? data) (move-caret-to-end (om/get-node owner))))
+      (when (:selected? data)
+        (let [input (om/get-node owner)]
+          (if (= (:text data) "...")
+              (doto input .focus .select)
+              (move-caret-to-end input)))))
     om/IDidUpdate
     (did-update [_ prev _]
       (let [input (om/get-node owner)]
