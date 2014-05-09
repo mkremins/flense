@@ -1,6 +1,6 @@
 (ns flense.edit
   (:require [flense.parse :as p]
-            [flense.util :refer [delete exchange insert update]]
+            [flense.util :refer [delete exchange insert maybe update]]
             [flense.zip :as z]
             [flense.zip.util :as zu]))
 
@@ -28,14 +28,11 @@
   (when (and (p/coll-node? sexp) (not (p/stringish-node? sexp)))
     (assoc sexp :type type)))
 
-(defn- toggle-dispatch* [node]
-  (update node :type
-   #(or ({:map    :set
-          :set    :map
-          :seq    :fn
-          :fn     :seq
-          :string :regex
-          :regex  :string} %) %)))
+(defn- toggle-dispatch* [sexp]
+  (update sexp :type
+   #(maybe {:map :set, :set :map,
+            :seq :fn, :fn :seq,
+            :string :regex, :regex :string} %)))
 
 (defn- wrap-quote* [sexp]
   (when-not (p/coll-node? sexp)
