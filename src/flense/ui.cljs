@@ -24,10 +24,10 @@
   (and (= (.-selectionStart input) 0)
        (= (.-selectionEnd input) (count (.-value input)))))
 
-(def ^:private max-chars 60)
+(def ^:private MAX_CHARS 60)
 
 (defn- line-count [text]
-  (inc (int (/ (count text) (- max-chars 2)))))
+  (inc (int (/ (count text) (- MAX_CHARS 2)))))
 
 (defn- px [n]
   (str n "px"))
@@ -37,11 +37,11 @@
     (set! (.-textContent tester) content)
     (inc (.-clientWidth tester))))
 
-(def ^:private char-width
+(def ^:private CHAR_WIDTH
   (render-width "_"))
 
-(def ^:private max-width
-  (render-width (string/join (repeat max-chars " "))))
+(def ^:private MAX_WIDTH
+  (render-width (string/join (repeat MAX_CHARS "_"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; atom views
@@ -96,7 +96,7 @@
                :onChange #(om/update! data :text (.. % -target -value))
                :onKeyDown handle-string-key
                :style #js {:height (str (* 1.3 (line-count text)) "rem")
-                           :width  (px (min (render-width text) max-width))}
+                           :width  (px (min (render-width text) MAX_WIDTH))}
                :value text})))
     om/IDidMount
     (did-mount [_]
@@ -116,12 +116,12 @@
 
 (defn- head-size [items]
   (let [itemc (count items)]
-    (loop [offset char-width
+    (loop [offset CHAR_WIDTH
            idxs (range itemc)]
       (if-let [idx (first idxs)]
         (let [item-width (render-width (p/tree->str (nth items idx)))
-              offset' (+ offset char-width item-width)]
-          (if (> offset' max-width) idx (recur offset' (rest idxs))))
+              offset' (+ offset CHAR_WIDTH item-width)]
+          (if (> offset' MAX_WIDTH) idx (recur offset' (rest idxs))))
         itemc))))
 
 (defn- seq-view [data owner]
