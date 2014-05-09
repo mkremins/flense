@@ -15,6 +15,11 @@
     (if (p/coll-node? node) "coll" "atom")
     (when selected? "selected")]))
 
+(defn- move-caret-to-end [input]
+  (let [idx (count (.-value input))]
+    (set! (.-selectionStart input) idx)
+    (set! (.-selectionEnd input) idx)))
+
 (defn- fully-selected? [input]
   (and (= (.-selectionStart input) 0)
        (= (.-selectionEnd input) (count (.-value input)))))
@@ -104,17 +109,13 @@
     om/IDidMount
     (did-mount [_]
       (when (:selected? node)
-        (doto (om/get-node owner)
-          (.focus)
-          (.select))))
+        (move-caret-to-end (om/get-node owner))))
 
     om/IDidUpdate
     (did-update [_ prev-props prev-state]
       (if (:selected? node)
           (when (or (not (:selected? prev-props)) (= (:text node) "..."))
-            (doto (om/get-node owner)
-              (.focus)
-              (.select)))
+            (move-caret-to-end (om/get-node owner)))
           (when (:selected? prev-props)
             (.blur (om/get-node owner)))))))
 
