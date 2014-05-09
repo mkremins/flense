@@ -85,7 +85,8 @@
            #{:SPACE}
            #{:SHIFT :NINE}
            #{:SHIFT :OPEN_BRACKET}
-           #{:SHIFT :QUOTE}} (key-data ev))
+           #{:SHIFT :QUOTE}
+           #{:SHIFT :THREE}} (key-data ev))
     (.stopPropagation ev)))
 
 (defn- string-content-view [data owner]
