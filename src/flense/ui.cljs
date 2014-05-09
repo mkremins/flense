@@ -48,7 +48,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-key [ev]
-  (when (and (= (key-data ev) #{:BKSPACE})
+  (when (and (= (key-data ev) #{:BACKSPACE})
              (not (fully-selected? (.-target ev))))
     (.stopPropagation ev)))
 
@@ -78,13 +78,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-string-key [ev]
-  (when (#{#{:BKSPACE}
-           #{:LBRAK}
+  (when (#{#{:BACKSPACE}
            #{:LEFT}
+           #{:OPEN_BRACKET}
            #{:RIGHT}
            #{:SPACE}
-           #{:SHIFT :LBRAK}
            #{:SHIFT :NINE}
+           #{:SHIFT :OPEN_BRACKET}
            #{:SHIFT :QUOTE}} (key-data ev))
     (.stopPropagation ev)))
 

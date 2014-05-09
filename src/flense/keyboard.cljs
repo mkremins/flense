@@ -15,19 +15,19 @@
    k/DOWN :DOWN, k/LEFT :LEFT, k/RIGHT :RIGHT, k/UP :UP,
 
    ; punctuation --------------------------------------------------------------
-   k/BACKSLASH             :BKSLASH
-   k/CLOSE_SQUARE_BRACKET  :RBRAK
+   k/BACKSLASH             :BACKSLASH
+   k/CLOSE_SQUARE_BRACKET  :CLOSE_BRACKET
    k/COMMA                 :COMMA
    k/DASH                  :DASH
    k/EQUALS                :EQUALS
-   k/OPEN_SQUARE_BRACKET   :LBRAK
+   k/OPEN_SQUARE_BRACKET   :OPEN_BRACKET
    k/PERIOD                :DOT
-   k/SEMICOLON             :SEMI
+   k/SEMICOLON             :SEMICOLON
    k/SINGLE_QUOTE          :QUOTE
    k/SLASH                 :SLASH
 
    ; other --------------------------------------------------------------------
-   k/BACKSPACE             :BKSPACE
+   k/BACKSPACE             :BACKSPACE
    k/CAPS_LOCK             :CAPS
    k/ENTER                 :ENTER
    k/ESC                   :ESC
