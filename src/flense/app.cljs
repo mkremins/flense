@@ -64,8 +64,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-tx [{:keys [new-state tag]}]
-  (when (= tag :wrap-coll)
-    (exec! z/down ::hist/ignore))
   (when-not (= tag ::hist/ignore)
     (hist/push-state! new-state)))
 

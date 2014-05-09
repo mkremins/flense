@@ -37,23 +37,15 @@
           :string :regex
           :regex  :string} %) %)))
 
+(defn- wrap-quote* [sexp]
+  (when-not (p/coll-node? sexp)
+    {:type :string
+     :children [(assoc sexp
+                  :type :string-content
+                  :text (str (:form sexp)))]}))
+
 (defn- wrap-sexp-type* [sexp type]
   {:type type :children [sexp]})
-
-(defn wrap-curly [sexp]
-  (wrap-sexp-type* sexp :map))
-
-(defn wrap-round [sexp]
-  (wrap-sexp-type* sexp :seq))
-
-(defn wrap-square [sexp]
-  (wrap-sexp-type* sexp :vec))
-
-(defn wrap-string [sexp]
-  {:type :string
-   :children [(assoc sexp
-                :type :string-content
-                :text (str (:form sexp)))]})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; use these with `edit-parent`
@@ -244,3 +236,15 @@
 
 (defn toggle-dispatch [loc]
   (z/edit loc toggle-dispatch*))
+
+(defn wrap-curly [loc]
+  (-> loc (z/edit wrap-sexp-type* :map) z/down))
+
+(defn wrap-quote [loc]
+  (-> loc (z/edit wrap-quote*) z/down))
+
+(defn wrap-round [loc]
+  (-> loc (z/edit wrap-sexp-type* :seq) z/down))
+
+(defn wrap-square [loc]
+  (-> loc (z/edit wrap-sexp-type* :vec) z/down))

@@ -35,6 +35,10 @@
    :par/split-right        e/split-right
    :par/swap-left          e/swap-left
    :par/swap-right         e/swap-right
+   :par/wrap-curly         e/wrap-curly
+   :par/wrap-quote         e/wrap-quote
+   :par/wrap-round         e/wrap-round
+   :par/wrap-square        e/wrap-square
 
    ; semantic editing ---------------------------------------------------------
    :clj/expand-template    e/expand-sexp

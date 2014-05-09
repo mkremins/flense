@@ -15,6 +15,10 @@
     (if (p/coll-node? node) "coll" "atom")
     (when selected? "selected")]))
 
+(defn- fully-selected? [input]
+  (and (= (.-selectionStart input) 0)
+       (= (.-selectionEnd input) (count (.-value input)))))
+
 (def ^:private max-chars 60)
 
 (defn- line-count [text]
@@ -39,18 +43,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-key [ev data]
-  (let [ks (key-data ev)]
-    (if (= ks #{:BKSPACE})
-        (let [input (.-target ev)]
-          (when (or (not= (.-selectionStart input) 0)
-                    (not= (.-selectionEnd input) (count (.-value input))))
-            (.stopPropagation ev)))
-        (when-let [wrap ({#{:LBRAK}        e/wrap-square
-                          #{:SHIFT :LBRAK} e/wrap-curly
-                          #{:SHIFT :NINE}  e/wrap-round
-                          #{:SHIFT :QUOTE} e/wrap-string} ks)]
-          (.preventDefault ev)
-          (om/transact! data [] wrap :wrap-coll)))))
+  (when (and (= (key-data ev) #{:BKSPACE})
+             (not (fully-selected? (.-target ev))))
+    (.stopPropagation ev)))
 
 (defn- atom-view [node owner]
   (reify
@@ -85,21 +80,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-string-key [ev data]
-  (condp = (key-data ev)
-    #{:BKSLASH}
-    (do (.preventDefault ev)
-        (om/transact! data :text #(str % "\\")))
-    #{:BKSPACE}
-    (let [input (.-target ev)]
-      (when (or (not= (.-selectionStart input) 0)
-                (not= (.-selectionEnd input) (count (.-value input))))
-        (.stopPropagation ev)))
-    #{:SPACE} ; allow default behavior (insert space) instead of keybound
-    (.stopPropagation ev)
-    #{:SHIFT :QUOTE}
-    (do (.preventDefault ev)
-        (om/transact! data :text #(str % "\"")))
-    nil)) ; deliberate no-op
+  (when (#{#{:BKSPACE}
+           #{:LBRAK}
+           #{:SPACE}
+           #{:SHIFT :LBRAK}
+           #{:SHIFT :NINE}
+           #{:SHIFT :QUOTE}} (key-data ev))
+    (.stopPropagation ev)))
 
 (defn- string-content-view [node owner]
   (reify

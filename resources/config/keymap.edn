@@ -2,6 +2,7 @@
  #{:BKSPACE}             :edit/delete
  #{:DOWN}                :nav/down
  #{:ENTER}               :edit/insert-outside
+ #{:LBRAK}               :par/wrap-square
  #{:LEFT}                :nav/left
  #{:RIGHT}               :nav/right
  #{:SPACE}               :edit/insert-right
@@ -39,7 +40,10 @@
  #{:CMD :SHIFT :UP}      :par/raise
 
  ; SHIFT --------------------------------------------------------------------
+ #{:SHIFT :LBRAK}        :par/wrap-curly
  #{:SHIFT :LEFT}         :nav/backward
+ #{:SHIFT :NINE}         :par/wrap-round
+ #{:SHIFT :QUOTE}        :par/wrap-quote
  #{:SHIFT :RIGHT}        :nav/forward
  #{:SHIFT :SPACE}        :edit/insert-left
  #{:SHIFT :THREE}        :clj/toggle-dispatch}
