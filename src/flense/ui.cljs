@@ -137,9 +137,14 @@
       (let [children (:children data)
             headc (head-size children)]
         (apply dom/div #js {:className (class-list data)}
-          (concat (om/build-all node-view (take headc children))
-                  [(apply dom/div #js {:className "runoff-children"}
-                    (om/build-all node-view (drop headc children)))]))))))
+         (concat
+          (om/build-all node-view
+           (->> (take headc children)
+                (map #(merge % {:enclosing-seq owner}))))
+          [(apply dom/div #js {:className "runoff-children"}
+            (om/build-all node-view
+             (->> (drop headc children)
+                  (map #(merge % {:enclosing-seq owner})))))]))))))
 
 (defn- coll-view [data owner]
   (reify om/IRender
@@ -152,12 +157,18 @@
     om/IRender
     (render [this]
       (om/build
-        (cond
-          (= (:type data) :seq) seq-view
-          (p/coll-node? data) coll-view
-          (= (:type data) :string-content) string-content-view
-          :else atom-view)
-        data))))
+       (cond (= (:type data) :seq) seq-view
+             (p/coll-node? data) coll-view
+             (= (:type data) :string-content) string-content-view
+             :else atom-view)
+       data))
+    om/IDidUpdate
+    ;; Since seq views render differently depending on the widths of their
+    ;; children, we need to refresh the enclosing seq view (if there is one)
+    ;; whenever there's a chance that this view's width changed.
+    (did-update [_ _ _]
+      (when-let [enclosing-seq-view (:enclosing-seq data)]
+        (om/refresh! enclosing-seq-view)))))
 
 (defn root-view [app-state owner]
   (reify
