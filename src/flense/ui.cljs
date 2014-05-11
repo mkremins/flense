@@ -37,9 +37,6 @@
     (set! (.-textContent tester) content)
     (inc (.-clientWidth tester))))
 
-(def ^:private CHAR_WIDTH
-  (render-width "_"))
-
 (def ^:private MAX_WIDTH
   (render-width (string/join (repeat MAX_CHARS "_"))))
 
@@ -123,12 +120,11 @@
 
 (defn- head-size [items]
   (let [itemc (count items)]
-    (loop [offset CHAR_WIDTH
-           idxs (range itemc)]
+    (loop [offset 1 idxs (range itemc)]
       (if-let [idx (first idxs)]
-        (let [item-width (render-width (p/tree->str (nth items idx)))
-              offset' (+ offset CHAR_WIDTH item-width)]
-          (if (> offset' MAX_WIDTH) idx (recur offset' (rest idxs))))
+        (let [item-width (count (p/tree->str (nth items idx)))
+              offset' (+ offset 1 item-width)]
+          (if (> offset' MAX_CHARS) idx (recur offset' (rest idxs))))
         itemc))))
 
 (defn- seq-view [data owner]

@@ -45,23 +45,6 @@
   {:path [0]
    :tree {:children (->> (fs/slurp fpath) string->forms (mapv form->tree))}})
 
-(defn tree->str [tree]
-  (if-let [form (:form tree)]
-          (pr-str form)
-          (let [delims
-                (condp = (:type tree)
-                  :fn     ["#("   ")"]
-                  :map    ["{"    "}"]
-                  :regex  ["#\"" "\""]
-                  :seq    ["("    ")"]
-                  :set    ["#{"   "}"]
-                  :string ["\""  "\""]
-                  :vec    ["["    "]"]
-                          [""      ""])]
-            (str (first delims)
-                 (string/join " " (map tree->str (:children tree)))
-                 (last delims)))))
-
 (defn coll-node? [{:keys [type]}]
   (#{:fn :map :regex :seq :set :string :vec} type))
 
@@ -73,6 +56,23 @@
 
 (defn placeholder-node? [{:keys [form]}]
   (= form (:form placeholder)))
+
+(defn tree->str [tree]
+  (cond
+    (coll-node? tree)
+    (let [delims
+          ({:fn     ["#("   ")"]
+            :map    ["{"    "}"]
+            :regex  ["#\"" "\""]
+            :seq    ["("    ")"]
+            :set    ["#{"   "}"]
+            :string ["\""  "\""]
+            :vec    ["["    "]"]} (:type tree))]
+      (str (first delims)
+           (string/join " " (map tree->str (:children tree)))
+           (last delims)))
+    (= (:type tree) :string-content) (:text tree)
+    :else (str (:form tree))))
 
 (def expanders
   {'def  (form->tree '(def ... ...))
