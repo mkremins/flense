@@ -48,6 +48,10 @@ body {
   display: none;
 }
 
+.string-content {
+  resize: none;
+}
+
 .flense {
   margin-bottom: 80px;
 }
