@@ -12,7 +12,7 @@
 (defn- class-list [{:keys [selected? type] :as data}]
   (string/join " "
    [(name type)
-    (if (p/coll-node? data) "coll" "atom")
+    (if (p/coll-node? data) "coll" "token")
     (when selected? "selected")]))
 
 (defn- move-caret-to-end [input]

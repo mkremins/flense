@@ -1,4 +1,4 @@
-.selected.atom,
+.selected.token,
 .selected.coll:before,
 .selected.coll:after {
   background: rgb(170,203,249);

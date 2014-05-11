@@ -19,7 +19,7 @@ body {
 
 /* main editor view styles */
 
-.atom {
+.token {
   border: none;
   font-family: inherit;
   font-size: inherit;
