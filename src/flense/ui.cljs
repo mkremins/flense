@@ -113,10 +113,28 @@
             (when (:selected? prev) (.blur input)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; collection, generic, root views
+;; special (semantic) views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (declare node-view)
+
+(defn- defn-view [data owner]
+  (reify om/IRender
+    (render [_]
+      (let [[head name & bodies] (:children data)]
+        (dom/div #js {:className (class-list data)}
+         (om/build node-view head)
+         (om/build node-view name)
+         (apply dom/div #js {:className "runoff-children"}
+          (om/build-all node-view bodies)))))))
+
+(def ^:private specials
+  {"defn"  defn-view
+   "defn-" defn-view})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; collection, generic, root views
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- head-size [items]
   (let [itemc (count items)]
@@ -151,12 +169,14 @@
 (defn- node-view [data owner]
   (reify
     om/IRender
-    (render [this]
+    (render [_]
       (om/build
-       (cond (= (:type data) :seq) seq-view
-             (p/coll-node? data) coll-view
-             (= (:type data) :string-content) string-content-view
-             :else token-view)
+       (cond
+        (= (:type data) :seq)
+        (or (specials (:text (first (:children data)))) seq-view)
+        (p/coll-node? data) coll-view
+        (= (:type data) :string-content) string-content-view
+        :else token-view)
        data))
     om/IDidUpdate
     ;; Since seq views render differently depending on the widths of their
