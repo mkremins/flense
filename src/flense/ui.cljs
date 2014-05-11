@@ -41,7 +41,7 @@
   (render-width (string/join (repeat MAX_CHARS "_"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; atom views
+;; token views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-key [ev]
@@ -49,16 +49,16 @@
              (not (fully-selected? (.-target ev))))
     (.stopPropagation ev)))
 
-(defn- atom-view [data owner]
+(defn- token-view [data owner]
   (reify
     om/IRender
     (render [_]
       (dom/input
         #js {:className (class-list data)
-             :onChange #(om/update! data (p/parse-atom (.. % -target -value)))
+             :onChange #(om/update! data (p/parse-token (.. % -target -value)))
              :onKeyDown handle-key
              :style #js {:width (px (render-width (p/tree->str data)))}
-             :value (pr-str (:form data))}))
+             :value (:text data)}))
     om/IDidMount
     (did-mount [_]
       (when (:selected? data) (doto (om/get-node owner) .focus .select)))
@@ -102,7 +102,7 @@
     (did-mount [_]
       (when (:selected? data)
         (let [input (om/get-node owner)]
-          (if (= (:text data) "...")
+          (if (p/placeholder-node? data)
               (doto input .focus .select)
               (move-caret-to-end input)))))
     om/IDidUpdate
@@ -156,7 +156,7 @@
        (cond (= (:type data) :seq) seq-view
              (p/coll-node? data) coll-view
              (= (:type data) :string-content) string-content-view
-             :else atom-view)
+             :else token-view)
        data))
     om/IDidUpdate
     ;; Since seq views render differently depending on the widths of their

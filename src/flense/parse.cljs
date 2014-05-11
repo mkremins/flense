@@ -21,15 +21,19 @@
         (vector?  x) :vec))
 
 (defn form->tree [form]
-  (merge
-    {:form form :type (classify form)}
-    (when (or (regex? form) (string? form))
-      {:children [{:type :string-content :text form}]})
-    (when (coll? form)
-      {:children (mapv form->tree
-                       (if (map? form)
-                           (interpose (keys form) (vals form))
-                           form))})))
+  (let [type (classify form)]
+    (merge {:type type}
+     (condp contains? type
+      #{:bool :keyword :number :symbol}
+       {:text (str form)}
+      #{:nil}
+       {:text "nil"}
+      #{:seq :set :vec}
+       {:children (mapv form->tree form)}
+      #{:map}
+       {:children (mapv form->tree (interleave (keys form) (vals form)))}
+      #{:regex :string}
+       {:children [{:type :string-content :text form}]}))))
 
 (defn- string->forms [string]
   (let [reader (rdr/push-back-reader string)]
@@ -54,55 +58,44 @@
 (def placeholder
   (form->tree '...))
 
-(defn placeholder-node? [{:keys [form]}]
-  (= form (:form placeholder)))
+(defn placeholder-node? [{:keys [text]}]
+  (= text "..."))
 
 (defn tree->str [tree]
-  (cond
-    (coll-node? tree)
-    (let [delims
-          ({:fn     ["#("   ")"]
-            :map    ["{"    "}"]
-            :regex  ["#\"" "\""]
-            :seq    ["("    ")"]
-            :set    ["#{"   "}"]
-            :string ["\""  "\""]
-            :vec    ["["    "]"]} (:type tree))]
-      (str (first delims)
-           (string/join " " (map tree->str (:children tree)))
-           (last delims)))
-    (= (:type tree) :string-content) (:text tree)
-    :else (str (:form tree))))
+  (if (coll-node? tree)
+      (let [delims
+            ({:fn     ["#("   ")"]
+              :map    ["{"    "}"]
+              :regex  ["#\"" "\""]
+              :seq    ["("    ")"]
+              :set    ["#{"   "}"]
+              :string ["\""  "\""]
+              :vec    ["["    "]"]} (:type tree))]
+        (str (first delims)
+             (string/join " " (map tree->str (:children tree)))
+             (last delims)))
+      (:text tree)))
 
 (def expanders
-  {'def  (form->tree '(def ... ...))
-   'defn (form->tree '(defn ... [...] ...))
-   'fn   (form->tree '(fn [...] ...))
-   'if   (form->tree '(if ... ... ...))
-   'let  (form->tree '(let [... ...] ...))
-   'when (form->tree '(when ... ...))})
+  {"def"  (form->tree '(def ... ...))
+   "defn" (form->tree '(defn ... [...] ...))
+   "fn"   (form->tree '(fn [...] ...))
+   "if"   (form->tree '(if ... ... ...))
+   "let"  (form->tree '(let [... ...] ...))
+   "when" (form->tree '(when ... ...))})
 
-(defn expand-sexp [{:keys [type form] :as sexp}]
-  (or (when (= type :symbol) (expanders form)) sexp))
+(defn expand-sexp [{:keys [type text] :as sexp}]
+  (or (when (= type :symbol) (expanders text)) sexp))
 
-(defn- parse-char [text]
-  {:type :char :form (subs text 1)})
-
-(defn- parse-keyword [text]
-  {:type :keyword :form (keyword (subs text 1))})
-
-(defn- parse-symbol-or-number [text]
+(defn- symbol-or-number [text]
   (let [number (js/parseFloat text)]
-    (if (js/isNaN number)
-        {:type :symbol :form (symbol text)}
-        {:type :number :form number})))
+    (if (js/isNaN number) :symbol :number)))
 
-(defn parse-atom [text]
+(defn parse-token [text]
   (let [init-ch (first text)]
-    (cond
-      (= text "false") {:type :bool :form false}
-      (= text "nil")   {:type :nil  :form nil}
-      (= text "true")  {:type :bool :form true}
-      (= init-ch \\)   (parse-char text)
-      (= init-ch \:)   (parse-keyword text)
-      :else            (parse-symbol-or-number text))))
+    {:text text
+     :type (cond (#{"false" "true"} text) :bool
+                 (= text "nil") :nil
+                 (= init-ch \\) :char
+                 (= init-ch \:) :keyword
+                 :else (symbol-or-number text))}))
