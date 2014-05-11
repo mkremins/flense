@@ -11,7 +11,7 @@
 
 body {
   font-family: 'Source Code Pro';
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.4;
   margin-left: 5%;
   margin-top: 40px;
@@ -33,12 +33,12 @@ body {
 .coll:not(.seq) > :not(:last-child),
 .seq > :not(:last-child):not(:nth-last-child(2)),
 .runoff-children > :not(:last-child) {
-  margin-right: 0.625rem;
+  margin-right: 0.5rem;
 }
 
 .runoff-children {
-  margin-left: 1.25rem;
-  margin-top: -1.3rem;
+  margin-left: 1rem;
+  margin-top: -1.2rem;
 }
 .runoff-children:before {
   content: " ";

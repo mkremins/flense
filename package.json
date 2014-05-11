@@ -2,7 +2,7 @@
   "name": "Flense",
   "main": "index.html",
   "window": {
-    "width": 1000,
+    "width": 900,
     "height": 700
   }
 }

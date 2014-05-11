@@ -24,7 +24,7 @@
   (and (= (.-selectionStart input) 0)
        (= (.-selectionEnd input) (count (.-value input)))))
 
-(def ^:private MAX_CHARS 60)
+(def ^:private MAX_CHARS 72)
 
 (defn- line-count [text]
   (inc (int (/ (count text) (- MAX_CHARS 2)))))
@@ -95,7 +95,7 @@
           #js {:className (class-list data)
                :onChange #(om/update! data :text (.. % -target -value))
                :onKeyDown handle-string-key
-               :style #js {:height (str (* 1.3 (line-count text)) "rem")
+               :style #js {:height (str (* 1.2 (line-count text)) "rem")
                            :width  (px (min (render-width text) MAX_WIDTH))}
                :value text})))
     om/IDidMount
