@@ -30,7 +30,9 @@ body {
   flex-flow: row wrap;
 }
 
-.coll:not(.seq) > :not(:last-child),
+.coll:not(.seq) > :not(:first-child) {
+  margin-left: 0.5rem;
+}
 .seq > :not(:last-child):not(:nth-last-child(2)),
 .runoff-children > :not(:last-child) {
   margin-right: 0.5rem;
