@@ -116,7 +116,7 @@
 ;; special (semantic) views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(declare node-view)
+(declare node-view seq-view)
 
 (defn- defn-view [data owner]
   (reify om/IRender
@@ -128,9 +128,25 @@
          (apply dom/div #js {:className "runoff-children"}
           (om/build-all node-view bodies)))))))
 
+(defn- if-view [data owner]
+  (reify om/IRender
+    (render [_]
+      (if (> (count (p/tree->str data)) MAX_CHARS)
+          (let [[head test & clauses] (:children data)]
+            (dom/div #js {:className (class-list data)}
+             (om/build node-view head)
+             (om/build node-view test)
+             (apply dom/div
+              #js {:className "runoff-children"
+                   :style #js {:margin-left "2rem"}}
+              (om/build-all node-view
+               (map #(merge % {:enclosing-seq owner}) clauses)))))
+          (om/build seq-view data)))))
+
 (def ^:private specials
   {"defn"  defn-view
-   "defn-" defn-view})
+   "defn-" defn-view
+   "if"    if-view})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; collection, generic, root views
