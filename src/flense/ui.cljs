@@ -1,5 +1,5 @@
 (ns flense.ui
-  (:refer-clojure :exclude [rem])
+  (:refer-clojure :exclude [chars rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as string]
             [flense.edit :as e]
@@ -117,97 +117,75 @@
             (when (:selected? prev) (.blur input)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; special (semantic) views
+;; seq views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(declare node-view seq-view)
+(declare node-view)
 
-(defn- defn-view [data owner]
-  (reify om/IRender
-    (render [_]
-      (let [[head name & bodies] (:children data)]
-        (dom/div #js {:className (class-list data)}
-         (om/build node-view head)
-         (om/build node-view name)
-         (apply dom/div #js {:className "runoff-children"}
-          (om/build-all node-view bodies)))))))
+(defn- chars [tree]
+  (count (p/tree->str tree)))
 
-(defn- if-view [data owner]
-  (reify om/IRender
-    (render [_]
-      (if (> (count (p/tree->str data)) MAX_CHARS)
-          (let [[head test & clauses] (:children data)]
-            (dom/div #js {:className (class-list data)}
-             (om/build node-view head)
-             (om/build node-view test)
-             (apply dom/div
-              #js {:className "runoff-children"
-                   :style #js {:margin-left "2rem"}}
-              (om/build-all node-view
-               (map #(merge % {:enclosing owner}) clauses)))))
-          (om/build seq-view data)))))
-
-(defn- when-view [data owner]
-  (reify om/IRender
-    (render [_]
-      (if (> (count (p/tree->str data)) MAX_CHARS)
-          (let [[head test & bodies] (:children data)]
-            (dom/div #js {:className (class-list data)}
-             (om/build node-view head)
-             (om/build node-view test)
-             (apply dom/div
-              #js {:className "runoff-children"
-                   :style #js {:margin-left "1rem"}}
-              (om/build-all node-view
-               (map #(merge % {:enclosing owner}) bodies)))))
-          (om/build seq-view data)))))
-
-(def ^:private specials
-  {"defn"      defn-view
-   "defn-"     defn-view
-   "do"        if-view
-   "if"        if-view
-   "if-let"    defn-view
-   "let"       defn-view
-   "loop"      defn-view
-   "ns"        defn-view
-   "when"      when-view
-   "when-let"  defn-view})
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; collection, generic, root views
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn- head-size [items]
+(defn- head-count [items]
   (let [itemc (count items)]
     (loop [offset 1 idxs (range itemc)]
       (if-let [idx (first idxs)]
-        (let [item-width (count (p/tree->str (nth items idx)))
+        (let [item-width (chars (nth items idx))
               offset' (+ offset 1 item-width)]
           (if (> offset' MAX_CHARS) idx (recur offset' (rest idxs))))
         itemc))))
 
-(defn- indent-size [head]
-  (rem (if (#{:keyword :symbol} (:type head))
-           (* .5 (+ 2 (count (p/tree->str head))))
-           1)))
+(defn- seq-view*
+  "Constructs and returns a seq view whose contents are formatted according to
+   the format specification passed as `opts`."
+  [data owner opts]
+  (reify om/IRender
+    (render [_]
+      (let [{:keys [always-multiline? fixed-head-count indent]} opts
+            merge-props (when-not always-multiline? {:enclosing owner})
+            multiline?  (or always-multiline? (> (chars data) MAX_CHARS))
+            indent   (if (instance? js/Function indent) (indent data) indent)
+            children (:children data)
+            headc (or (when multiline? fixed-head-count) (head-count children))
+            heads (map #(merge % merge-props) (take headc children))
+            tails (map #(merge % merge-props) (drop headc children))]
+        (apply dom/div #js {:className (class-list data)}
+         (concat (om/build-all node-view heads)
+                 [(apply dom/div
+                   #js {:className "runoff-children"
+                        :style #js {:margin-left indent}}
+                   (om/build-all node-view tails))]))))))
+
+(def ^:private special-formats
+  "Formatting options for clojure.core macros that are commonly indented in a
+   manner not consistent with the standard function call indentation style."
+  {"defmacro"  {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
+   "defn"      {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
+   "defn-"     {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
+   "do"        {:fixed-head-count 2 :indent "2rem"}
+   "if"        {:fixed-head-count 2 :indent "2rem"}
+   "if-let"    {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
+   "let"       {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
+   "loop"      {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
+   "ns"        {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
+   "when"      {:fixed-head-count 2 :indent "1rem"}
+   "when-let"  {:fixed-head-count 2 :indent "1rem" :always-multiline? true}})
+
+(defn- indent-size [tree]
+  (let [head (first (:children tree))]
+    (rem (if (#{:keyword :symbol} (:type head))
+             (* .5 (+ 2 (chars head)))
+             1))))
 
 (defn- seq-view [data owner]
   (reify om/IRender
     (render [_]
-      (let [children (:children data)
-            headc (head-size children)]
-        (apply dom/div #js {:className (class-list data)}
-         (concat
-          (om/build-all node-view
-           (->> (take headc children)
-                (map #(merge % {:enclosing owner}))))
-          [(apply dom/div
-            #js {:className "runoff-children"
-                 :style #js {:margin-left (indent-size (first children))}}
-            (om/build-all node-view
-             (->> (drop headc children)
-                  (map #(merge % {:enclosing owner})))))]))))))
+      (let [head (first (:children data))]
+        (om/build seq-view* data
+         {:opts (get special-formats (:text head) {:indent indent-size})})))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; collection, generic, root views
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- coll-view [data owner]
   (reify om/IRender
@@ -220,12 +198,10 @@
     om/IRender
     (render [_]
       (om/build
-       (cond
-        (= (:type data) :seq)
-        (or (specials (:text (first (:children data)))) seq-view)
-        (p/coll-node? data) coll-view
-        (= (:type data) :string-content) string-content-view
-        :else token-view)
+       (cond (= (:type data) :seq) seq-view
+             (p/coll-node? data) coll-view
+             (= (:type data) :string-content) string-content-view
+             :else token-view)
        data))
     om/IDidUpdate
     (did-update [_ _ _]
