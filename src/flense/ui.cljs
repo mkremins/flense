@@ -25,6 +25,18 @@
   (and (= (.-selectionStart input) 0)
        (= (.-selectionEnd input) (count (.-value input)))))
 
+(defn- in-viewport? [el]
+  (let [rect (.getBoundingClientRect el)]
+    (and (>= (.-top rect) 0)
+         (<= (.-bottom rect) (.-innerHeight js/window)))))
+
+(defn- scroll-viewport-to-contain [el]
+  (.scrollTo js/window 0
+             (+ (.-offsetTop el)
+                (- (.-innerHeight js/window))
+                (.-offsetHeight el)
+                60)))
+
 (def ^:private MAX_CHARS 72)
 
 (defn- line-count [text]
@@ -206,7 +218,10 @@
     om/IDidUpdate
     (did-update [_ _ _]
       (when-let [enclosing-view (:enclosing data)]
-        (om/refresh! enclosing-view)))))
+        (om/refresh! enclosing-view))
+      (when (:selected? data)
+        (let [el (om/get-node owner)]
+          (when-not (in-viewport? el) (scroll-viewport-to-contain el)))))))
 
 (defn root-view [app-state owner]
   (reify
