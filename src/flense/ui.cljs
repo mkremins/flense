@@ -1,4 +1,5 @@
 (ns flense.ui
+  (:refer-clojure :exclude [rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as string]
             [flense.edit :as e]
@@ -31,6 +32,9 @@
 
 (defn- px [n]
   (str n "px"))
+
+(defn- rem [n]
+  (str n "rem"))
 
 (defn- render-width [content]
   (let [tester (.getElementById js/document "width-tester")]
@@ -143,11 +147,32 @@
                (map #(merge % {:enclosing owner}) clauses)))))
           (om/build seq-view data)))))
 
+(defn- when-view [data owner]
+  (reify om/IRender
+    (render [_]
+      (if (> (count (p/tree->str data)) MAX_CHARS)
+          (let [[head test & bodies] (:children data)]
+            (dom/div #js {:className (class-list data)}
+             (om/build node-view head)
+             (om/build node-view test)
+             (apply dom/div
+              #js {:className "runoff-children"
+                   :style #js {:margin-left "1rem"}}
+              (om/build-all node-view
+               (map #(merge % {:enclosing owner}) bodies)))))
+          (om/build seq-view data)))))
+
 (def ^:private specials
-  {"defn"  defn-view
-   "defn-" defn-view
-   "if"    if-view
-   "ns"    defn-view})
+  {"defn"      defn-view
+   "defn-"     defn-view
+   "do"        if-view
+   "if"        if-view
+   "if-let"    defn-view
+   "let"       defn-view
+   "loop"      defn-view
+   "ns"        defn-view
+   "when"      when-view
+   "when-let"  defn-view})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; collection, generic, root views
@@ -162,6 +187,11 @@
           (if (> offset' MAX_CHARS) idx (recur offset' (rest idxs))))
         itemc))))
 
+(defn- indent-size [head]
+  (rem (if (#{:keyword :symbol} (:type head))
+           (* .5 (+ 2 (count (p/tree->str head))))
+           1)))
+
 (defn- seq-view [data owner]
   (reify om/IRender
     (render [_]
@@ -172,7 +202,9 @@
           (om/build-all node-view
            (->> (take headc children)
                 (map #(merge % {:enclosing owner}))))
-          [(apply dom/div #js {:className "runoff-children"}
+          [(apply dom/div
+            #js {:className "runoff-children"
+                 :style #js {:margin-left (indent-size (first children))}}
             (om/build-all node-view
              (->> (drop headc children)
                   (map #(merge % {:enclosing owner})))))]))))))
