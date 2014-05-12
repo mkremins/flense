@@ -111,7 +111,7 @@
           #js {:className (class-list data)
                :onChange #(om/update! data :text (.. % -target -value))
                :onKeyDown handle-string-key
-               :style #js {:height (str (* 1.2 (line-count text)) "rem")
+               :style #js {:height (rem (* 1.2 (line-count text)))
                            :width  (px (min (render-width text) MAX_WIDTH))}
                :value text})))
     om/IDidMount
@@ -146,17 +146,23 @@
           (if (> offset' MAX_CHARS) idx (recur offset' (rest idxs))))
         itemc))))
 
+(defn- indent-size [tree]
+  (let [head (first (:children tree))]
+    (if (#{:keyword :symbol} (:type head))
+        (+ 2 (chars head))
+        2)))
+
 (defn- seq-view*
   "Constructs and returns a seq view whose contents are formatted according to
    the format specification passed as `opts`."
   [data owner opts]
   (reify om/IRender
     (render [_]
-      (let [{:keys [always-multiline? fixed-head-count indent]} opts
+      (let [{:keys [always-multiline? fixed-head-count indent]
+             :or   {indent (indent-size data)}} opts
             merge-props (when-not always-multiline? {:enclosing owner})
-            multiline?  (or always-multiline? (> (chars data) MAX_CHARS))
-            indent   (if (instance? js/Function indent) (indent data) indent)
-            children (:children data)
+            multiline?  (or always-multiline? (> (chars data) MAX_CHARS))  
+            children    (:children data)
             headc (or (when multiline? fixed-head-count) (head-count children))
             heads (map #(merge % merge-props) (take headc children))
             tails (map #(merge % merge-props) (drop headc children))]
@@ -164,36 +170,29 @@
          (concat (om/build-all node-view heads)
                  [(apply dom/div
                    #js {:className "runoff-children"
-                        :style #js {:margin-left indent}}
+                        :style #js {:margin-left (rem (/ indent 2))}}
                    (om/build-all node-view tails))]))))))
 
 (def ^:private special-formats
   "Formatting options for clojure.core macros that are commonly indented in a
    manner not consistent with the standard function call indentation style."
-  {"defmacro"  {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
-   "defn"      {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
-   "defn-"     {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
-   "do"        {:fixed-head-count 2 :indent "2rem"}
-   "if"        {:fixed-head-count 2 :indent "2rem"}
-   "if-let"    {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
-   "let"       {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
-   "loop"      {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
-   "ns"        {:fixed-head-count 2 :indent "1rem" :always-multiline? true}
-   "when"      {:fixed-head-count 2 :indent "1rem"}
-   "when-let"  {:fixed-head-count 2 :indent "1rem" :always-multiline? true}})
-
-(defn- indent-size [tree]
-  (let [head (first (:children tree))]
-    (rem (if (#{:keyword :symbol} (:type head))
-             (* .5 (+ 2 (chars head)))
-             1))))
+  {"defmacro"  {:fixed-head-count 2 :indent 2 :always-multiline? true}
+   "defn"      {:fixed-head-count 2 :indent 2 :always-multiline? true}
+   "defn-"     {:fixed-head-count 2 :indent 2 :always-multiline? true}
+   "do"        {:fixed-head-count 2 :indent 4}
+   "if"        {:fixed-head-count 2 :indent 4}
+   "if-let"    {:fixed-head-count 2 :indent 2 :always-multiline? true}
+   "let"       {:fixed-head-count 2 :indent 2 :always-multiline? true}
+   "loop"      {:fixed-head-count 2 :indent 2 :always-multiline? true}
+   "ns"        {:fixed-head-count 2 :indent 2 :always-multiline? true}
+   "when"      {:fixed-head-count 2 :indent 2}
+   "when-let"  {:fixed-head-count 2 :indent 2 :always-multiline? true}})
 
 (defn- seq-view [data owner]
   (reify om/IRender
     (render [_]
-      (let [head (first (:children data))]
-        (om/build seq-view* data
-         {:opts (get special-formats (:text head) {:indent indent-size})})))))
+      (om/build seq-view* data
+       {:opts (get special-formats (-> data :children first :text))}))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; collection, generic, root views
