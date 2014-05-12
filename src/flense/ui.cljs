@@ -146,7 +146,8 @@
 (def ^:private specials
   {"defn"  defn-view
    "defn-" defn-view
-   "if"    if-view})
+   "if"    if-view
+   "ns"    defn-view})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; collection, generic, root views
