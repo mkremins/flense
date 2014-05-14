@@ -6,9 +6,9 @@
 
 (def commands
   {; navigation ---------------------------------------------------------------
-   :nav/backward           z/backward
+   :nav/prev               z/prev
    :nav/down               z/down
-   :nav/forward            z/forward
+   :nav/next               z/next
    :nav/left               z/left-or-wrap
    :nav/right              z/right-or-wrap
    :nav/up                 z/up

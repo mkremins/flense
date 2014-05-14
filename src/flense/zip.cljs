@@ -1,5 +1,5 @@
 (ns flense.zip
-  (:refer-clojure :exclude [find remove replace])
+  (:refer-clojure :exclude [find next remove replace])
   (:require [flense.util :refer [lconj update]]
             [flense.zip.util :as zu]))
 
@@ -85,14 +85,14 @@
                   (up next-loc) (recur (up next-loc))
                   :else nil))))
 
-(def backward (partial walk left rightmost))
-(def forward  (partial walk right leftmost))
+(def prev (partial walk left rightmost))
+(def next (partial walk right leftmost))
 
 (defn find
   "Returns a lazy sequence of locations following `loc` in `direction` (default
-   `forward`) for which `(pred location)` returns truthy."
+   `next`) for which `(pred location)` returns truthy."
   ([loc pred]
-    (find loc pred forward))
+    (find loc pred next))
   ([loc pred direction]
     (->> loc
          (iterate direction)

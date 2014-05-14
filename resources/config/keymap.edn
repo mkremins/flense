@@ -40,10 +40,10 @@
  #{:CMD :SHIFT :UP}             :par/raise
 
  ; SHIFT --------------------------------------------------------------------
- #{:SHIFT :LEFT}                :nav/backward
+ #{:SHIFT :LEFT}                :nav/prev
  #{:SHIFT :NINE}                :par/wrap-round
  #{:SHIFT :OPEN_BRACKET}        :par/wrap-curly
  #{:SHIFT :QUOTE}               :par/wrap-quote
- #{:SHIFT :RIGHT}               :nav/forward
+ #{:SHIFT :RIGHT}               :nav/next
  #{:SHIFT :SPACE}               :edit/insert-left
  #{:SHIFT :THREE}               :clj/toggle-dispatch}
