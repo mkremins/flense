@@ -236,24 +236,3 @@
       (let [{:keys [tree]} (z/edit app-state assoc :selected? true)]
         (apply dom/div #js {:className "flense"}
           (om/build-all node-view (:children tree)))))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; command bar view
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn- handle-command-bar-key [command-chan ev]
-  (condp = (key-data ev)
-    #{:ENTER} (let [input (.-target ev)]
-                (async/put! command-chan (string/split (.-value input) #"\s+"))
-                (set! (.-value input) "")
-                (.blur input))
-    #{:ESC} (.. ev -target blur) nil)
-  (.stopPropagation ev)) ; allow default behavior instead of keybound
-
-(defn command-bar-view [_ owner]
-  (reify om/IRender
-    (render [_]
-      (dom/input
-        #js {:id "command-bar"
-             :onKeyDown (partial handle-command-bar-key
-                         (om/get-shared owner :command-chan))}))))

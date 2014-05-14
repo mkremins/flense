@@ -102,7 +102,7 @@ body {
   white-space: pre;
 }
 
-#command-bar {
+#cli {
   border: none;
   border-top: 1px solid #ccc;
   bottom: 0;

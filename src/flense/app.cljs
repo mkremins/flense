@@ -5,6 +5,7 @@
             [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
             [flense.ui :as ui]
+            [flense.ui.cli :as cli-ui]
             [flense.ui.error :as err-ui]
             [flense.util :refer [maybe]]
             [flense.zip :as z]
@@ -52,7 +53,7 @@
 (defn- handle-key [ev]
   (let [ks (key-data ev)]
     (when (= ks #{:CTRL :X})
-      (.. js/document (getElementById "command-bar") focus))
+      (.. js/document (getElementById "cli") focus))
     (when-let [keybind (-> ks *keybinds* commands)]
       (.preventDefault ev)
       (exec! keybind
@@ -84,8 +85,8 @@
              {:target (.getElementById js/document "flense-parent")
               :shared {:tx-chan *tx-chan*}
               :tx-listen handle-tx})
-    (om/root ui/command-bar-view nil
-             {:target (.getElementById js/document "command-bar-parent")
+    (om/root cli-ui/cli-view nil
+             {:target (.getElementById js/document "cli-parent")
               :shared {:command-chan command-chan}})
     (om/root err-ui/error-bar-view nil
              {:target (.getElementById js/document "error-bar-parent")
