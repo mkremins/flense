@@ -5,6 +5,7 @@
             [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
             [flense.ui :as ui]
+            [flense.ui.error :as err-ui]
             [flense.util :refer [maybe]]
             [flense.zip :as z]
             [om.core :as om])
@@ -22,7 +23,13 @@
     :tree {:children
            [(p/form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
 
+(def ^:dynamic ^:private *error-chan*)
 (def ^:dynamic ^:private *tx-chan*)
+
+(defn raise!
+  "Display error message `message` to the user in the popover error bar."
+  [message]
+  (async/put! *error-chan* message))
 
 (defn exec!
   "Execute command `f` on the active document, optionally tagging the resulting
@@ -69,6 +76,7 @@
 
 (defn init []
   (set! *keybinds* (p/load-config "resources/config/keymap.edn"))
+  (set! *error-chan* (async/chan))
   (set! *tx-chan* (async/chan))
   (let [command-chan (async/chan)]
     (hist/push-state! @app-state)
@@ -79,6 +87,9 @@
     (om/root ui/command-bar-view nil
              {:target (.getElementById js/document "command-bar-parent")
               :shared {:command-chan command-chan}})
+    (om/root err-ui/error-bar-view nil
+             {:target (.getElementById js/document "error-bar-parent")
+              :shared {:error-chan *error-chan*}})
     (go-loop []
       (let [[command & args] (<! command-chan)]
         (apply handle-command command args))

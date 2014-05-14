@@ -113,3 +113,23 @@ body {
   position: fixed;
   width: 100%;
 }
+
+#error-bar {
+  background: rgb(200,0,0);
+  border-bottom-left-radius: 0.25rem;
+  color: white;
+  padding: 0.5rem;
+  position: fixed;
+  right: 0;
+  top: 0;
+}
+#error-bar.visible {
+  opacity: 1;
+}
+#error-bar.hidden {
+  opacity: 0;
+  transition: opacity 2s ease-out;
+}
+#error-bar:empty {
+  visibility: hidden;
+}
