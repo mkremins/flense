@@ -115,6 +115,7 @@ body {
 }
 
 #error-bar {
+  -webkit-backface-visibility: hidden;
   background: rgb(200,0,0);
   border-bottom-left-radius: 0.25rem;
   color: white;
