@@ -4,6 +4,8 @@
             [om.dom :as dom :include-macros true])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
+(def ^:private TIMEOUT_MILLIS 4000)
+
 (defn error-bar-view [_ owner]
   (reify
     om/IInitState
@@ -18,7 +20,7 @@
               error-chan
               (do (om/set-state! owner :message msg)
                   (om/set-state! owner :visible? true)
-                  (recur (async/timeout 5000)))
+                  (recur (async/timeout TIMEOUT_MILLIS)))
               timeout
               (do (om/set-state! owner :visible? false)
                   (recur (async/chan))))))))
