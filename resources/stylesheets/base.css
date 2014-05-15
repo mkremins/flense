@@ -19,6 +19,14 @@ body {
 
 /* main editor view styles */
 
+.editor {
+  margin-bottom: 80px;
+}
+.editor > * {
+  margin-bottom: 1rem;
+  margin-left: 0;
+}
+
 .token {
   border: none;
   font-family: inherit;
@@ -54,30 +62,20 @@ body {
   resize: none;
 }
 
-.flense {
-  margin-bottom: 80px;
-}
-
-.flense > * {
-  margin-bottom: 1rem;
-  margin-left: 0;
-}
-
-.fn:before  { content: "#("; }
-.fn:after   { content:  ")"; }
-.map:before { content:  "{"; }
-.map:after  { content:  "}"; }
-.seq:before { content:  "("; }
-.seq:after  { content:  ")"; }
-.set:before { content: "#{"; }
-.set:after  { content:  "}"; }
-.vec:before { content:  "["; }
-.vec:after  { content:  "]"; }
-
+.fn:before     { content:  "#("; }
+.fn:after      { content:   ")"; }
+.map:before    { content:   "{"; }
+.map:after     { content:   "}"; }
 .regex:before  { content: "#\""; }
 .regex:after   { content:  "\""; }
+.seq:before    { content:   "("; }
+.seq:after     { content:   ")"; }
+.set:before    { content:  "#{"; }
+.set:after     { content:   "}"; }
 .string:before { content:  "\""; }
 .string:after  { content:  "\""; }
+.vec:before    { content:   "["; }
+.vec:after     { content:   "]"; }
 
 /* match invalid structures and display in red */
 

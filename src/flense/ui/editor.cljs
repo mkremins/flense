@@ -1,4 +1,4 @@
-(ns flense.ui
+(ns flense.ui.editor
   (:refer-clojure :exclude [chars rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as string]
@@ -222,7 +222,7 @@
         (let [el (om/get-node owner)]
           (when-not (in-viewport? el) (scroll-viewport-to-contain el)))))))
 
-(defn root-view [app-state owner]
+(defn editor-view [app-state owner]
   (reify
     om/IWillMount
     (will-mount [_]
@@ -234,5 +234,5 @@
     om/IRender
     (render [_]
       (let [{:keys [tree]} (z/edit app-state assoc :selected? true)]
-        (apply dom/div #js {:className "flense"}
+        (apply dom/div #js {:className "editor"}
           (om/build-all node-view (:children tree)))))))

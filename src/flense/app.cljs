@@ -4,9 +4,9 @@
             [flense.history :as hist]
             [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
-            [flense.ui :as ui]
-            [flense.ui.cli :as cli-ui]
-            [flense.ui.error :as err-ui]
+            [flense.ui.cli :refer [cli-view]]
+            [flense.ui.editor :refer [editor-view]]
+            [flense.ui.error :refer [error-bar-view]]
             [flense.util :refer [maybe]]
             [flense.zip :as z]
             [om.core :as om])
@@ -85,14 +85,14 @@
   (set! *tx-chan* (async/chan))
   (let [command-chan (async/chan)]
     (hist/push-state! @app-state)
-    (om/root ui/root-view app-state
-             {:target (.getElementById js/document "flense-parent")
+    (om/root editor-view app-state
+             {:target (.getElementById js/document "editor-parent")
               :shared {:tx-chan *tx-chan*}
               :tx-listen handle-tx})
-    (om/root cli-ui/cli-view nil
+    (om/root cli-view nil
              {:target (.getElementById js/document "cli-parent")
               :shared {:command-chan command-chan}})
-    (om/root err-ui/error-bar-view nil
+    (om/root error-bar-view nil
              {:target (.getElementById js/document "error-bar-parent")
               :shared {:error-chan *error-chan*}})
     (go-loop []
