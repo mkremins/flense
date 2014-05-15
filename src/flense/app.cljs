@@ -64,8 +64,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-command [command & args]
-  (when (and (= command "open") (first args))
-    (open! (first args))))
+  (condp = command
+    "open"
+    (if-let [fpath (first args)]
+      (open! fpath)
+      (raise! "Must specify a filepath to open"))
+    nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; application setup and wiring
