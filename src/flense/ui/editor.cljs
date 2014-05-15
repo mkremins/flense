@@ -91,15 +91,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-string-key [ev]
-  (when (#{#{:BACKSPACE}
-           #{:LEFT}
-           #{:OPEN_BRACKET}
-           #{:RIGHT}
-           #{:SPACE}
-           #{:SHIFT :NINE}
-           #{:SHIFT :OPEN_BRACKET}
-           #{:SHIFT :QUOTE}
-           #{:SHIFT :THREE}} (key-data ev))
+  (when-not (#{#{:ENTER} #{:UP}} (key-data ev))
     (.stopPropagation ev)))
 
 (defn- string-content-view [data owner]
