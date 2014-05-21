@@ -1,49 +1,49 @@
 {; naked --------------------------------------------------------------------
- #{:BACKSPACE}                  :edit/delete
- #{:DOWN}                       :nav/down
- #{:ENTER}                      :edit/insert-outside
- #{:LEFT}                       :nav/left
- #{:OPEN_BRACKET}               :par/wrap-square
- #{:RIGHT}                      :nav/right
- #{:SPACE}                      :edit/insert-right
- #{:TAB}                        :clj/expand-template
- #{:UP}                         :nav/up
+ #{:BACKSPACE}                  :paredit/remove
+ #{:DOWN}                       :move/down
+ #{:ENTER}                      :paredit/insert-outside
+ #{:LEFT}                       :move/left
+ #{:OPEN_BRACKET}               :paredit/wrap-square
+ #{:RIGHT}                      :move/right
+ #{:SPACE}                      :paredit/insert-right
+ #{:TAB}                        :clojure/expand-template
+ #{:UP}                         :move/up
 
  ; CTRL, CTRL+SHIFT ---------------------------------------------------------
- #{:CTRL :OPEN_BRACKET}         :par/make-square
- #{:CTRL :SHIFT :NINE}          :par/make-round
- #{:CTRL :SHIFT :OPEN_BRACKET}  :par/make-curly
+ #{:CTRL :OPEN_BRACKET}         :paredit/make-square
+ #{:CTRL :SHIFT :NINE}          :paredit/make-round
+ #{:CTRL :SHIFT :OPEN_BRACKET}  :paredit/make-curly
 
  ; CMD ----------------------------------------------------------------------
- #{:CMD :C}                     :clip/copy
- #{:CMD :V}                     :clip/paste
- #{:CMD :X}                     :clip/cut
- #{:CMD :Y}                     :hist/redo
- #{:CMD :Z}                     :hist/undo
+ #{:CMD :C}                     :clipboard/copy
+ #{:CMD :V}                     :clipboard/paste
+ #{:CMD :X}                     :clipboard/cut
+ #{:CMD :Y}                     :history/redo
+ #{:CMD :Z}                     :history/undo
 
  ; CMD+CTRL -----------------------------------------------------------------
- #{:CMD :CTRL :A}               :par/join-left
- #{:CMD :CTRL :K}               :par/swap-left
- #{:CMD :CTRL :L}               :par/swap-right
- #{:CMD :CTRL :LEFT}            :par/barf-left
- #{:CMD :CTRL :NINE}            :par/split-left
- #{:CMD :CTRL :RIGHT}           :par/barf-right
- #{:CMD :CTRL :S}               :par/join-right
- #{:CMD :CTRL :UP}              :par/splice
- #{:CMD :CTRL :ZERO}            :par/split-right
+ #{:CMD :CTRL :A}               :paredit/join-left
+ #{:CMD :CTRL :K}               :paredit/swap-left
+ #{:CMD :CTRL :L}               :paredit/swap-right
+ #{:CMD :CTRL :LEFT}            :paredit/shrink-left
+ ;#{:CMD :CTRL :NINE}            :paredit/split-left
+ #{:CMD :CTRL :RIGHT}           :paredit/shrink-right
+ #{:CMD :CTRL :S}               :paredit/join-right
+ #{:CMD :CTRL :UP}              :paredit/splice
+ ;#{:CMD :CTRL :ZERO}            :paredit/split-right
 
  ; CMD+SHIFT ----------------------------------------------------------------
- #{:CMD :SHIFT :K}              :find/prev-placeholder
- #{:CMD :SHIFT :L}              :find/next-placeholder
- #{:CMD :SHIFT :LEFT}           :par/slurp-left
- #{:CMD :SHIFT :RIGHT}          :par/slurp-right
- #{:CMD :SHIFT :UP}             :par/raise
+ #{:CMD :SHIFT :K}              :move/prev-placeholder
+ #{:CMD :SHIFT :L}              :move/next-placeholder
+ #{:CMD :SHIFT :LEFT}           :paredit/grow-left
+ #{:CMD :SHIFT :RIGHT}          :paredit/grow-right
+ #{:CMD :SHIFT :UP}             :paredit/raise
 
  ; SHIFT --------------------------------------------------------------------
- #{:SHIFT :LEFT}                :nav/prev
- #{:SHIFT :NINE}                :par/wrap-round
- #{:SHIFT :OPEN_BRACKET}        :par/wrap-curly
- #{:SHIFT :QUOTE}               :par/wrap-quote
- #{:SHIFT :RIGHT}               :nav/next
- #{:SHIFT :SPACE}               :edit/insert-left
- #{:SHIFT :THREE}               :clj/toggle-dispatch}
+ #{:SHIFT :LEFT}                :move/prev
+ #{:SHIFT :NINE}                :paredit/wrap-round
+ #{:SHIFT :OPEN_BRACKET}        :paredit/wrap-curly
+ #{:SHIFT :QUOTE}               :paredit/wrap-quote
+ #{:SHIFT :RIGHT}               :move/next
+ #{:SHIFT :SPACE}               :paredit/insert-left
+ #{:SHIFT :THREE}               :clojure/toggle-dispatch}

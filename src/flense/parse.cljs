@@ -52,12 +52,6 @@
 (defn coll-node? [{:keys [type]}]
   (#{:fn :map :regex :seq :set :string :vec} type))
 
-(defn stringish-node? [{:keys [type]}]
-  (#{:regex :string} type))
-
-(def placeholder
-  (form->tree '...))
-
 (defn placeholder-node? [{:keys [text]}]
   (= text "..."))
 
@@ -75,17 +69,6 @@
              (string/join " " (map tree->str (:children tree)))
              (last delims)))
       (:text tree)))
-
-(def expanders
-  {"def"  (form->tree '(def ... ...))
-   "defn" (form->tree '(defn ... [...] ...))
-   "fn"   (form->tree '(fn [...] ...))
-   "if"   (form->tree '(if ... ... ...))
-   "let"  (form->tree '(let [... ...] ...))
-   "when" (form->tree '(when ... ...))})
-
-(defn expand-sexp [{:keys [type text] :as sexp}]
-  (or (when (= type :symbol) (expanders text)) sexp))
 
 (defn- symbol-or-number [text]
   (let [number (js/parseFloat text)]

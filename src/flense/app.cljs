@@ -1,14 +1,16 @@
 (ns flense.app
   (:require [cljs.core.async :as async :refer [<!]]
-            [flense.commands :refer [commands]]
-            [flense.history :as hist]
+            [flense.edit :refer [actions]]
+            [flense.edit.history :as hist]
+            flense.edit.clipboard
+            flense.edit.clojure
+            flense.edit.movement
+            flense.edit.paredit
             [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
             [flense.ui.cli :refer [cli-view]]
             [flense.ui.editor :refer [editor-view]]
             [flense.ui.error :refer [error-bar-view]]
-            [flense.util :refer [maybe]]
-            [flense.zip :as z]
             [om.core :as om])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
@@ -24,19 +26,13 @@
     :tree {:children
            [(p/form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
 
+(def ^:dynamic ^:private *edit-chan*)
 (def ^:dynamic ^:private *error-chan*)
-(def ^:dynamic ^:private *tx-chan*)
 
 (defn raise!
   "Display error message `message` to the user in the popover error bar."
   [message]
   (async/put! *error-chan* message))
-
-(defn exec!
-  "Execute command `f` on the active document, optionally tagging the resulting
-   transaction with `tag`."
-  ([f] (exec! f nil))
-  ([f tag] (async/put! *tx-chan* {:fn (partial maybe f) :tag tag})))
 
 (defn open!
   "Load the source file at `fpath` and open the loaded document, discarding any
@@ -54,10 +50,9 @@
   (let [ks (key-data ev)]
     (when (= ks #{:CTRL :X})
       (.. js/document (getElementById "cli") focus))
-    (when-let [keybind (-> ks *keybinds* commands)]
+    (when-let [keybind (-> ks *keybinds* (@actions))]
       (.preventDefault ev)
-      (exec! keybind
-       (when (#{hist/redo hist/undo} keybind) ::hist/ignore)))))
+      (async/put! *edit-chan* keybind))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; text commands
@@ -75,19 +70,19 @@
 ;; application setup and wiring
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- handle-tx [{:keys [new-state tag]}]
-  (when-not (= tag ::hist/ignore)
+(defn- handle-tx [{:keys [new-state tag] :or {tag #{}}}]
+  (when-not (tag :history)
     (hist/push-state! new-state)))
 
 (defn init []
   (set! *keybinds* (p/load-config "resources/config/keymap.edn"))
+  (set! *edit-chan* (async/chan))
   (set! *error-chan* (async/chan))
-  (set! *tx-chan* (async/chan))
   (let [command-chan (async/chan)]
     (hist/push-state! @app-state)
     (om/root editor-view app-state
              {:target (.getElementById js/document "editor-parent")
-              :shared {:tx-chan *tx-chan*}
+              :shared {:edit-chan *edit-chan*}
               :tx-listen handle-tx})
     (om/root cli-view nil
              {:target (.getElementById js/document "cli-parent")

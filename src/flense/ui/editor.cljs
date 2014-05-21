@@ -2,12 +2,11 @@
   (:refer-clojure :exclude [chars rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as string]
-            [flense.edit :as e]
             [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
-            [flense.zip :as z]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true])
+            [om.dom :as dom :include-macros true]
+            [xyzzy.core :as z])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (defn- class-list [{:keys [selected? type] :as data}]
@@ -218,10 +217,10 @@
   (reify
     om/IWillMount
     (will-mount [_]
-      (let [tx-chan (om/get-shared owner :tx-chan)]
+      (let [edit-chan (om/get-shared owner :edit-chan)]
         (go-loop []
-          (let [tx (<! tx-chan)]
-            (om/transact! app-state (or (:path tx) []) (:fn tx) (:tag tx)))
+          (let [{pred :when, :keys [edit tags]} (<! edit-chan)]
+            (om/transact! app-state [] #(if (pred %) (edit %) %) tags))
           (recur))))
     om/IRender
     (render [_]
