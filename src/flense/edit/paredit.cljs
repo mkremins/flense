@@ -2,7 +2,7 @@
   (:require [flense.edit
              :refer [action coll-loc? nonempty-loc? placeholder
                      placeholder-loc? string-content-loc? token-loc?]]
-            [flense.util :refer [update]]
+            [flense.util :refer [exchange update]]
             [xyzzy.core :as z]))
 
 (action :paredit/grow-left
@@ -119,18 +119,16 @@
 (action :paredit/swap-left
         :when z/left
         :edit (fn [loc]
-                (let [n (-> loc :path peek)]
-                  (-> loc z/up (z/remove-child n)
-                      (z/insert-child (dec n) (z/node loc))
-                      (z/child (dec n))))))
+                (let [i (-> loc :path peek) j (dec i)]
+                  (-> loc z/up (z/edit update :children exchange i j)
+                      (z/child j)))))
 
 (action :paredit/swap-right
         :when z/right
         :edit (fn [loc]
-                (let [n (-> loc :path peek)]
-                  (-> loc z/up (z/remove-child n)
-                      (z/insert-child (inc n) (z/node loc))
-                      (z/child (inc n))))))
+                (let [i (-> loc :path peek) j (inc i)]
+                  (-> loc z/up (z/edit update :children exchange i j)
+                      (z/child j)))))
 
 (defn- wrap [sexp type]
   {:type type :children [sexp]})
