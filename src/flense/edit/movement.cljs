@@ -3,9 +3,7 @@
             [xyzzy.core :as z]))
 
 (defn- find-placeholder [direction loc]
-  (let [p-locs (z/find loc placeholder-loc? direction)
-        p-loc  (first p-locs)]
-    (if (= p-loc loc) (second p-locs) p-loc)))
+  (z/find-next loc placeholder-loc? direction))
 
 (doseq [[name move]
         {:move/down   z/down
