@@ -26,11 +26,11 @@
  #{:CMD :CTRL :K}               :paredit/swap-left
  #{:CMD :CTRL :L}               :paredit/swap-right
  #{:CMD :CTRL :LEFT}            :paredit/shrink-left
- ;#{:CMD :CTRL :NINE}            :paredit/split-left
+ #{:CMD :CTRL :NINE}            :paredit/split-left
  #{:CMD :CTRL :RIGHT}           :paredit/shrink-right
  #{:CMD :CTRL :S}               :paredit/join-right
  #{:CMD :CTRL :UP}              :paredit/splice
- ;#{:CMD :CTRL :ZERO}            :paredit/split-right
+ #{:CMD :CTRL :ZERO}            :paredit/split-right
 
  ; CMD+SHIFT ----------------------------------------------------------------
  #{:CMD :SHIFT :K}              :move/prev-placeholder

@@ -94,6 +94,28 @@
                                      (update :children (comp vec flatten))))
                       (z/child n)))))
 
+(action :paredit/split-left
+        :when #(and (-> % z/up z/up) (not (string-content-loc? %)))
+        :edit (fn [loc]
+                (let [split (-> loc :path peek)
+                      node  (-> loc z/up z/node)
+                      [ls rs] (map vec (split-at split (:children node)))]
+                  (-> loc z/up
+                      (z/edit assoc :children rs)
+                      (z/insert-left (assoc node :children ls))
+                      z/down))))
+
+(action :paredit/split-right
+        :when #(and (-> % z/up z/up) (not (string-content-loc? %)))
+        :edit (fn [loc]
+                (let [split (-> loc :path peek inc)
+                      node  (-> loc z/up z/node)
+                      [ls rs] (map vec (split-at split (:children node)))]
+                  (-> loc z/up
+                      (z/edit assoc :children ls)
+                      (z/insert-right (assoc node :children rs))
+                      z/down z/rightmost))))
+
 (action :paredit/swap-left
         :when z/left
         :edit (fn [loc]
