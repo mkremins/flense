@@ -4,48 +4,21 @@
             [clojure.string :as string]
             [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
+            [flense.util.dom :as udom :refer [px rem]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [xyzzy.core :as z])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (defn- class-list [{:keys [selected? type] :as data}]
-  (string/join " "
-   [(name type)
-    (if (p/coll-node? data) "coll" "token")
-    (when selected? "selected")]))
-
-(defn- move-caret-to-end [input]
-  (let [idx (count (.-value input))]
-    (set! (.-selectionStart input) idx)
-    (set! (.-selectionEnd input) idx)))
-
-(defn- fully-selected? [input]
-  (and (= (.-selectionStart input) 0)
-       (= (.-selectionEnd input) (count (.-value input)))))
-
-(defn- in-viewport? [el]
-  (let [rect (.getBoundingClientRect el)]
-    (and (>= (.-top rect) 0)
-         (<= (.-bottom rect) (.-innerHeight js/window)))))
-
-(defn- scroll-viewport-to-contain [el]
-  (.scrollTo js/window 0
-             (+ (.-offsetTop el)
-                (- (.-innerHeight js/window))
-                (.-offsetHeight el)
-                60)))
+  (string/join " " [(name type)
+                    (if (p/coll-node? data) "coll" "token")
+                    (when selected? "selected")]))
 
 (def ^:private MAX_CHARS 72)
 
 (defn- line-count [text]
   (inc (int (/ (count text) (- MAX_CHARS 2)))))
-
-(defn- px [n]
-  (str n "px"))
-
-(defn- rem [n]
-  (str n "rem"))
 
 (defn- render-width [content]
   (let [tester (.getElementById js/document "width-tester")]
@@ -61,7 +34,7 @@
 
 (defn- handle-key [ev]
   (when (and (= (key-data ev) #{:BACKSPACE})
-             (not (fully-selected? (.-target ev))))
+             (not (udom/fully-selected? (.-target ev))))
     (.stopPropagation ev)))
 
 (defn- token-view [data owner]
@@ -76,13 +49,13 @@
              :value (:text data)}))
     om/IDidMount
     (did-mount [_]
-      (when (:selected? data) (doto (om/get-node owner) .focus .select)))
+      (when (:selected? data) (udom/focus+select (om/get-node owner))))
     om/IDidUpdate
     (did-update [_ prev _]
       (let [input (om/get-node owner)]
         (if (:selected? data)
             (when (or (not (:selected? prev)) (p/placeholder-node? data))
-              (doto input .focus .select))
+              (udom/focus+select input))
             (when (:selected? prev) (.blur input)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -110,13 +83,13 @@
       (when (:selected? data)
         (let [input (om/get-node owner)]
           (if (p/placeholder-node? data)
-              (doto input .focus .select)
-              (move-caret-to-end input)))))
+              (udom/focus+select input)
+              (udom/move-caret-to-end input)))))
     om/IDidUpdate
     (did-update [_ prev _]
       (let [input (om/get-node owner)]
         (if (:selected? data)
-            (when-not (:selected? prev) (move-caret-to-end input))
+            (when-not (:selected? prev) (udom/move-caret-to-end input))
             (when (:selected? prev) (.blur input)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -211,7 +184,7 @@
         (om/refresh! enclosing-view))
       (when (:selected? data)
         (let [el (om/get-node owner)]
-          (when-not (in-viewport? el) (scroll-viewport-to-contain el)))))))
+          (when-not (udom/in-view? el) (udom/scroll-into-view el)))))))
 
 (defn editor-view [app-state owner]
   (reify
