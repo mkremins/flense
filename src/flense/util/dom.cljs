@@ -1,4 +1,5 @@
-(ns flense.util.dom)
+(ns flense.util.dom
+  (:refer-clojure :exclude [rem]))
 
 (defn focus+select [input]
   (doto input .focus .select))
