@@ -34,9 +34,12 @@
    k/SPACE                 :SPACE
    k/TAB                   :TAB})
 
-(defn key-data [ev]
-  (-> #{(key-name (.-keyCode ev))}
-      (#(if (.-altKey ev)   (conj % :ALT)   %))
-      (#(if (.-ctrlKey ev)  (conj % :CTRL)  %))
-      (#(if (.-metaKey ev)  (conj % :CMD)   %))
-      (#(if (.-shiftKey ev) (conj % :SHIFT) %))))
+(defn key-data
+  "Given a key event `ev`, returns a set of keywords representing the key that
+   was pressed and any modifier keys that were held when the press occurred."
+  [ev]
+  (cond-> #{(key-name (.-keyCode ev))}
+          (.-altKey ev)   (conj :ALT)
+          (.-ctrlKey ev)  (conj :CTRL)
+          (.-metaKey ev)  (conj :CMD)
+          (.-shiftKey ev) (conj :SHIFT)))
