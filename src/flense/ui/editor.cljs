@@ -193,7 +193,8 @@
       (let [edit-chan (om/get-shared owner :edit-chan)]
         (go-loop []
           (let [{pred :when, :keys [edit tags]} (<! edit-chan)]
-            (om/transact! app-state [] #(if (pred %) (edit %) %) tags))
+            (when (pred @app-state)
+              (om/transact! app-state [] edit tags)))
           (recur))))
     om/IRender
     (render [_]
