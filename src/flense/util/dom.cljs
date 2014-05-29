@@ -18,9 +18,6 @@
     (set! (.-selectionStart input) idx)
     (set! (.-selectionEnd input) idx)))
 
-(defn px [n]
-  (str n "px"))
-
 (defn rem [n]
   (str n "rem"))
 

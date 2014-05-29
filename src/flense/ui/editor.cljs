@@ -4,7 +4,7 @@
             [clojure.string :as string]
             [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
-            [flense.util.dom :as udom :refer [px rem]]
+            [flense.util.dom :as udom :refer [rem]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [xyzzy.core :as z])
@@ -20,13 +20,8 @@
 (defn- line-count [text]
   (inc (int (/ (count text) (- MAX_CHARS 2)))))
 
-(defn- render-width [content]
-  (let [tester (.getElementById js/document "width-tester")]
-    (set! (.-textContent tester) content)
-    (inc (.-clientWidth tester))))
-
-(def ^:private MAX_WIDTH
-  (render-width (string/join (repeat MAX_CHARS "_"))))
+(defn- chars [tree]
+  (count (p/tree->str tree)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; token views
@@ -45,7 +40,7 @@
         #js {:className (class-list data)
              :onChange #(om/update! data (p/parse-token (.. % -target -value)))
              :onKeyDown handle-key
-             :style #js {:width (px (render-width (p/tree->str data)))}
+             :style #js {:width (rem (/ (chars data) 2))}
              :value (:text data)}))
     om/IDidMount
     (did-mount [_]
@@ -76,7 +71,7 @@
                :onChange #(om/update! data :text (.. % -target -value))
                :onKeyDown handle-string-key
                :style #js {:height (rem (* 1.2 (line-count text)))
-                           :width  (px (min (render-width text) MAX_WIDTH))}
+                           :width  (rem (/ (min (count text) MAX_CHARS) 2))}
                :value text})))
     om/IDidMount
     (did-mount [_]
@@ -97,9 +92,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (declare node-view)
-
-(defn- chars [tree]
-  (count (p/tree->str tree)))
 
 (defn- head-count [items]
   (let [itemc (count items)]

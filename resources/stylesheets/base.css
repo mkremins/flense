@@ -92,14 +92,6 @@ body {
 
 /* styles for stuff other than the main editor view */
 
-#width-tester {
-  left: -1000px;
-  position: absolute;
-  top: -1000px;
-  width: auto;
-  white-space: pre;
-}
-
 #cli {
   border: none;
   border-top: 1px solid #ccc;
