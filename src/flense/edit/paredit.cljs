@@ -19,9 +19,8 @@
         :edit (fn [loc]
                 (let [n   (-> loc :path peek)
                       sib (-> loc z/right z/node)]
-                  (-> loc z/up
-                      (z/remove-child (inc n)) (z/child n)
-                      z/down z/rightmost (z/insert-right sib) z/up))))
+                  (-> loc z/up (z/remove-child (inc n)) (z/child n)
+                      (z/edit #(update % :children conj sib))))))
 
 (action :paredit/insert-left
         :when z/up :edit #(-> % (z/insert-left placeholder) z/left))
