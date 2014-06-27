@@ -1,9 +1,9 @@
 (defproject flense "0.1.0-SNAPSHOT"
   :dependencies
   [[org.clojure/clojure "1.6.0"]
-   [org.clojure/clojurescript "0.0-2227"]
-   [org.clojure/core.async "0.1.298.0-2a82a1-alpha"]
-   [om "0.6.2"]
+   [org.clojure/clojurescript "0.0-2234"]
+   [org.clojure/core.async "0.1.303.0-886421-alpha"]
+   [om "0.6.4"]
    [mkremins/fs "0.2.0"]
    [mkremins/xyzzy "0.1.3"]]
 
