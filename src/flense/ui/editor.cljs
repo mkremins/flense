@@ -27,19 +27,17 @@
 ;; token views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- handle-key [ev]
-  (when (and (= (key-data ev) #{:BACKSPACE})
-             (not (udom/fully-selected? (.-target ev))))
-    (.stopPropagation ev)))
-
 (defn- token-view [data owner]
   (reify
     om/IRender
     (render [_]
       (dom/input
         #js {:className (class-list data)
-             :onChange #(om/update! data (p/parse-token (.. % -target -value)))
-             :onKeyDown handle-key
+             :onChange  #(om/update! data (p/parse-token (.. % -target -value)))
+             :onKeyDown ; prevent delete keybind unless text fully selected
+                        #(when (and (= (key-data %) #{:BACKSPACE})
+                                    (not (udom/fully-selected? (.-target %))))
+                           (.stopPropagation %))
              :style #js {:width (rem (/ (chars data) 2))}
              :value (:text data)}))
     om/IDidMount
@@ -57,10 +55,6 @@
 ;; string content views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- handle-string-key [ev]
-  (when-not (#{#{:ENTER} #{:UP}} (key-data ev))
-    (.stopPropagation ev)))
-
 (defn- string-content-view [data owner]
   (reify
     om/IRender
@@ -68,8 +62,10 @@
       (let [text (string/replace (:text data) #"\s+" " ")]
         (dom/textarea
           #js {:className (class-list data)
-               :onChange #(om/update! data :text (.. % -target -value))
-               :onKeyDown handle-string-key
+               :onChange  #(om/update! data :text (.. % -target -value))
+               :onKeyDown ; prevent keybinds (except those that end editing)
+                          #(when-not (#{#{:ENTER} #{:UP}} (key-data %))
+                             (.stopPropagation %))
                :style #js {:height (rem (* 1.2 (line-count text)))
                            :width  (rem (/ (min (count text) MAX_CHARS) 2))}
                :value text})))
