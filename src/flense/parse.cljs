@@ -7,18 +7,19 @@
   (instance? js/RegExp x))
 
 (defn classify [x]
-  (cond (false?   x) :bool
-        (true?    x) :bool
-        (keyword? x) :keyword
-        (map?     x) :map
-        (nil?     x) :nil
-        (number?  x) :number
-        (regex?   x) :regex
-        (seq?     x) :seq
-        (set?     x) :set
-        (string?  x) :string
-        (symbol?  x) :symbol
-        (vector?  x) :vec))
+  (condp apply [x]
+    false?   :bool
+    true?    :bool
+    keyword? :keyword
+    map?     :map
+    nil?     :nil
+    number?  :number
+    regex?   :regex
+    seq?     :seq
+    set?     :set
+    string?  :string
+    symbol?  :symbol
+    vector?  :vec))
 
 (defn form->tree [form]
   (let [type (classify form)]
