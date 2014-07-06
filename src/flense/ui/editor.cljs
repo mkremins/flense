@@ -131,7 +131,7 @@
   {"defmacro"  {:fixed-head-count 2 :indent 2 :always-multiline? true}
    "defn"      {:fixed-head-count 2 :indent 2 :always-multiline? true}
    "defn-"     {:fixed-head-count 2 :indent 2 :always-multiline? true}
-   "do"        {:fixed-head-count 2 :indent 4}
+   "do"        {:fixed-head-count 2           :always-multiline? true}
    "if"        {:fixed-head-count 2 :indent 2}
    "if-let"    {:fixed-head-count 2 :indent 2 :always-multiline? true}
    "let"       {:fixed-head-count 2 :indent 2 :always-multiline? true}
