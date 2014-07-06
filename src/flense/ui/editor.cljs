@@ -110,10 +110,10 @@
   [data owner opts]
   (reify om/IRender
     (render [_]
-      (let [{:keys [always-multiline? fixed-head-count indent]
+      (let [{:keys [inlineable? fixed-head-count indent]
              :or   {indent (indent-size data)}} opts
-            merge-props (when-not always-multiline? {:enclosing owner})
-            multiline?  (or always-multiline? (> (chars data) MAX_CHARS))  
+            merge-props (when inlineable? {:enclosing owner})
+            multiline?  (or (not inlineable?) (> (chars data) MAX_CHARS))
             children    (:children data)
             headc (or (when multiline? fixed-head-count) (head-count children))
             heads (map #(merge % merge-props) (take headc children))
@@ -128,17 +128,17 @@
 (def ^:private special-formats
   "Formatting options for clojure.core macros that are commonly indented in a
    manner not consistent with the standard function call indentation style."
-  {"defmacro"  {:fixed-head-count 2 :indent 2 :always-multiline? true}
-   "defn"      {:fixed-head-count 2 :indent 2 :always-multiline? true}
-   "defn-"     {:fixed-head-count 2 :indent 2 :always-multiline? true}
-   "do"        {:fixed-head-count 2           :always-multiline? true}
-   "if"        {:fixed-head-count 2 :indent 2}
-   "if-let"    {:fixed-head-count 2 :indent 2 :always-multiline? true}
-   "let"       {:fixed-head-count 2 :indent 2 :always-multiline? true}
-   "loop"      {:fixed-head-count 2 :indent 2 :always-multiline? true}
-   "ns"        {:fixed-head-count 2 :indent 2 :always-multiline? true}
-   "when"      {:fixed-head-count 2 :indent 2}
-   "when-let"  {:fixed-head-count 2 :indent 2 :always-multiline? true}})
+  {"defmacro"  {:fixed-head-count 2 :indent 2}
+   "defn"      {:fixed-head-count 2 :indent 2}
+   "defn-"     {:fixed-head-count 2 :indent 2}
+   "do"        {:fixed-head-count 2}
+   "if"        {:fixed-head-count 2 :indent 2 :inlineable? true}
+   "if-let"    {:fixed-head-count 2 :indent 2}
+   "let"       {:fixed-head-count 2 :indent 2}
+   "loop"      {:fixed-head-count 2 :indent 2}
+   "ns"        {:fixed-head-count 2 :indent 2}
+   "when"      {:fixed-head-count 2 :indent 2 :inlineable? true}
+   "when-let"  {:fixed-head-count 2 :indent 2}})
 
 (defn- seq-view [data owner]
   (reify om/IRender
