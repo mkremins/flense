@@ -114,16 +114,14 @@
              :or   {indent (indent-size data)}} opts
             merge-props (when inlineable? {:enclosing owner})
             multiline?  (or (not inlineable?) (> (chars data) MAX_CHARS))
-            children    (:children data)
-            headc (or (when multiline? fixed-head-count) (head-count children))
-            heads (map #(merge % merge-props) (take headc children))
-            tails (map #(merge % merge-props) (drop headc children))]
+            children    (map #(merge % merge-props) (:children data))
+            headc (or (when multiline? fixed-head-count) (head-count children))]
         (apply dom/div #js {:className (class-list data)}
-         (concat (om/build-all node-view heads)
+         (concat (om/build-all node-view (take headc children))
                  [(apply dom/div
                    #js {:className "runoff-children"
                         :style #js {:margin-left (rem (/ indent 2))}}
-                   (om/build-all node-view tails))]))))))
+                   (om/build-all node-view (drop headc children)))]))))))
 
 (def ^:private special-formats
   "Formatting options for clojure.core macros that are commonly indented in a
