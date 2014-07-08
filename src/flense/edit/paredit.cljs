@@ -1,7 +1,7 @@
 (ns flense.edit.paredit
   (:require [flense.edit
              :refer [action coll-loc? nonempty-loc? placeholder
-                     placeholder-loc? string-content-loc? token-loc?]]
+                     placeholder-loc? stringlike-loc? token-loc?]]
             [flense.util :refer [exchange update]]
             [xyzzy.core :as z]))
 
@@ -94,7 +94,7 @@
                       (z/child n)))))
 
 (action :paredit/split-left
-        :when #(and (-> % z/up z/up) (not (string-content-loc? %)))
+        :when #(and (-> % z/up z/up) (not (stringlike-loc? %)))
         :edit (fn [loc]
                 (let [split (-> loc :path peek)
                       node  (-> loc z/up z/node)
@@ -105,7 +105,7 @@
                       z/down))))
 
 (action :paredit/split-right
-        :when #(and (-> % z/up z/up) (not (string-content-loc? %)))
+        :when #(and (-> % z/up z/up) (not (stringlike-loc? %)))
         :edit (fn [loc]
                 (let [split (-> loc :path peek inc)
                       node  (-> loc z/up z/node)
@@ -133,20 +133,14 @@
   {:type type :children [sexp]})
 
 (action :paredit/wrap-curly
-        :when (complement string-content-loc?)
         :edit #(-> % (z/edit wrap :map) z/down))
 
 (action :paredit/wrap-quote
         :when token-loc?
-        :edit (letfn [(wrap-quote [sexp]
-                        {:type :string
-                         :children [(assoc sexp :type :string-content)]})]
-                #(-> % (z/edit wrap-quote) z/down)))
+        :edit #(z/edit % assoc :type :string :editing? true))
 
 (action :paredit/wrap-round
-        :when (complement string-content-loc?)
         :edit #(-> % (z/edit wrap :seq) z/down))
 
 (action :paredit/wrap-square
-        :when (complement string-content-loc?)
         :edit #(-> % (z/edit wrap :vec) z/down))

@@ -36,8 +36,8 @@
 (defn placeholder-loc? [loc]
   (= (-> loc z/node :text) "..."))
 
-(defn string-content-loc? [loc]
-  (= (-> loc z/node :type) :string-content))
+(defn stringlike-loc? [loc]
+  (#{:regex :string} (-> loc z/node :type)))
 
 (defn token-loc? [loc]
   (#{:bool :keyword :nil :number :symbol} (-> loc z/node :type)))

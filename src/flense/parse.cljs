@@ -24,17 +24,17 @@
 (defn form->tree [form]
   (let [type (classify form)]
     (merge {:type type}
-     (condp contains? type
-      #{:bool :keyword :number :symbol}
-       {:text (str form)}
-      #{:nil}
-       {:text "nil"}
-      #{:seq :set :vec}
-       {:children (mapv form->tree form)}
-      #{:map}
-       {:children (mapv form->tree (interleave (keys form) (vals form)))}
-      #{:regex :string}
-       {:children [{:type :string-content :text form}]}))))
+      (case type
+        (:bool :keyword :number :string :symbol)
+          {:text (str form)}
+        :nil
+          {:text "nil"}
+        (:seq :set :vec)
+          {:children (mapv form->tree form)}
+        :map
+          {:children (mapv form->tree (interleave (keys form) (vals form)))}
+        :regex
+          {:text (.-source form)}))))
 
 (defn- string->forms [string]
   (let [reader (rdr/push-back-reader string)]
@@ -51,24 +51,28 @@
    :tree {:children (->> (fs/slurp fpath) string->forms (mapv form->tree))}})
 
 (defn coll-node? [{:keys [type]}]
-  (#{:fn :map :regex :seq :set :string :vec} type))
+  (#{:fn :map :seq :set :vec} type))
 
 (defn placeholder-node? [{:keys [text]}]
   (= text "..."))
 
+(defn stringlike-node? [{:keys [type]}]
+  (#{:regex :string} type))
+
 (defn tree->str [tree]
-  (if (coll-node? tree)
-      (let [delims
-            ({:fn     ["#("   ")"]
-              :map    ["{"    "}"]
-              :regex  ["#\"" "\""]
-              :seq    ["("    ")"]
-              :set    ["#{"   "}"]
-              :string ["\""  "\""]
-              :vec    ["["    "]"]} (:type tree))]
+  (cond
+    (coll-node? tree)
+      (let [delims ({:fn  ["#(" ")"]
+                     :map ["{"  "}"]
+                     :seq ["("  ")"]
+                     :set ["#{" "}"]
+                     :vec ["["  "]"]} (:type tree))]
         (str (first delims)
              (string/join " " (map tree->str (:children tree)))
              (last delims)))
+    (stringlike-node? tree)
+      (str (if (= (:type tree) :regex) "#\"" \") (:text tree) \")
+    :else
       (:text tree)))
 
 (defn- symbol-or-number [text]

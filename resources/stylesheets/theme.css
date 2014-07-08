@@ -1,6 +1,9 @@
 .selected.token,
 .selected.coll:before,
-.selected.coll:after {
+.selected.coll:after,
+.selected.stringlike:not(.editing):before,
+.selected.stringlike:not(.editing):after,
+.selected.stringlike.editing textarea {
   background: rgb(170,203,249);
 }
 
@@ -8,7 +11,7 @@
   color: rgb(198,115,91);
 }
 
-.string-content {
+.stringlike textarea {
   color: rgb(21,144,155);
 }
 
@@ -18,6 +21,8 @@
 }
 
 .coll:before,
-.coll:after {
+.coll:after,
+.stringlike:before,
+.stringlike:after {
   color: #777;
 }

@@ -10,9 +10,13 @@
             [xyzzy.core :as z])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
-(defn- class-list [{:keys [selected? type] :as data}]
+(defn- class-list [{:keys [editing? selected? type] :as data}]
   (string/join " " [(name type)
-                    (if (p/coll-node? data) "coll" "token")
+                    (cond
+                      (p/coll-node? data) "coll"
+                      (p/stringlike-node? data) "stringlike"
+                      :else "token")
+                    (when editing? "editing")
                     (when selected? "selected")]))
 
 (def ^:private MAX_CHARS 72)
@@ -52,36 +56,37 @@
             (when (:selected? prev) (.blur input)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; string content views
+;; stringlike views
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- string-content-view [data owner]
+(defn- stringlike-view [data owner]
   (reify
     om/IRender
     (render [_]
-      (let [text (string/replace (:text data) #"\s+" " ")]
-        (dom/textarea
-          #js {:className (class-list data)
-               :onChange  #(om/update! data :text (.. % -target -value))
-               :onKeyDown ; prevent keybinds (except those that end editing)
-                          #(when-not (#{#{:ENTER} #{:UP}} (key-data %))
-                             (.stopPropagation %))
-               :style #js {:height (rem (* 1.2 (line-count text)))
-                           :width  (rem (/ (min (count text) MAX_CHARS) 2))}
-               :value text})))
+      (dom/div #js {:className (class-list data)}
+        (let [text (string/replace (:text data) #"\s+" " ")]
+          (dom/textarea
+            #js {:onChange  #(om/update! data :text (.. % -target -value))
+                 :onKeyDown ; prevent keybinds (except those that end editing)
+                            #(when-not (#{#{:ENTER} #{:UP}} (key-data %))
+                               (.stopPropagation %))
+                 :ref "content"
+                 :style #js {:height (rem (* 1.2 (line-count text)))
+                             :width  (rem (/ (min (count text) MAX_CHARS) 2))}
+                 :value text}))))
     om/IDidMount
     (did-mount [_]
-      (when (:selected? data)
-        (let [input (om/get-node owner)]
+      (when (:editing? data)
+        (let [input (om/get-node owner "content")]
           (if (p/placeholder-node? data)
-              (udom/focus+select input)
-              (udom/move-caret-to-end input)))))
+            (udom/focus+select input)
+            (udom/move-caret-to-end input)))))
     om/IDidUpdate
     (did-update [_ prev _]
-      (let [input (om/get-node owner)]
-        (if (:selected? data)
-            (when-not (:selected? prev) (udom/move-caret-to-end input))
-            (when (:selected? prev) (.blur input)))))))
+      (let [input (om/get-node owner "content")]
+        (if (:editing? data)
+          (when-not (:editing? prev) (udom/move-caret-to-end input))
+          (when (:editing? prev) (.blur input)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; seq views
@@ -161,7 +166,7 @@
       (om/build
        (cond (= (:type data) :seq) seq-view
              (p/coll-node? data) coll-view
-             (= (:type data) :string-content) string-content-view
+             (p/stringlike-node? data) stringlike-view
              :else token-view)
        data))
     om/IDidUpdate
