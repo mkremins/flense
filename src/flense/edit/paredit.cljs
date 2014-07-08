@@ -1,7 +1,7 @@
 (ns flense.edit.paredit
   (:require [flense.edit
              :refer [action coll-loc? nonempty-loc? placeholder
-                     placeholder-loc? stringlike-loc? token-loc?]]
+                     placeholder-loc? token-loc?]]
             [flense.util :refer [exchange update]]
             [xyzzy.core :as z]))
 
@@ -94,7 +94,7 @@
                       (z/child n)))))
 
 (action :paredit/split-left
-        :when #(and (-> % z/up z/up) (not (stringlike-loc? %)))
+        :when (comp z/up z/up)
         :edit (fn [loc]
                 (let [split (-> loc :path peek)
                       node  (-> loc z/up z/node)
@@ -105,7 +105,7 @@
                       z/down))))
 
 (action :paredit/split-right
-        :when #(and (-> % z/up z/up) (not (stringlike-loc? %)))
+        :when (comp z/up z/up)
         :edit (fn [loc]
                 (let [split (-> loc :path peek inc)
                       node  (-> loc z/up z/node)
