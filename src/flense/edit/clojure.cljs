@@ -1,21 +1,22 @@
 (ns flense.edit.clojure
-  (:require [flense.edit :refer [action]]
+  (:require [flense.edit :refer [action find-placeholder]]
             [flense.parse :refer [form->tree]]
             [flense.util :refer [maybe update]]
             [xyzzy.core :as z]))
 
 (def templates
-  {"def"   (form->tree '(def ... ...))
-   "defn"  (form->tree '(defn ... [...] ...))
-   "defn-" (form->tree '(defn- ... [...] ...))
-   "fn"    (form->tree '(fn [...] ...))
-   "if"    (form->tree '(if ... ... ...))
-   "let"   (form->tree '(let [... ...] ...))
-   "when"  (form->tree '(when ... ...))})
+  {"def"   '(def ... ...)
+   "defn"  '(defn ... [...] ...)
+   "defn-" '(defn- ... [...] ...)
+   "fn"    '(fn [...] ...)
+   "if"    '(if ... ... ...)
+   "let"   '(let [... ...] ...)
+   "when"  '(when ... ...)})
 
 (action :clojure/expand-template
         :when (comp templates :text z/node)
-        :edit #(z/edit % (comp templates :text)))
+        :edit #(-> % (z/edit (comp form->tree templates :text))
+                 (find-placeholder z/next)))
 
 (def ^:private dispatch-types
   {:map :set, :set :map,
