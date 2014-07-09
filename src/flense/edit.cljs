@@ -41,3 +41,6 @@
 
 (defn token-loc? [loc]
   (#{:bool :keyword :nil :number :symbol} (-> loc z/node :type)))
+
+(defn find-placeholder [loc direction]
+  (z/find-next loc placeholder-loc? direction))

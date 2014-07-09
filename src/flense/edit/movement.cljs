@@ -1,16 +1,13 @@
 (ns flense.edit.movement
-  (:require [flense.edit :refer [action placeholder-loc? stringlike-loc?]]
+  (:require [flense.edit :refer [action find-placeholder stringlike-loc?]]
             [xyzzy.core :as z]))
-
-(defn- find-placeholder [direction loc]
-  (z/find-next loc placeholder-loc? direction))
 
 (doseq [[name move]
         {:move/left   z/left-or-wrap
          :move/next   z/next
-         :move/next-placeholder (partial find-placeholder z/next)
+         :move/next-placeholder #(find-placeholder % z/next)
          :move/prev   z/prev
-         :move/prev-placeholder (partial find-placeholder z/prev)
+         :move/prev-placeholder #(find-placeholder % z/prev)
          :move/right  z/right-or-wrap}]
   (action name :when move :edit move))
 
