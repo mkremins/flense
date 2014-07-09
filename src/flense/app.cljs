@@ -30,9 +30,9 @@
 (def ^:private error-chan (async/chan))
 
 (defn raise!
-  "Display error message `message` to the user in the popover error bar."
-  [message]
-  (async/put! error-chan message))
+  "Display error message `mparts` to the user in the popover error bar."
+  [& mparts]
+  (async/put! error-chan (apply str mparts)))
 
 (defn open!
   "Load the source file at `fpath` and open the loaded document, discarding any
@@ -64,14 +64,14 @@
       (if-let [name (first args)]
         (if-let [action (-> name p/parse-keyword (@actions))]
           (async/put! edit-chan action)
-          (raise! (str "Invalid action \"" name \")))
+          (raise! "Invalid action \"" name \"))
         (raise! "Must specify an action to execute"))
     "open"
       (if-let [fpath (first args)]
         (open! fpath)
         (raise! "Must specify a filepath to open"))
     ;else
-      (raise! (str "Invalid command \"" command \"))))
+      (raise! "Invalid command \"" command \")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; application setup and wiring
