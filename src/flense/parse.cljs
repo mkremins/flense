@@ -87,3 +87,7 @@
                  (= init-ch \\) :char
                  (= init-ch \:) :keyword
                  :else (symbol-or-number text))}))
+
+(defn parse-keyword [text]
+  (let [k (rdr/read-string text)]
+    (when (keyword? k) k)))

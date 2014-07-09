@@ -59,12 +59,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- handle-command [command & args]
-  (condp = command
+  (case command
+    "exec"
+      (if-let [name (first args)]
+        (if-let [action (-> name p/parse-keyword (@actions))]
+          (async/put! edit-chan action)
+          (raise! (str "Invalid action \"" name \")))
+        (raise! "Must specify an action to execute"))
     "open"
-    (if-let [fpath (first args)]
-      (open! fpath)
-      (raise! "Must specify a filepath to open"))
-    nil))
+      (if-let [fpath (first args)]
+        (open! fpath)
+        (raise! "Must specify a filepath to open"))
+    ;else
+      (raise! (str "Invalid command \"" command \"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; application setup and wiring
