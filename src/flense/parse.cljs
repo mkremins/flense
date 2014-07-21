@@ -88,10 +88,6 @@
                  (= init-ch \:) :keyword
                  :else (symbol-or-number text))}))
 
-(defn parse-keyword [text]
-  (let [k (rdr/read-string text)]
-    (when (keyword? k) k)))
-
 (defn tree->form [tree]
   (case (:type tree)
     (:bool :char :keyword :nil :number :symbol) (rdr/read-string (:text tree))

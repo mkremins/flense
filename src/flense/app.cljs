@@ -1,5 +1,6 @@
 (ns flense.app
   (:require [cljs.core.async :as async :refer [<!]]
+            [cljs.reader :as rdr]
             [flense.edit :refer [actions]]
             [flense.edit.history :as hist]
             flense.edit.clipboard
@@ -62,7 +63,7 @@
   (case command
     "exec"
       (if-let [name (first args)]
-        (if-let [action (-> name p/parse-keyword (@actions))]
+        (if-let [action (-> name rdr/read-string (@actions))]
           (async/put! edit-chan action)
           (raise! "Invalid action \"" name \"))
         (raise! "Must specify an action to execute"))
