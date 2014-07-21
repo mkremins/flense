@@ -3,13 +3,15 @@
             [clojure.string :as string]
             [fs]))
 
+(defn- bool? [x]
+  (or (true? x) (false? x)))
+
 (defn- regex? [x]
   (instance? js/RegExp x))
 
 (defn classify [x]
   (condp apply [x]
-    false?   :bool
-    true?    :bool
+    bool?    :bool
     keyword? :keyword
     map?     :map
     nil?     :nil
