@@ -50,4 +50,4 @@
 
 (action :clojure/collapse-macro
         :when #(-> % z/node :collapsed-form)
-        :edit #(z/replace % (-> % z/node :collapsed-form)))
+        :edit #(z/edit % :collapsed-form))
