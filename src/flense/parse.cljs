@@ -91,3 +91,13 @@
 (defn parse-keyword [text]
   (let [k (rdr/read-string text)]
     (when (keyword? k) k)))
+
+(defn tree->form [tree]
+  (case (:type tree)
+    (:bool :char :keyword :nil :number :symbol) (rdr/read-string (:text tree))
+    :map (apply hash-map (map tree->form (:children tree)))
+    :seq (map tree->form (:children tree))
+    :set (set (map tree->form (:children tree)))
+    :vec (mapv tree->form (:children tree))
+    :string (:text tree)
+    :regex (js/RegExp. (:text tree))))
