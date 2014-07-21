@@ -10,14 +10,14 @@
             [xyzzy.core :as z])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
-(defn- class-list [{:keys [editing? selected? type] :as data}]
-  (string/join " " [(name type)
-                    (cond
-                      (p/coll-node? data) "coll"
-                      (p/stringlike-node? data) "stringlike"
-                      :else "token")
-                    (when editing? "editing")
-                    (when selected? "selected")]))
+(defn- class-list [data]
+  (string/join " " [(name (:type data))
+                    (cond (p/coll-node? data) "coll"
+                          (p/stringlike-node? data) "stringlike"
+                          :else "token")
+                    (when (:collapsed-form data) "macroexpanded")
+                    (when (:editing? data) "editing")
+                    (when (:selected? data) "selected")]))
 
 (def ^:private MAX_CHARS 72)
 

@@ -26,3 +26,12 @@
 .stringlike:after {
   color: #777;
 }
+
+.macroexpanded,
+.macroexpanded:before,
+.macroexpanded:after,
+.macroexpanded *,
+.macroexpanded *:before,
+.macroexpanded *:after {
+  color: blue !important;
+}
