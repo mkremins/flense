@@ -45,4 +45,9 @@
 
 (action :clojure/expand-macro
         :when #(-> % z/node tree->form macro-form?)
-        :edit #(z/edit % (comp form->tree macroexpand tree->form)))
+        :edit #(-> % (z/edit (comp form->tree macroexpand tree->form))
+                     (z/edit assoc :collapsed-form (z/node %))))
+
+(action :clojure/collapse-macro
+        :when #(-> % z/node :collapsed-form)
+        :edit #(z/replace % (-> % z/node :collapsed-form)))
