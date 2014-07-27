@@ -2,11 +2,11 @@
   (:refer-clojure :exclude [chars rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as string]
-            [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
             [flense.util.dom :as udom :refer [rem]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
+            [phalanges.core :as phalanges]
             [xyzzy.core :as z])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
@@ -39,7 +39,7 @@
         #js {:className (class-list data)
              :onChange  #(om/update! data (p/parse-token (.. % -target -value)))
              :onKeyDown ; prevent delete keybind unless text fully selected
-                        #(when (and (= (key-data %) #{:BACKSPACE})
+                        #(when (and (= (phalanges/key-set %) #{:backspace})
                                     (not (udom/fully-selected? (.-target %))))
                            (.stopPropagation %))
              :style #js {:width (rem (/ (chars data) 2))}
@@ -68,7 +68,7 @@
           (dom/textarea
             #js {:onChange  #(om/update! data :text (.. % -target -value))
                  :onKeyDown ; prevent keybinds (except those that end editing)
-                            #(when-not (#{#{:ENTER} #{:UP}} (key-data %))
+                            #(when-not (#{#{:enter} #{:up}} (phalanges/key-set %))
                                (.stopPropagation %))
                  :ref "content"
                  :style #js {:height (rem (* 1.2 (line-count text)))

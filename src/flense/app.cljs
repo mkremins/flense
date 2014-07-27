@@ -7,12 +7,12 @@
             flense.edit.clojure
             flense.edit.movement
             flense.edit.paredit
-            [flense.keyboard :refer [key-data]]
             [flense.parse :as p]
             [flense.ui.cli :refer [cli-view]]
             [flense.ui.editor :refer [editor-view]]
             [flense.ui.error :refer [error-bar-view]]
-            [om.core :as om])
+            [om.core :as om]
+            [phalanges.core :as phalanges])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (enable-console-print!)
@@ -48,8 +48,8 @@
 (def ^:dynamic *keybinds*)
 
 (defn- handle-key [ev]
-  (let [ks (key-data ev)]
-    (when (= ks #{:CTRL :X})
+  (let [ks (phalanges/key-set ev)]
+    (when (= ks #{:ctrl :x})
       (.. js/document (getElementById "cli") focus))
     (when-let [keybind (-> ks *keybinds* (@actions))]
       (.preventDefault ev)

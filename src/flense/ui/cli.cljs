@@ -1,17 +1,17 @@
 (ns flense.ui.cli
   (:require [cljs.core.async :as async]
             [clojure.string :as string]
-            [flense.keyboard :refer [key-data]]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]))
+            [om.dom :as dom :include-macros true]
+            [phalanges.core :as phalanges]))
 
 (defn- handle-key [command-chan ev]
-  (condp = (key-data ev)
-    #{:ENTER} (let [input (.-target ev)]
+  (condp = (phalanges/key-set ev)
+    #{:enter} (let [input (.-target ev)]
                 (async/put! command-chan (string/split (.-value input) #"\s+"))
                 (set! (.-value input) "")
                 (.blur input))
-    #{:ESC} (.. ev -target blur) nil)
+    #{:esc} (.. ev -target blur) nil)
   (.stopPropagation ev)) ; allow default behavior instead of keybound
 
 (defn cli-view [_ owner]
