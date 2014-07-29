@@ -1,18 +1,18 @@
 (ns flense.app
   (:require [cljs.core.async :as async :refer [<!]]
             [cljs.reader :as rdr]
-            [flense.edit :refer [actions]]
+            [flense.edit :refer [action actions]]
             [flense.edit.history :as hist]
             flense.edit.clipboard
             flense.edit.clojure
             flense.edit.movement
             flense.edit.paredit
+            [flense.keymap :as keymap]
             [flense.parse :as p]
             [flense.ui.cli :refer [cli-view]]
             [flense.ui.editor :refer [editor-view]]
             [flense.ui.error :refer [error-bar-view]]
-            [om.core :as om]
-            [phalanges.core :as phalanges])
+            [om.core :as om])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (enable-console-print!)
@@ -42,20 +42,6 @@
   (reset! app-state (p/load-source fpath)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; keybinds
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def ^:dynamic *keybinds*)
-
-(defn- handle-key [ev]
-  (let [ks (phalanges/key-set ev)]
-    (when (= ks #{:ctrl :x})
-      (.. js/document (getElementById "cli") focus))
-    (when-let [keybind (-> ks *keybinds* (@actions))]
-      (.preventDefault ev)
-      (async/put! edit-chan keybind))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; text commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -80,12 +66,21 @@
 ;; application setup and wiring
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(action :flense/text-command :edit identity) ; dummy action to trap ctrl+x keybind
+
+(defn- handle-key [ev]
+  (when-let [action (keymap/bound-action ev)]
+    (if (= (:name action) :flense/text-command)
+      (.. js/document (getElementById "cli") focus)
+      (do (.preventDefault ev)
+          (async/put! edit-chan action)))))
+
 (defn- handle-tx [{:keys [new-state tag] :or {tag #{}}}]
   (when-not (tag :history)
     (hist/push-state! new-state)))
 
 (defn init []
-  (set! *keybinds* (p/load-config "resources/config/keymap.edn"))
+  (set! keymap/*bindings* (p/load-config "resources/config/keymap.edn"))
   (let [command-chan (async/chan)]
     (hist/push-state! @app-state)
     (om/root editor-view app-state

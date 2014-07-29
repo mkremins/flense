@@ -13,6 +13,7 @@
  #{:ctrl :open-square-bracket}         :paredit/make-square
  #{:ctrl :shift :nine}                 :paredit/make-round
  #{:ctrl :shift :open-square-bracket}  :paredit/make-curly
+ #{:ctrl :x}                           :flense/text-command
 
  ; meta ---------------------------------------------------------------------
  #{:meta :c}                           :clipboard/copy
