@@ -59,20 +59,22 @@
 ;; text commands
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- handle-command [command & args]
-  (case command
-    "exec"
-      (if-let [name (first args)]
-        (if-let [action (-> name rdr/read-string (@actions))]
-          (async/put! edit-chan action)
-          (raise! "Invalid action \"" name \"))
-        (raise! "Must specify an action to execute"))
-    "open"
-      (if-let [fpath (first args)]
-        (open! fpath)
-        (raise! "Must specify a filepath to open"))
-    ;else
-      (raise! "Invalid command \"" command \")))
+(defmulti handle-command (fn [command & _] command))
+
+(defmethod handle-command :default [command & _]
+  (raise! "Invalid command \"" command \"))
+
+(defmethod handle-command "exec" [_ & args]
+  (if-let [name (first args)]
+    (if-let [action (-> name rdr/read-string (@actions))]
+      (async/put! edit-chan action)
+      (raise! "Invalid action \"" name \"))
+    (raise! "Must specify an action to execute")))
+
+(defmethod handle-command "open" [_ & args]
+  (if-let [fpath (first args)]
+    (open! fpath)
+    (raise! "Must specify a filepath to open")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; application setup and wiring
