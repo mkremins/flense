@@ -4,7 +4,7 @@
    [org.clojure/clojurescript "0.0-2268"]
    [org.clojure/core.async "0.1.303.0-886421-alpha"]
    [om "0.6.4"]
-   [spellhouse/phalanges "0.1.3-SNAPSHOT"]
+   [spellhouse/phalanges "0.1.3"]
    [mkremins/fs "0.2.0"]
    [mkremins/xyzzy "0.1.3"]]
 
