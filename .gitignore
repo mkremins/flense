@@ -2,7 +2,6 @@ pom.xml
 *jar
 /lib/
 /node_modules/
-/vendor/
 /classes/
 /out/
 /target/
