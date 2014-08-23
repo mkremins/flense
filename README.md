@@ -36,5 +36,18 @@ Since only this layer is tied to Clojure semantics in particular, long-term futu
 * Inline code analysis, linting and refactoring suggestions
 * Inline code evaluation at arbitrary levels of granularity
 
+## Building
+
+Flense currently requires [node-webkit](https://github.com/rogerwang/node-webkit) to run. You'll also need [npm](https://www.npmjs.org/) to install some of Flense's dependencies and [Leiningen](http://leiningen.org/) to compile the ClojureScript source.
+
+```bash
+cd path/to/flense
+lein cljsbuild once
+npm install
+path/to/node-webkit .
+```
+
+This will launch Flense as a standalone GUI app.
+
 ## License
 [MIT License](http://opensource.org/licenses/MIT). Hack away.
