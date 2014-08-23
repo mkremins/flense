@@ -4,5 +4,8 @@
   "window": {
     "width": 900,
     "height": 700
+  },
+  "dependencies": {
+    "mkdirp": "0.4.0"
   }
 }
