@@ -1,5 +1,6 @@
 (ns flense.edit
-   (:require [xyzzy.core :as z]))
+   (:require [flense.util :refer [update]]
+             [xyzzy.core :as z]))
 
 (def actions (atom {}))
 
@@ -20,9 +21,11 @@
               to the empty set.
   "
   [name & opts]
-  (let [action (merge {:when (constantly true) :tags #{}}
-                      (apply hash-map opts) {:name name})]
-    (assert (:edit action))
+  (let [{:keys [edit tags], pred :when
+         :or {pred (constantly true), tags #{}}} (apply hash-map opts)
+        action (or (@actions name) {:name name :cases []})
+        action (update action :cases conj {:pred pred :edit edit :tags tags})]
+    (assert edit)
     (swap! actions assoc name action)))
 
 (def placeholder {:type :symbol :text "..."})
