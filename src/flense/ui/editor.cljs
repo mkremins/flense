@@ -19,10 +19,10 @@
                     (when (:editing? data) "editing")
                     (when (:selected? data) "selected")]))
 
-(def ^:private MAX_CHARS 72)
+(def ^:private MAX_CHARS_PER_LINE 72)
 
 (defn- line-count [text]
-  (inc (int (/ (count text) (- MAX_CHARS 2)))))
+  (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
 
 (defn- chars [tree]
   (count (p/tree->str tree)))
@@ -73,7 +73,7 @@
                                (.stopPropagation %))
                  :ref "content"
                  :style #js {:height (rem (* 1.2 (line-count text)))
-                             :width  (rem (/ (min (count text) MAX_CHARS) 2))}
+                             :width  (rem (/ (min (count text) MAX_CHARS_PER_LINE) 2))}
                  :value text}))))
     om/IDidMount
     (did-mount [_]
@@ -101,7 +101,7 @@
       (if-let [idx (first idxs)]
         (let [item-width (chars (nth items idx))
               offset' (+ offset 1 item-width)]
-          (if (> offset' MAX_CHARS) idx (recur offset' (rest idxs))))
+          (if (> offset' MAX_CHARS_PER_LINE) idx (recur offset' (rest idxs))))
         itemc))))
 
 (defn- indent-size [tree]
@@ -119,7 +119,7 @@
       (let [{:keys [inlineable? fixed-head-count indent]
              :or   {indent (indent-size data)}} opts
             merge-props (when inlineable? {:enclosing owner})
-            multiline?  (or (not inlineable?) (> (chars data) MAX_CHARS))
+            multiline?  (or (not inlineable?) (> (chars data) MAX_CHARS_PER_LINE))
             children    (map #(merge % merge-props) (:children data))
             headc (or (when multiline? fixed-head-count) (head-count children))]
         (apply dom/div #js {:className (class-list data)}
