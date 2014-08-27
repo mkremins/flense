@@ -1,9 +1,4 @@
-.selected.token,
-.selected.coll:before,
-.selected.coll:after,
-.selected.stringlike:not(.editing):before,
-.selected.stringlike:not(.editing):after,
-.selected.stringlike.editing textarea {
+.selected  {
   background: rgb(170,203,249);
 }
 
@@ -15,23 +10,7 @@
   color: rgb(21,144,155);
 }
 
-.seq > .symbol:first-child {
+/*.seq > .symbol:first-child {
   color: rgb(119,39,6);
   font-weight: bold;
-}
-
-.coll:before,
-.coll:after,
-.stringlike:before,
-.stringlike:after {
-  color: #777;
-}
-
-.macroexpanded,
-.macroexpanded:before,
-.macroexpanded:after,
-.macroexpanded *,
-.macroexpanded *:before,
-.macroexpanded *:after {
-  color: blue !important;
-}
+}*/

@@ -27,64 +27,15 @@ body {
   margin-left: 0;
 }
 
-.token, .stringlike textarea {
+.atom, .stringlike textarea {
   border: none;
   font-family: inherit;
   font-size: inherit;
   resize: none;
 }
 
-.coll, .stringlike {
-  display: flex;
-  flex-flow: row wrap;
-}
-
-.coll:not(.seq) > :not(:first-child) {
-  margin-left: 0.5rem;
-}
-.seq > :not(:last-child):not(:nth-last-child(2)),
-.runoff-children > :not(:last-child) {
-  margin-right: 0.5rem;
-}
-
-.runoff-children {
-  margin-left: 1rem;
-  margin-top: -1.2rem;
-}
-.runoff-children:before {
-  content: " ";
-  margin-right: 1000px;
-}
-.runoff-children:empty {
-  display: none;
-}
-
-.fn:before     { content:  "#("; }
-.fn:after      { content:   ")"; }
-.map:before    { content:   "{"; }
-.map:after     { content:   "}"; }
-.regex:before  { content: "#\""; }
-.regex:after   { content:  "\""; }
-.seq:before    { content:   "("; }
-.seq:after     { content:   ")"; }
-.set:before    { content:  "#{"; }
-.set:after     { content:   "}"; }
-.string:before { content:  "\""; }
-.string:after  { content:  "\""; }
-.vec:before    { content:   "["; }
-.vec:after     { content:   "]"; }
-
-/* match invalid structures and display in red */
-
-.fn .fn,
-.fn .fn *,
-.fn .fn:before,
-.fn .fn:after {
-  color: red;
-}
-
-.map > :nth-child(odd):last-child {
-  color: red;
+.spacer {
+  white-space: pre;
 }
 
 /* styles for stuff other than the main editor view */
