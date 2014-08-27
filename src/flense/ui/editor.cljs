@@ -30,11 +30,17 @@
 (def spacer
   {:classes #{:spacer} :content \space})
 
+(defn annotate-head [form]
+  (if (= (:type form) :seq)
+    (let [[head & tail] (:children form)]
+      (assoc form :children (vec (concat [(assoc head :head? true)] tail))))
+    form))
+
 (defn ->tokens [form]
   (if (p/coll-node? form)
     (concat
       [(delimiter form :left)]
-      (->> (:children form)
+      (->> (:children (annotate-head form))
            (mapcat ->tokens)
            (interpose spacer))
       [(delimiter form :right)])
@@ -51,7 +57,7 @@
 
 (defn ->lines [form]
   (if (and (p/coll-node? form) (not (fits-on-own-line? form)))
-    (let [children (:children form)
+    (let [children (:children (annotate-head form))
           indent (if (= (:type form) :seq) [spacer spacer] [spacer])]
       (loop [lines []
              line (concat [(delimiter form :left)] (->tokens (first children)))
@@ -87,6 +93,7 @@
         :className
           (class-name
            (cond-> #{:atom (:type form)}
+                   (:head? form) (conj :head)
                    (:selected? form) (conj :selected)
                    (:collapsed-form form) (conj :macroexpanded)))
         :onChange 

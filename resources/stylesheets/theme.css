@@ -10,7 +10,7 @@
   color: rgb(21,144,155);
 }
 
-/*.seq > .symbol:first-child {
+.symbol.head {
   color: rgb(119,39,6);
   font-weight: bold;
-}*/
+}
