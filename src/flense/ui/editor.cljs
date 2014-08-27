@@ -46,6 +46,9 @@
 (defn fits-on-own-line? [form]
   (<= (chars form) MAX_CHARS_PER_LINE))
 
+(defn has-content? [line]
+  (not-every? #(contains? (:classes %) :spacer) line))
+
 (defn ->lines [form]
   (if (and (p/coll-node? form) (not (fits-on-own-line? form)))
     (let [children (:children form)
@@ -56,8 +59,7 @@
         (if-let [child (first children)]
           (cond
             (fits-on-line? line child) ; append child to current line
-            (let [line (if (every? #(contains? (:classes %) :spacer) line)
-                         line (concat line [spacer]))]
+            (let [line (cond-> line (has-content? line) (concat [spacer]))]
               (recur lines
                      (concat line (->tokens child))
                      (rest children)))
@@ -66,10 +68,10 @@
                    (concat indent (->tokens child))
                    (rest children))
             :else ; split child across multiple lines and insert them all
-            (recur (vec (concat (conj lines line)
-                                (map #(concat indent %) (->lines child))))
-                   (if (rest children) indent ())
-                   (rest children)))
+            (let [lines (cond-> lines (has-content? line) (conj line))]
+              (recur (vec (concat lines (map #(concat indent %) (->lines child))))
+                     (if (rest children) indent ())
+                     (rest children))))
           (conj lines (concat line [(delimiter form :right)])))))
     [(->tokens form)]))
 
