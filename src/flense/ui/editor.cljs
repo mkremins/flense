@@ -31,9 +31,8 @@
   {:classes #{:spacer} :content \space})
 
 (defn annotate-head [form]
-  (if (= (:type form) :seq)
-    (let [[head & tail] (:children form)]
-      (assoc form :children (vec (concat [(assoc head :head? true)] tail))))
+  (if (and (= (:type form) :seq) (seq (:children form)))
+    (update-in form [:children 0] assoc :head? true)
     form))
 
 (defn ->tokens [form]
