@@ -72,7 +72,9 @@
               (recur (vec (concat lines (map #(concat indent %) (->lines child))))
                      (if (rest children) indent ())
                      (rest children))))
-          (conj lines (concat line [(delimiter form :right)])))))
+          (if (has-content? line)
+            (conj lines (concat line [(delimiter form :right)]))
+            (conj (pop lines) (concat (peek lines) [(delimiter form :right)]))))))
     [(->tokens form)]))
 
 ;; Om components
