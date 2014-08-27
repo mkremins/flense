@@ -67,7 +67,10 @@
 (action :paredit/remove
         :when z/up
         :edit #(if (placeholder-loc? %)
-                   (z/remove %)
+                   (if (and (not (-> % z/up z/up))
+                            (= (-> % z/up z/node :children count) 1))
+                       %
+                       (z/remove %))
                    (z/replace % placeholder)))
 
 (action :paredit/shrink-left
