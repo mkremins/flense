@@ -40,8 +40,9 @@
     (concat
       [(delimiter form :left)]
       (->> (:children (annotate-head form))
-           (mapcat ->tokens)
-           (interpose spacer))
+           (map ->tokens)
+           (interpose [spacer])
+           (apply concat))
       [(delimiter form :right)])
     [form]))
 
@@ -95,7 +96,7 @@
                    (:head? form) (conj :head)
                    (:selected? form) (conj :selected)
                    (:collapsed-form form) (conj :macroexpanded)))
-        :onChange 
+        :onChange
           #(om/update! form (p/parse-token (.. % -target -value)))
         :onKeyDown ; prevent delete keybind unless text fully selected
           #(when (and (= (:name (keymap/bound-action %)) :paredit/remove)
