@@ -56,9 +56,11 @@
         (if-let [child (first children)]
           (cond
             (fits-on-line? line child) ; append child to current line
-            (recur lines
-                   (concat line [spacer] (->tokens child))
-                   (rest children))
+            (let [line (if (every? #(contains? (:classes %) :spacer) line)
+                         line (concat line [spacer]))]
+              (recur lines
+                     (concat line (->tokens child))
+                     (rest children)))
             (fits-on-own-line? child) ; insert a new line containing child
             (recur (conj lines line)
                    (concat indent (->tokens child))
