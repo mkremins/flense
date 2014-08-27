@@ -12,8 +12,7 @@
 (def ^:private MAX_CHARS_PER_LINE 72)
 
 (defn class-name [classes]
-  (->> classes (filter identity) ; debug
-               (map name) (str/join " ")))
+  (->> classes (map name) (str/join " ")))
 
 (defn chars [token-or-form]
   (if (:content token-or-form)
