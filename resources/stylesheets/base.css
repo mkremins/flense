@@ -45,12 +45,10 @@ body {
   vertical-align: top;
 }
 
-.string::before {
-  content: "\"";
-}
-.string::after {
-  content: "\"";
-}
+.regex::before  { content: "#\""; }
+.regex::after   { content:  "\""; }
+.string::before { content:  "\""; }
+.string::after  { content:  "\""; }
 
 .spacer {
   white-space: pre;
