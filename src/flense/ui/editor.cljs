@@ -22,6 +22,9 @@
     (count (:content token-or-form))
     (count (p/tree->str token-or-form))))
 
+(defn line-count [text]
+  (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
+
 (defn delimiter [{:keys [selected? type]} l-or-r]
   {:classes (cond-> #{:delimiter type l-or-r} selected? (conj :selected))
    :content (case [type l-or-r]
@@ -58,36 +61,44 @@
 (defn has-content? [line]
   (not-every? #(contains? (:classes %) :spacer) line))
 
+(defmulti ->lines*
+  (fn [form]
+    (when (and (= (:type form) :seq)
+               (= (:type (first (:children form))) :symbol))
+      (symbol (get-in form [:children 0 :text])))))
+
+(declare ->lines)
+
+(defmethod ->lines* :default [form]
+  (let [children (:children form)
+        indent (if (= (:type form) :seq) [spacer spacer] [spacer])]
+    (loop [lines []
+           line (concat [(delimiter form :left)] (->tokens (first children)))
+           children (rest children)]
+      (if-let [child (first children)]
+        (cond
+          (fits-on-line? line child) ; append child to current line
+          (let [line (cond-> line (has-content? line) (concat [spacer]))]
+            (recur lines
+                   (concat line (->tokens child))
+                   (rest children)))
+          (fits-on-own-line? child) ; insert a new line containing child
+          (recur (conj lines line)
+                 (concat indent (->tokens child))
+                 (rest children))
+          :else ; split child across multiple lines and insert them all
+          (let [lines (cond-> lines (has-content? line) (conj line))]
+            (recur (vec (concat lines (map #(concat indent %) (->lines child))))
+                   (if (rest children) indent ())
+                   (rest children))))
+        (if (has-content? line)
+          (conj lines (concat line [(delimiter form :right)]))
+          (conj (pop lines) (concat (peek lines) [(delimiter form :right)])))))))
+
 (defn ->lines [form]
   (if (and (p/coll-node? form) (not (fits-on-own-line? form)))
-    (let [children (:children (annotate-head form))
-          indent (if (= (:type form) :seq) [spacer spacer] [spacer])]
-      (loop [lines []
-             line (concat [(delimiter form :left)] (->tokens (first children)))
-             children (rest children)]
-        (if-let [child (first children)]
-          (cond
-            (fits-on-line? line child) ; append child to current line
-            (let [line (cond-> line (has-content? line) (concat [spacer]))]
-              (recur lines
-                     (concat line (->tokens child))
-                     (rest children)))
-            (fits-on-own-line? child) ; insert a new line containing child
-            (recur (conj lines line)
-                   (concat indent (->tokens child))
-                   (rest children))
-            :else ; split child across multiple lines and insert them all
-            (let [lines (cond-> lines (has-content? line) (conj line))]
-              (recur (vec (concat lines (map #(concat indent %) (->lines child))))
-                     (if (rest children) indent ())
-                     (rest children))))
-          (if (has-content? line)
-            (conj lines (concat line [(delimiter form :right)]))
-            (conj (pop lines) (concat (peek lines) [(delimiter form :right)]))))))
+    (->lines* (annotate-head form))
     [(->tokens form)]))
-
-(defn line-count [text]
-  (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
 
 ;; Om components
 
