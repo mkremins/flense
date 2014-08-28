@@ -34,6 +34,24 @@ body {
   resize: none;
 }
 
+.stringlike {
+  display: inline-block;
+  line-height: 0;
+  vertical-align: top;
+}
+.stringlike::before,
+.stringlike::after {
+  line-height: 1;
+  vertical-align: top;
+}
+
+.string::before {
+  content: "\"";
+}
+.string::after {
+  content: "\"";
+}
+
 .spacer {
   white-space: pre;
 }

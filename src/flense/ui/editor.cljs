@@ -14,8 +14,11 @@
 (defn class-name [classes]
   (->> classes (map name) (str/join " ")))
 
+(defn presentational? [token-or-form]
+  (contains? token-or-form :content))
+
 (defn chars [token-or-form]
-  (if (:content token-or-form)
+  (if (presentational? token-or-form)
     (count (:content token-or-form))
     (count (p/tree->str token-or-form))))
 
@@ -83,6 +86,9 @@
             (conj (pop lines) (concat (peek lines) [(delimiter form :right)]))))))
     [(->tokens form)]))
 
+(defn line-count [text]
+  (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
+
 ;; Om components
 
 (defn atom-view [form owner]
@@ -117,6 +123,45 @@
           (when (:selected? prev)
             (.blur input)))))))
 
+(defn stringlike-view [form owner]
+  (reify
+    om/IRender
+    (render [_]
+      (dom/div #js {
+        :className
+          (class-name
+           (cond-> #{:stringlike (:type form)}
+                   (:editing? form) (conj :editing)
+                   (:selected? form) (conj :selected)))}
+        (let [text (str/replace (:text form) #"\s+" " ")]
+          (dom/textarea #js {
+            :onChange
+              #(om/update! form :text (.. % -target -value))
+            :onKeyDown ; prevent keybinds (except those that end editing)
+              #(when-not (-> % keymap/bound-action :name
+                             #{:flense/text-command :move/up :paredit/insert-outside})
+                 (.stopPropagation %))
+            :ref "content"
+            :style #js {
+              :height (rem (* 1.2 (line-count text)))
+              :width  (rem (/ (min (count text) MAX_CHARS_PER_LINE) 2))}
+            :value text}))))
+    om/IDidMount
+    (did-mount [_]
+      (when (:editing? form)
+        (let [input (om/get-node owner "content")]
+          (if (p/placeholder-node? form)
+            (udom/focus+select input)
+            (udom/move-caret-to-end input)))))
+    om/IDidUpdate
+    (did-update [_ prev _]
+      (let [input (om/get-node owner "content")]
+        (if (:editing? form)
+          (when-not (:editing? prev)
+            (udom/move-caret-to-end input))
+          (when (:editing? prev)
+            (.blur input)))))))
+
 (defn form-view [form owner]
   (reify om/IRender
     (render [_]
@@ -124,10 +169,14 @@
         (for [line (->lines form)]
           (apply dom/div #js {:className "line"}
             (for [token line]
-              (if-not (:content token)
-                (om/build atom-view token)
+              (cond
+                (presentational? token)
                 (dom/span #js {:className (class-name (:classes token))}
-                  (:content token))))))))))
+                  (:content token))
+                (p/stringlike-node? token)
+                (om/build stringlike-view token)
+                :else
+                (om/build atom-view token)))))))))
 
 (defn editor-view [document owner]
   (reify

@@ -1,4 +1,7 @@
-.selected  {
+.selected,
+.selected.stringlike:not(.editing)::before,
+.selected.stringlike:not(.editing)::after,
+.selected.stringlike.editing textarea {
   background: rgb(170,203,249);
 }
 
@@ -15,6 +18,8 @@
   font-weight: bold;
 }
 
-.delimiter {
+.delimiter,
+.stringlike::before,
+.stringlike::after {
   color: #777;
 }
