@@ -4,6 +4,23 @@
 (defn- update-last [v f & args]
   (conj (pop v) (apply f (peek v) args)))
 
+;; iflike
+
+(defn iflike->lines [form]
+  (let [[opener closer] (delimiters form)
+        [head test then else & more] (:children form)
+        init-line (concat opener (->tokens head) (spacer) (->tokens test))
+        then-lines (map #(concat (spacer 2) %) (->lines then))
+        else-lines (map #(concat (spacer 2) %) (->lines else))
+        more-lines (map #(concat (spacer 2) %) (mapcat ->lines more))
+        lines `[~init-line ~@then-lines ~@else-lines ~@more-lines]]
+    (update-last lines concat closer)))
+
+(doseq [iflike '[if if-let if-not if-some]]
+  (defmethod ->lines* iflike [form] (iflike->lines form)))
+
+;; letlike
+
 (defn bpair->tokens [[bform bval]]
   (concat (->tokens bform) (spacer) (->tokens bval)))
 
@@ -35,6 +52,8 @@
 
 (doseq [letlike '[binding let loop]]
   (defmethod ->lines* letlike [form] (letlike->lines form)))
+
+;; whenlike
 
 (defn whenlike->lines [form]
   (let [[opener closer] (delimiters form)
