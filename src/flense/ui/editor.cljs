@@ -33,8 +33,10 @@
               [:map :left] "{",  [:map :right] "}"
               [:set :left] "#{", [:set :right] "}")})
 
-(def spacer
-  {:classes #{:spacer} :content \space})
+(defn spacer
+  ([] (spacer 1))
+  ([n] [{:classes #{:spacer}
+         :content (str/join (repeat n \space))}]))
 
 (defn annotate-head [form]
   (if (and (= (:type form) :seq) (seq (:children form)))
@@ -47,7 +49,7 @@
       [(delimiter form :left)]
       (->> (:children (annotate-head form))
            (map ->tokens)
-           (interpose [spacer])
+           (interpose (spacer))
            (apply concat))
       [(delimiter form :right)])
     [form]))
@@ -71,14 +73,14 @@
 
 (defmethod ->lines* :default [form]
   (let [children (:children form)
-        indent (if (= (:type form) :seq) [spacer spacer] [spacer])]
+        indent (if (= (:type form) :seq) (spacer 2) (spacer))]
     (loop [lines []
            line (concat [(delimiter form :left)] (->tokens (first children)))
            children (rest children)]
       (if-let [child (first children)]
         (cond
           (fits-on-line? line child) ; append child to current line
-          (let [line (cond-> line (has-content? line) (concat [spacer]))]
+          (let [line (cond-> line (has-content? line) (concat (spacer)))]
             (recur lines
                    (concat line (->tokens child))
                    (rest children)))
