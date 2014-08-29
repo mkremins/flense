@@ -25,13 +25,11 @@
 (defn line-count [text]
   (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
 
-(defn delimiter [{:keys [selected? type]} l-or-r]
-  {:classes (cond-> #{:delimiter type l-or-r} selected? (conj :selected))
-   :content (case [type l-or-r]
-              [:seq :left] "(",  [:seq :right] ")"
-              [:vec :left] "[",  [:vec :right] "]"
-              [:map :left] "{",  [:map :right] "}"
-              [:set :left] "#{", [:set :right] "}")})
+(defn delimiters [{:keys [selected? type]}]
+  [[{:classes (cond-> #{:delimiter type :left} selected? (conj :selected))
+     :content (case type :seq "(" :vec "[" :map "{" :set "#{")}]
+   [{:classes (cond-> #{:delimiter type :right} selected? (conj :selected))
+     :content (case type :seq ")" :vec "]" (:map :set) "}")}]])
 
 (defn spacer
   ([] (spacer 1))
@@ -45,13 +43,13 @@
 
 (defn ->tokens [form]
   (if (p/coll-node? form)
-    (concat
-      [(delimiter form :left)]
-      (->> (:children (annotate-head form))
-           (map ->tokens)
-           (interpose (spacer))
-           (apply concat))
-      [(delimiter form :right)])
+    (let [[opener closer] (delimiters form)]
+      (concat opener
+        (->> (:children (annotate-head form))
+             (map ->tokens)
+             (interpose (spacer))
+             (apply concat))
+        closer))
     [form]))
 
 (defn fits-on-line? [line form]
@@ -73,9 +71,10 @@
 
 (defmethod ->lines* :default [form]
   (let [children (:children form)
-        indent (if (= (:type form) :seq) (spacer 2) (spacer))]
+        indent (if (= (:type form) :seq) (spacer 2) (spacer))
+        [opener closer] (delimiters form)]
     (loop [lines []
-           line (concat [(delimiter form :left)] (->tokens (first children)))
+           line (concat opener (->tokens (first children)))
            children (rest children)]
       (if-let [child (first children)]
         (cond
@@ -94,8 +93,8 @@
                    (if (rest children) indent ())
                    (rest children))))
         (if (has-content? line)
-          (conj lines (concat line [(delimiter form :right)]))
-          (conj (pop lines) (concat (peek lines) [(delimiter form :right)])))))))
+          (conj lines (concat line closer))
+          (conj (pop lines) (concat (peek lines) closer)))))))
 
 (defn ->lines [form]
   (if (and (p/coll-node? form) (not (fits-on-own-line? form)))
