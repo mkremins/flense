@@ -11,6 +11,7 @@
             [flense.parse :as p]
             [flense.ui.cli :refer [cli-view]]
             [flense.ui.editor :refer [editor-view]]
+            flense.ui.editor.layout
             [flense.ui.error :refer [error-bar-view]]
             [om.core :as om])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
