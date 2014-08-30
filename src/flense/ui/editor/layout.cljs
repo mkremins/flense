@@ -4,6 +4,20 @@
 (defn- update-last [v f & args]
   (conj (pop v) (apply f (peek v) args)))
 
+;; deflike
+
+(defn deflike->lines [form]
+  (let [[opener closer] (delimiters form)
+        [head def-sym & more] (:children form)
+        init-line (concat opener (->tokens head) (spacer) (->tokens def-sym))
+        more-lines (map #(concat (spacer 2) %) (mapcat ->lines more))
+        lines `[~init-line ~@more-lines]]
+    (update-last lines concat closer)))
+
+(doseq [deflike '[def definline definterface defmacro defmethod defmulti defn
+                  defn- defonce defprotocol defrecord defstruct deftype]]
+  (defmethod ->lines* deflike [form] (deflike->lines form)))
+
 ;; iflike
 
 (defn iflike->lines [form]
