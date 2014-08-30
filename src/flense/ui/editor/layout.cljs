@@ -4,36 +4,26 @@
 (defn- update-last [v f & args]
   (conj (pop v) (apply f (peek v) args)))
 
-;; deflike
+;; simple "header+body" layout is good enough for most core macros
 
-(defn deflike->lines [form]
+(defn header+body->lines [form headc]
   (let [[opener closer] (delimiters form)
-        [head def-sym & more] (:children form)
-        init-line (concat opener (->tokens head) (spacer) (->tokens def-sym))
-        more-lines (map #(concat (spacer 2) %) (mapcat ->lines more))
-        lines `[~init-line ~@more-lines]]
+        [inits rests] (split-at headc (:children form))
+        init-line (concat opener (apply concat (interpose (spacer) (map ->tokens inits))))
+        rest-lines (map #(concat (spacer 2) %) (mapcat ->lines rests))
+        lines `[~init-line ~@rest-lines]]
     (update-last lines concat closer)))
 
-(doseq [deflike '[def definline definterface defmacro defmethod defmulti defn
-                  defn- defonce defprotocol defrecord defstruct deftype]]
-  (defmethod ->lines* deflike [form] (deflike->lines form)))
+(def header-counts
+  '{case 2, cond 1, condp 3, def 2, definline 2, definterface 2, defmacro 2, defmethod 3,
+    defmulti 2, defn 2, defn- 2, defonce 2, defprotocol 2, defrecord 3, defstruct 2, deftype 3,
+    dotimes 2, if 2, if-let 2, if-not 2, if-some 2, when 2, when-first 2, when-let 2, when-not 2,
+    when-some 2})
 
-;; iflike
+(doseq [[core-macro headc] header-counts]
+  (defmethod ->lines* core-macro [form] (header+body->lines form headc)))
 
-(defn iflike->lines [form]
-  (let [[opener closer] (delimiters form)
-        [head test then else & more] (:children form)
-        init-line (concat opener (->tokens head) (spacer) (->tokens test))
-        then-lines (map #(concat (spacer 2) %) (->lines then))
-        else-lines (map #(concat (spacer 2) %) (->lines else))
-        more-lines (map #(concat (spacer 2) %) (mapcat ->lines more))
-        lines `[~init-line ~@then-lines ~@else-lines ~@more-lines]]
-    (update-last lines concat closer)))
-
-(doseq [iflike '[if if-let if-not if-some]]
-  (defmethod ->lines* iflike [form] (iflike->lines form)))
-
-;; letlike
+;; letlike core macros need their own layout algorithm
 
 (defn bpair->tokens [[bform bval]]
   (concat (->tokens bform) (spacer) (->tokens bval)))
@@ -64,18 +54,5 @@
         `[~init-line ~@bvec-lines ~@body-lines])
       ((get-method ->lines* :default) form))))
 
-(doseq [letlike '[binding let loop]]
+(doseq [letlike '[binding doseq for let loop]]
   (defmethod ->lines* letlike [form] (letlike->lines form)))
-
-;; whenlike
-
-(defn whenlike->lines [form]
-  (let [[opener closer] (delimiters form)
-        [head test & body] (:children form)
-        init-line (concat opener (->tokens head) (spacer) (->tokens test))
-        body-lines (mapv #(concat (spacer 2) %) (mapcat ->lines body))
-        body-lines (update-last body-lines concat closer)]
-    `[~init-line ~@body-lines]))
-
-(doseq [whenlike '[when when-first when-let when-not when-some]]
-  (defmethod ->lines* whenlike [form] (whenlike->lines form)))
