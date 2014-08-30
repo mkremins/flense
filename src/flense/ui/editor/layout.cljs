@@ -15,10 +15,10 @@
     (update-last lines concat closer)))
 
 (def header-counts
-  '{case 2, cond 1, condp 3, def 2, definline 2, definterface 2, defmacro 2, defmethod 3,
-    defmulti 2, defn 2, defn- 2, defonce 2, defprotocol 2, defrecord 3, defstruct 2, deftype 3,
-    dotimes 2, if 2, if-let 2, if-not 2, if-some 2, when 2, when-first 2, when-let 2, when-not 2,
-    when-some 2})
+  '{-> 2, ->> 2, as-> 3, case 2, cond 1, cond-> 2, cond->> 2, condp 3, def 2, definline 2,
+    definterface 2, defmacro 2, defmethod 3, defmulti 2, defn 2, defn- 2, defonce 2, defprotocol 2,
+    defrecord 3, defstruct 2, deftype 3, do 2, dotimes 2, if 2, if-let 2, if-not 2, if-some 2,
+    some-> 2, some->> 2, when 2, when-first 2, when-let 2, when-not 2, when-some 2})
 
 (doseq [[core-macro headc] header-counts]
   (defmethod ->lines* core-macro [form] (header+body->lines form headc)))
