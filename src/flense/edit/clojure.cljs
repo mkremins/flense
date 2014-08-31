@@ -68,29 +68,30 @@
             (= (:text sym) sym-name)))
     z/next))
 
+(defn- children [loc]
+  (let [loc' (z/down loc)]
+    (cons loc' (z/followers loc' z/right))))
+
 (defn- bsym-locs [loc]
-  (let [form (z/node loc)]
-    (case (:type form)
-      :symbol [loc]
-      :vec (let [loc' (z/down loc)]
-             (mapcat bsym-locs (cons loc' (z/followers loc' z/right))))
-      [])))
+  (case (:type (z/node loc))
+    :symbol [loc]
+    (:map :vec) (mapcat bsym-locs (children loc))
+    []))
 
 (defn- binding-locs [loc]
-  (let [[head :as children] (:children (z/node loc))]
+  (let [[head next] (:children (z/node loc))]
     (cond
       (and (#{"binding" "doseq" "for" "if-let" "if-some" "let" "loop" "when-first" "when-let"
               "when-some"} (:text head))
-           (= (:type (second children)) :vec))
-      (let [loc' (-> loc z/down z/right z/down)]
-        (->> (cons loc' (z/followers loc' z/right))
-             (partition 2)
-             (map first)
-             (mapcat bsym-locs)))
+           (= (:type next) :vec))
+      (->> (children (-> loc z/down z/right))
+           (partition 2)
+           (map first)
+           (mapcat bsym-locs))
       (#{"defmacro" "defmethod" "defn" "defn-" "fn"} (:text head))
-      (when-let [loc' (seek #(= (:type (z/node %)) :vec)
-                        (z/followers (z/down loc) z/right))]
-        (mapcat bsym-locs (cons loc' (z/followers loc' z/right)))))))
+      (->> (seek #(= (:type (z/node %)) :vec) (children loc))
+           children
+           (mapcat bsym-locs)))))
 
 (defn- find-definition [loc sym-name]
   (if-let [loc' (z/up loc)]
