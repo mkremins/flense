@@ -6,6 +6,8 @@
             [flense.util :refer [maybe update]]
             [xyzzy.core :as z]))
 
+;; expand templates
+
 (def templates
   {"def"   '(def ... ...)
    "defn"  '(defn ... [...] ...)
@@ -20,6 +22,8 @@
         :edit #(-> % (z/edit (comp form->tree templates :text))
                  (find-placeholder z/next)))
 
+;; toggle dispatch reader macro
+
 (def ^:private dispatch-types
   {:map :set, :set :map,
    :seq :fn, :fn :seq,
@@ -28,6 +32,8 @@
 (action :clojure/toggle-dispatch
         :when #(contains? dispatch-types (-> % z/node :type))
         :edit #(z/edit % update :type (partial maybe dispatch-types)))
+
+;; expand and collapse macro forms
 
 (def macros
   {'when (fn [test & body] `(if ~test (do ~@body) nil))})
@@ -53,16 +59,39 @@
         :when #(-> % z/node :collapsed-form)
         :edit #(z/edit % :collapsed-form))
 
-(defn- top [loc]
-  (assoc loc :path []))
+;; jump to definition
 
-(defn- find-definition [loc sym]
-  (z/find-next-node (top loc)
-    #(let [[head def-sym] (:children %)]
+(defn- find-def-form [loc sym-name]
+  (z/find-next-node loc
+    #(let [[head sym] (:children %)]
        (and (= (str/join (take 3 (:text head))) "def")
-            (= (:text sym) (:text def-sym))))
+            (= (:text sym) sym-name)))
     z/next))
+
+(defn- bsym-locs [loc]
+  (let [form (z/node loc)]
+    (case (:type form)
+      :symbol [loc]
+      :vec (let [loc' (z/down loc)]
+             (mapcat bsym-locs (cons loc' (z/followers loc' z/right))))
+      [])))
+
+(defn- binding-locs [loc]
+  (let [[head bvec] (:children (z/node loc))]
+    (when (and (#{"binding" "doseq" "for" "let" "loop"} (:text head))
+               (= (:type bvec) :vec))
+      (let [loc' (-> loc z/down z/right z/down)]
+        (->> (cons loc' (z/followers loc' z/right))
+             (partition 2)
+             (map first)
+             (mapcat bsym-locs))))))
+
+(defn- find-definition [loc sym-name]
+  (if-let [loc' (z/up loc)]
+    (or (first (filter #(= (:text (z/node %)) sym-name) (binding-locs loc)))
+        (recur loc' sym-name))
+    (-> (find-def-form loc sym-name) z/down z/right)))
 
 (action :clojure/jump-to-definition
         :when #(= (:type (z/node %)) :symbol)
-        :edit #(or (-> % (find-definition (z/node %)) z/down z/right) %))
+        :edit #(or (find-definition % (:text (z/node %))) %))
