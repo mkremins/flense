@@ -28,6 +28,11 @@
   [f x]
   (or (f x) x))
 
+(defn seek
+  "Returns the first value in `coll` for which `pred` returns truthy."
+  [pred coll]
+  (first (filter pred coll)))
+
 (defn update
   "Like `update-in`, but takes a single key `k` as its second argument instead
    of a key sequence."

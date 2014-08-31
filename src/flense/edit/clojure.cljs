@@ -3,7 +3,7 @@
   (:require [clojure.string :as str]
             [flense.edit :refer [action find-placeholder]]
             [flense.parse :refer [form->tree tree->form]]
-            [flense.util :refer [maybe update]]
+            [flense.util :refer [maybe seek update]]
             [xyzzy.core :as z]))
 
 ;; expand templates
@@ -77,18 +77,23 @@
       [])))
 
 (defn- binding-locs [loc]
-  (let [[head bvec] (:children (z/node loc))]
-    (when (and (#{"binding" "doseq" "for" "let" "loop"} (:text head))
-               (= (:type bvec) :vec))
+  (let [[head :as children] (:children (z/node loc))]
+    (cond
+      (and (#{"binding" "doseq" "for" "let" "loop"} (:text head))
+           (= (:type (second children)) :vec))
       (let [loc' (-> loc z/down z/right z/down)]
         (->> (cons loc' (z/followers loc' z/right))
              (partition 2)
              (map first)
-             (mapcat bsym-locs))))))
+             (mapcat bsym-locs)))
+      (#{"defmacro" "defmethod" "defn" "defn-" "fn"} (:text head))
+      (when-let [loc' (seek #(= (:type (z/node %)) :vec)
+                        (z/followers (z/down loc) z/right))]
+        (mapcat bsym-locs (cons loc' (z/followers loc' z/right)))))))
 
 (defn- find-definition [loc sym-name]
   (if-let [loc' (z/up loc)]
-    (or (first (filter #(= (:text (z/node %)) sym-name) (binding-locs loc)))
+    (or (seek #(= (:text (z/node %)) sym-name) (binding-locs loc))
         (recur loc' sym-name))
     (-> (find-def-form loc sym-name) z/down z/right)))
 
