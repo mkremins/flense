@@ -79,7 +79,8 @@
 (defn- binding-locs [loc]
   (let [[head :as children] (:children (z/node loc))]
     (cond
-      (and (#{"binding" "doseq" "for" "let" "loop"} (:text head))
+      (and (#{"binding" "doseq" "for" "if-let" "if-some" "let" "loop" "when-first" "when-let"
+              "when-some"} (:text head))
            (= (:type (second children)) :vec))
       (let [loc' (-> loc z/down z/right z/down)]
         (->> (cons loc' (z/followers loc' z/right))
