@@ -1,6 +1,7 @@
 (ns flense.edit.clojure
   (:refer-clojure :exclude [macroexpand macroexpand-1])
-  (:require [flense.edit :refer [action find-placeholder]]
+  (:require [clojure.string :as str]
+            [flense.edit :refer [action find-placeholder]]
             [flense.parse :refer [form->tree tree->form]]
             [flense.util :refer [maybe update]]
             [xyzzy.core :as z]))
@@ -51,3 +52,17 @@
 (action :clojure/collapse-macro
         :when #(-> % z/node :collapsed-form)
         :edit #(z/edit % :collapsed-form))
+
+(defn- top [loc]
+  (assoc loc :path []))
+
+(defn- find-definition [loc sym]
+  (z/find-next-node (top loc)
+    #(let [[head def-sym] (:children %)]
+       (and (= (str/join (take 3 (:text head))) "def")
+            (= (:text sym) (:text def-sym))))
+    z/next))
+
+(action :clojure/jump-to-definition
+        :when #(= (:type (z/node %)) :symbol)
+        :edit #(or (-> % (find-definition (z/node %)) z/down z/right) %))
