@@ -71,7 +71,7 @@
 
 (defmethod ->lines* :default [form]
   (let [children (:children form)
-        indent (if (= (:type form) :seq) (spacer 2) (spacer))
+        indent (if (#{:seq :set} (:type form)) (spacer 2) (spacer))
         [opener closer] (delimiters form)]
     (loop [lines []
            line (concat opener (->tokens (first children)))
