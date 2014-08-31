@@ -34,6 +34,7 @@
  #{:meta :ctrl :zero}                  :paredit/split-right
 
  ; meta+shift ---------------------------------------------------------------
+ #{:meta :shift :d}                    :clojure/jump-to-definition
  #{:meta :shift :k}                    :move/prev-placeholder
  #{:meta :shift :l}                    :move/next-placeholder
  #{:meta :shift :left}                 :paredit/grow-left
