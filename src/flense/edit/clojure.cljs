@@ -78,19 +78,23 @@
     (:map :vec) (mapcat bsym-locs (children loc))
     []))
 
-(defn- binding-locs [loc]
-  (let [[head next] (:children (z/node loc))]
-    (cond
-      (and (#{"binding" "doseq" "for" "if-let" "if-some" "let" "loop" "when-first" "when-let"
-              "when-some"} (:text head))
-           (= (:type next) :vec))
+(defmulti binding-locs
+  (fn [loc] (some-> loc z/node :children first :text symbol)))
+
+(defmethod binding-locs :default [_] ())
+
+(doseq [fnlike '[defmacro defmethod defn defn- fn]]
+  (defmethod binding-locs fnlike [loc]
+    (->> (seek #(= (:type (z/node %)) :vec) (children loc))
+         children
+         (mapcat bsym-locs))))
+
+(doseq [letlike '[binding doseq for if-let if-some let loop when-first when-let when-some]]
+  (defmethod binding-locs letlike [loc]
+    (when (= (-> loc z/node :children second :type) :vec)
       (->> (children (-> loc z/down z/right))
            (partition 2)
            (map first)
-           (mapcat bsym-locs))
-      (#{"defmacro" "defmethod" "defn" "defn-" "fn"} (:text head))
-      (->> (seek #(= (:type (z/node %)) :vec) (children loc))
-           children
            (mapcat bsym-locs)))))
 
 (defn- find-definition [loc sym-name]
