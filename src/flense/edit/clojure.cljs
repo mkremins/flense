@@ -68,14 +68,10 @@
             (= (:text sym) sym-name)))
     z/next))
 
-(defn- children [loc]
-  (let [loc' (z/down loc)]
-    (cons loc' (z/followers loc' z/right))))
-
 (defn- bsym-locs [loc]
   (case (:type (z/node loc))
     :symbol [loc]
-    (:map :vec) (mapcat bsym-locs (children loc))
+    (:map :vec) (mapcat bsym-locs (z/children loc))
     []))
 
 (defmulti binding-locs
@@ -85,14 +81,14 @@
 
 (doseq [fnlike '[defmacro defmethod defn defn- fn]]
   (defmethod binding-locs fnlike [loc]
-    (->> (seek #(= (:type (z/node %)) :vec) (children loc))
-         children
+    (->> (seek #(= (:type (z/node %)) :vec) (z/children loc))
+         z/children
          (mapcat bsym-locs))))
 
 (doseq [letlike '[binding doseq for if-let if-some let loop when-first when-let when-some]]
   (defmethod binding-locs letlike [loc]
     (when (= (-> loc z/node :children second :type) :vec)
-      (->> (children (-> loc z/down z/right))
+      (->> (z/children (-> loc z/down z/right))
            (partition 2)
            (map first)
            (mapcat bsym-locs)))))
