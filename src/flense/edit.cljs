@@ -23,8 +23,7 @@
   [name & opts]
   (let [{:keys [edit tags], pred :when
          :or {pred (constantly true), tags #{}}} (apply hash-map opts)
-        action (or (@actions name) {:name name :cases []})
-        action (update action :cases conj {:pred pred :edit edit :tags tags})]
+        action {:name name :pred pred :edit edit :tags tags}]
     (assert edit)
     (swap! actions assoc name action)))
 

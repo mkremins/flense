@@ -196,9 +196,9 @@
     (will-mount [_]
       (let [edit-chan (om/get-shared owner :edit-chan)]
         (go-loop []
-          (let [{:keys [cases]} (<! edit-chan)]
-            (when-let [case (first (filter #((:pred %) @document) cases))]
-              (om/transact! document [] (:edit case) (:tags case))))
+          (let [action (<! edit-chan)]
+            (when ((:pred action) @document)
+              (om/transact! document [] (:edit action) (:tags action))))
           (recur))))
     om/IRender
     (render [_]
