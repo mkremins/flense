@@ -13,6 +13,7 @@
             [flense.ui.editor :refer [editor-view]]
             flense.ui.editor.layout
             [flense.ui.error :refer [error-bar-view]]
+            [flense.util.dom :as udom]
             [om.core :as om])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
@@ -80,13 +81,23 @@
   (when-not (tag :history)
     (hist/push-state! new-state)))
 
+(defn- propagate-keypress? [ev form]
+  (if (p/stringlike-node? form)
+    ;; prevent all keybinds except those that end editing
+    (-> ev keymap/bound-action :name
+        #{:flense/text-command :move/up :paredit/insert-outside})
+    ;; prevent delete keybind unless text fully selected
+    (or (not= (:name (keymap/bound-action ev)) :flense/remove)
+        (udom/fully-selected? (.-target ev)))))
+
 (defn init []
   (set! keymap/*bindings* (p/load-config "resources/config/keymap.edn"))
   (let [command-chan (async/chan)]
     (hist/push-state! @app-state)
     (om/root editor-view app-state
              {:target (.getElementById js/document "editor-parent")
-              :opts {:edit-chan edit-chan}
+              :opts {:edit-chan edit-chan
+                     :propagate-keypress? propagate-keypress?}
               :tx-listen handle-tx})
     (om/root cli-view nil
              {:target (.getElementById js/document "cli-parent")

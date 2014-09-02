@@ -1,7 +1,6 @@
 (ns flense.ui.editor
   (:refer-clojure :exclude [chars rem])
   (:require [clojure.string :as str]
-            [flense.keymap :as keymap]
             [flense.parse :as p]
             [flense.util.dom :as udom :refer [rem]]
             [om.core :as om :include-macros true]
@@ -103,7 +102,7 @@
 
 ;; Om components
 
-(defn atom-view [form owner]
+(defn atom-view [form owner opts]
   (reify
     om/IRender
     (render [_]
@@ -116,9 +115,8 @@
                    (:collapsed-form form) (conj :macroexpanded)))
         :onChange
           #(om/update! form (p/parse-token (.. % -target -value)))
-        :onKeyDown ; prevent delete keybind unless text fully selected
-          #(when (and (= (:name (keymap/bound-action %)) :paredit/remove)
-                      (not (udom/fully-selected? (.-target %))))
+        :onKeyDown
+          #(when-not ((:propagate-keypress? opts) % @form)
              (.stopPropagation %))
          :style #js {:width (rem (/ (chars form) 2))}
          :value (:text form)}))
@@ -135,7 +133,7 @@
           (when (:selected? prev)
             (.blur input)))))))
 
-(defn stringlike-view [form owner]
+(defn stringlike-view [form owner opts]
   (reify
     om/IRender
     (render [_]
@@ -149,9 +147,8 @@
           (dom/textarea #js {
             :onChange
               #(om/update! form :text (.. % -target -value))
-            :onKeyDown ; prevent keybinds (except those that end editing)
-              #(when-not (-> % keymap/bound-action :name
-                             #{:flense/text-command :move/up :paredit/insert-outside})
+            :onKeyDown
+              #(when-not ((:propagate-keypress? opts) % @form)
                  (.stopPropagation %))
             :ref "content"
             :style #js {
@@ -174,7 +171,7 @@
           (when (:editing? prev)
             (.blur input)))))))
 
-(defn form-view [form owner]
+(defn form-view [form owner opts]
   (reify om/IRender
     (render [_]
       (apply dom/div #js {:className "form"}
@@ -186,9 +183,9 @@
                 (dom/span #js {:className (class-name (:classes token))}
                   (:content token))
                 (p/stringlike-node? token)
-                (om/build stringlike-view token)
+                (om/build stringlike-view token {:opts opts})
                 :else
-                (om/build atom-view token)))))))))
+                (om/build atom-view token {:opts opts})))))))))
 
 (defn editor-view [document owner opts]
   (reify
@@ -203,4 +200,5 @@
     (render [_]
       (let [{:keys [tree]} (z/edit document assoc :selected? true)]
         (apply dom/div #js {:className "editor"}
-          (om/build-all form-view (:children tree)))))))
+          (om/build-all form-view (:children tree)
+            {:opts (select-keys opts [:propagate-keypress?])}))))))
