@@ -190,16 +190,15 @@
                 :else
                 (om/build atom-view token)))))))))
 
-(defn editor-view [document owner]
+(defn editor-view [document owner opts]
   (reify
     om/IWillMount
     (will-mount [_]
-      (let [edit-chan (om/get-shared owner :edit-chan)]
-        (go-loop []
-          (let [action (<! edit-chan)]
-            (when ((:pred action) @document)
-              (om/transact! document [] (:edit action) (:tags action))))
-          (recur))))
+      (go-loop []
+        (let [action (<! (:edit-chan opts))]
+          (when ((:pred action) @document)
+            (om/transact! document [] (:edit action) (:tags action))))
+        (recur)))
     om/IRender
     (render [_]
       (let [{:keys [tree]} (z/edit document assoc :selected? true)]

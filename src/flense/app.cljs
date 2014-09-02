@@ -86,7 +86,7 @@
     (hist/push-state! @app-state)
     (om/root editor-view app-state
              {:target (.getElementById js/document "editor-parent")
-              :shared {:edit-chan edit-chan}
+              :opts {:edit-chan edit-chan}
               :tx-listen handle-tx})
     (om/root cli-view nil
              {:target (.getElementById js/document "cli-parent")
