@@ -1,8 +1,8 @@
 (ns flense.edit.clojure
   (:refer-clojure :exclude [macroexpand macroexpand-1])
   (:require [clojure.string :as str]
-            [flense.edit :refer [action find-placeholder]]
-            [flense.model :refer [form->tree tree->form]]
+            [flense.edit :refer [action]]
+            [flense.model :refer [find-placeholder form->tree tree->form]]
             [flense.util :refer [maybe seek update]]
             [xyzzy.core :as z]))
 

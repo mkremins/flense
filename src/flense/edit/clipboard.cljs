@@ -1,5 +1,6 @@
 (ns flense.edit.clipboard
-  (:require [flense.edit :refer [action placeholder placeholder-loc?]]
+  (:require [flense.edit :refer [action]]
+            [flense.model :refer [placeholder placeholder-loc?]]
             [xyzzy.core :as z]))
 
 (def ^{:dynamic true :private true} *clipboard* nil)

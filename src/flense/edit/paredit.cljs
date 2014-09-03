@@ -1,12 +1,13 @@
 (ns flense.edit.paredit
-  (:require [flense.edit
-             :refer [action coll-loc? nonempty-loc? placeholder
-                     placeholder-loc? token-loc?]]
+  (:require [flense.edit :refer [action]]
+            [flense.model
+             :refer [atom-loc? collection-loc? nonempty-loc? placeholder
+                     placeholder-loc?]]
             [flense.util :refer [exchange update]]
             [xyzzy.core :as z]))
 
 (action :paredit/grow-left
-        :when #(and (z/left %) (coll-loc? %))
+        :when #(and (z/left %) (collection-loc? %))
         :edit (fn [loc]
                 (let [n   (-> loc :path peek dec)
                       sib (-> loc z/left z/node)]
@@ -15,7 +16,7 @@
                       (z/insert-child 0 sib)))))
 
 (action :paredit/grow-right
-        :when #(and (z/right %) (coll-loc? %))
+        :when #(and (z/right %) (collection-loc? %))
         :edit (fn [loc]
                 (let [n   (-> loc :path peek)
                       sib (-> loc z/right z/node)]
@@ -33,7 +34,7 @@
         :when z/up :edit #(-> % (z/insert-right placeholder) z/right))
 
 (action :paredit/join-left
-        :when #(and (coll-loc? %) (-> % z/left coll-loc?))
+        :when #(and (collection-loc? %) (-> % z/left collection-loc?))
         :edit (fn [loc]
                 (let [n  (-> loc :path peek dec)
                       cs (-> loc z/left z/node :children)]
@@ -43,7 +44,7 @@
                       z/up (z/remove-child n) (z/child n)))))
 
 (action :paredit/join-right
-        :when #(and (coll-loc? %) (-> % z/right coll-loc?))
+        :when #(and (collection-loc? %) (-> % z/right collection-loc?))
         :edit (fn [loc]
                 (let [n  (-> loc :path peek)
                       cs (-> loc z/right z/node :children)]
@@ -53,13 +54,13 @@
                       z/up (z/remove-child (inc n)) (z/child n)))))
 
 (action :paredit/make-curly
-        :when coll-loc? :edit #(z/edit % assoc :type :map))
+        :when collection-loc? :edit #(z/edit % assoc :type :map))
 
 (action :paredit/make-round
-        :when coll-loc? :edit #(z/edit % assoc :type :seq))
+        :when collection-loc? :edit #(z/edit % assoc :type :seq))
 
 (action :paredit/make-square
-        :when coll-loc? :edit #(z/edit % assoc :type :vec))
+        :when collection-loc? :edit #(z/edit % assoc :type :vec))
 
 (action :paredit/raise
         :when z/up :edit #(-> % z/up (z/replace (z/node %))))
@@ -74,20 +75,20 @@
                    (z/replace % placeholder)))
 
 (action :paredit/shrink-left
-        :when #(and (z/up %) (coll-loc? %) (nonempty-loc? %))
+        :when #(and (z/up %) (collection-loc? %) (nonempty-loc? %))
         :edit (fn [loc]
                 (let [sib (-> loc z/down z/node)]
                   (-> loc (z/remove-child 0) (z/insert-left sib)))))
 
 (action :paredit/shrink-right
-        :when #(and (z/up %) (coll-loc? %) (nonempty-loc? %))
+        :when #(and (z/up %) (collection-loc? %) (nonempty-loc? %))
         :edit (fn [loc]
                 (let [sib (-> loc z/down z/rightmost z/node)]
                   (-> loc (z/edit #(update % :children (comp vec butlast)))
                       (z/insert-right sib)))))
 
 (action :paredit/splice
-        :when #(and (z/up %) (coll-loc? %) (nonempty-loc? %))
+        :when #(and (z/up %) (collection-loc? %) (nonempty-loc? %))
         :edit (fn [loc]
                 (let [n  (-> loc :path peek)
                       cs (-> loc z/node :children)]
@@ -139,7 +140,7 @@
         :edit #(-> % (z/edit wrap :map) z/down))
 
 (action :paredit/wrap-quote
-        :when token-loc?
+        :when atom-loc?
         :edit #(z/edit % assoc :type :string :editing? true))
 
 (action :paredit/wrap-round

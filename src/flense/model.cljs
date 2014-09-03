@@ -2,9 +2,12 @@
   "Functions for constructing, querying and manipulating xyzzy-compatible
    Clojure parse trees."
   (:require [cljs.reader :as rdr]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [xyzzy.core :as z]))
 
-;; parse tree node predicates – test what kind of node you have
+;; parse tree nodes
+
+(def placeholder {:type :symbol :text "..."})
 
 (defn atom? [node]
   (#{:bool :char :keyword :nil :number :symbol} (:type node)))
@@ -12,13 +15,27 @@
 (defn collection? [node]
   (#{:map :seq :set :vec} (:type node)))
 
+(defn nonempty? [node]
+  (seq (:children node)))
+
 (defn placeholder? [node]
   (= (:text node) "..."))
 
 (defn stringlike? [node]
   (#{:regex :string} (:type node)))
 
-;; conversions between raw strings, EDN data, parse-tree nodes
+;; parse tree zippers
+
+(def atom-loc?        (comp atom? z/node))
+(def collection-loc?  (comp collection? z/node))
+(def nonempty-loc?    (comp nonempty? z/node))
+(def placeholder-loc? (comp placeholder? z/node))
+(def stringlike-loc?  (comp stringlike? z/node))
+
+(defn find-placeholder [loc direction]
+  (z/find-next loc placeholder-loc? direction))
+
+;; conversions between raw strings, EDN data, parse tree nodes
 
 (defn- string->forms [string]
   (let [reader (rdr/push-back-reader string)]

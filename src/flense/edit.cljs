@@ -26,23 +26,3 @@
         action {:name name :pred pred :edit edit :tags tags}]
     (assert edit)
     (swap! actions assoc name action)))
-
-(def placeholder {:type :symbol :text "..."})
-
-(defn coll-loc? [loc]
-  (#{:fn :map :seq :set :vec} (-> loc z/node :type)))
-
-(defn nonempty-loc? [loc]
-  (seq (-> loc z/node :children)))
-
-(defn placeholder-loc? [loc]
-  (= (-> loc z/node :text) "..."))
-
-(defn stringlike-loc? [loc]
-  (#{:regex :string} (-> loc z/node :type)))
-
-(defn token-loc? [loc]
-  (#{:bool :keyword :nil :number :symbol} (-> loc z/node :type)))
-
-(defn find-placeholder [loc direction]
-  (z/find-next loc placeholder-loc? direction))

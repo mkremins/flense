@@ -1,5 +1,6 @@
 (ns flense.edit.movement
-  (:require [flense.edit :refer [action find-placeholder stringlike-loc?]]
+  (:require [flense.edit :refer [action]]
+            [flense.model :refer [find-placeholder stringlike-loc?]]
             [xyzzy.core :as z]))
 
 (doseq [[name move]
