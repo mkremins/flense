@@ -1,7 +1,7 @@
 (ns flense.ui.editor
   (:refer-clojure :exclude [chars rem])
   (:require [clojure.string :as str]
-            [flense.parse :as p]
+            [flense.model :as model]
             [flense.util.dom :as udom :refer [rem]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
@@ -19,7 +19,7 @@
 (defn chars [token-or-form]
   (if (presentational? token-or-form)
     (count (:content token-or-form))
-    (count (p/tree->str token-or-form))))
+    (count (model/tree->string token-or-form))))
 
 (defn line-count [text]
   (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
@@ -41,7 +41,7 @@
     form))
 
 (defn ->tokens [form]
-  (if (p/coll-node? form)
+  (if (model/collection? form)
     (let [[opener closer] (delimiters form)]
       (concat opener
         (->> (:children (annotate-head form))
@@ -96,7 +96,7 @@
           (conj (pop lines) (concat (peek lines) closer)))))))
 
 (defn ->lines [form]
-  (if (and (p/coll-node? form) (not (fits-on-own-line? form)))
+  (if (and (model/collection? form) (not (fits-on-own-line? form)))
     (->lines* (annotate-head form))
     [(->tokens form)]))
 
@@ -114,7 +114,7 @@
                    (:selected? form) (conj :selected)
                    (:collapsed-form form) (conj :macroexpanded)))
         :onChange
-          #(om/update! form (p/parse-token (.. % -target -value)))
+          #(om/update! form (model/string->atom (.. % -target -value)))
         :onKeyDown
           #(when-not ((:propagate-keypress? opts) % @form)
              (.stopPropagation %))
@@ -128,7 +128,7 @@
     (did-update [_ prev _]
       (let [input (om/get-node owner)]
         (if (:selected? form)
-          (when (or (not (:selected? prev)) (p/placeholder-node? form))
+          (when (or (not (:selected? prev)) (model/placeholder? form))
             (udom/focus+select input))
           (when (:selected? prev)
             (.blur input)))))))
@@ -159,7 +159,7 @@
     (did-mount [_]
       (when (:editing? form)
         (let [input (om/get-node owner "content")]
-          (if (p/placeholder-node? form)
+          (if (model/placeholder? form)
             (udom/focus+select input)
             (udom/move-caret-to-end input)))))
     om/IDidUpdate
@@ -182,7 +182,7 @@
                 (presentational? token)
                 (dom/span #js {:className (class-name (:classes token))}
                   (:content token))
-                (p/stringlike-node? token)
+                (model/stringlike? token)
                 (om/build stringlike-view token {:opts opts})
                 :else
                 (om/build atom-view token {:opts opts})))))))))

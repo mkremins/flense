@@ -8,12 +8,13 @@
             flense.edit.movement
             flense.edit.paredit
             [flense.keymap :as keymap]
-            [flense.parse :as p]
+            [flense.model :as model]
             [flense.ui.cli :refer [cli-view]]
             [flense.ui.editor :refer [editor-view]]
             flense.ui.editor.layout
             [flense.ui.error :refer [error-bar-view]]
             [flense.util.dom :as udom]
+            fs
             [om.core :as om])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
@@ -27,7 +28,7 @@
   (atom
    {:path [0]
     :tree {:children
-           [(p/form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
+           [(model/form->tree '(fn greet [name] (str "Hello, " name "!")))]}}))
 
 (def ^:private edit-chan (async/chan))
 (def ^:private error-chan (async/chan))
@@ -41,7 +42,10 @@
   "Load the source file at `fpath` and open the loaded document, discarding any
    changes made to the previously active document."
   [fpath]
-  (reset! app-state (p/load-source fpath)))
+  (reset! app-state
+    {:path [0]
+     :tree {:children
+            (->> (fs/slurp fpath) model/string->forms (mapv model/form->tree))}}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; text commands
@@ -82,7 +86,7 @@
     (hist/push-state! new-state)))
 
 (defn- propagate-keypress? [ev form]
-  (if (p/stringlike-node? form)
+  (if (model/stringlike? form)
     ;; prevent all keybinds except those that end editing
     (-> ev keymap/bound-action :name
         #{:flense/text-command :move/up :paredit/insert-outside})
@@ -91,7 +95,8 @@
         (udom/fully-selected? (.-target ev)))))
 
 (defn init []
-  (set! keymap/*bindings* (p/load-config "resources/config/keymap.edn"))
+  (set! keymap/*bindings*
+    (rdr/read-string (fs/slurp "resources/config/keymap.edn")))
   (let [command-chan (async/chan)]
     (hist/push-state! @app-state)
     (om/root editor-view app-state

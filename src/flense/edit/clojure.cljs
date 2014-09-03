@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [macroexpand macroexpand-1])
   (:require [clojure.string :as str]
             [flense.edit :refer [action find-placeholder]]
-            [flense.parse :refer [form->tree tree->form]]
+            [flense.model :refer [form->tree tree->form]]
             [flense.util :refer [maybe seek update]]
             [xyzzy.core :as z]))
 
