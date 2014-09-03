@@ -1,5 +1,5 @@
 (ns flense.keymap
-  (:require [flense.edit :refer [actions]]
+  (:require [flense.actions :refer [actions]]
             [phalanges.core :as phalanges]))
 
 (def ^:dynamic *bindings*)

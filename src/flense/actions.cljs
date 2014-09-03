@@ -1,10 +1,10 @@
-(ns flense.edit
+(ns flense.actions
    (:require [flense.util :refer [update]]
              [xyzzy.core :as z]))
 
 (def actions (atom {}))
 
-(defn action
+(defn defaction
   "Defines an action with name `name` and options `opts`, where `name` is a
    keyword naming the action and `opts` are kwargs as specified below.
 

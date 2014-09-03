@@ -1,12 +1,12 @@
 (ns flense.app
   (:require [cljs.core.async :as async :refer [<!]]
             [cljs.reader :as rdr]
-            [flense.edit :refer [action actions]]
-            [flense.edit.history :as hist]
-            flense.edit.clipboard
-            flense.edit.clojure
-            flense.edit.movement
-            flense.edit.paredit
+            [flense.actions :refer [actions defaction]]
+            [flense.actions.history :as hist]
+            flense.actions.clipboard
+            flense.actions.clojure
+            flense.actions.movement
+            flense.actions.paredit
             [flense.keymap :as keymap]
             [flense.model :as model]
             [flense.ui.cli :refer [cli-view]]
@@ -72,7 +72,7 @@
 ;; application setup and wiring
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(action :flense/text-command :edit identity) ; dummy action to trap ctrl+x keybind
+(defaction :flense/text-command :edit identity) ; dummy action to trap ctrl+x keybind
 
 (defn- handle-key [ev]
   (when-let [action (keymap/bound-action ev)]
