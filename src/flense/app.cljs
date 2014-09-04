@@ -12,7 +12,6 @@
             [flense.ui.editor :refer [editor-view]]
             flense.ui.editor.layout
             [flense.ui.error :refer [error-bar-view]]
-            [flense.util.dom :as udom]
             fs
             [om.core :as om]
             [phalanges.core :as phalanges])
@@ -86,6 +85,10 @@
       (do (.preventDefault ev)
           (async/put! edit-chan action)))))
 
+(defn- fully-selected? [input]
+  (and (= (.-selectionStart input) 0)
+       (= (.-selectionEnd input) (count (.-value input)))))
+
 (defn- propagate-keypress? [ev form]
   (when-let [action (bound-action ev)]
     (if (model/stringlike? form)
@@ -93,7 +96,7 @@
       (#{:flense/text-command :move/up :paredit/insert-outside} (:name action))
       ;; prevent delete keybind unless text fully selected
       (or (not= (:name action) :flense/remove)
-          (udom/fully-selected? (.-target ev))))))
+          (fully-selected? (.-target ev))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; application setup and wiring

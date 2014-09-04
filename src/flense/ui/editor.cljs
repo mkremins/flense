@@ -2,7 +2,6 @@
   (:refer-clojure :exclude [chars rem])
   (:require [clojure.string :as str]
             [flense.model :as model]
-            [flense.util.dom :as udom :refer [rem]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [xyzzy.core :as z])
@@ -100,6 +99,19 @@
     (->lines* (annotate-head form))
     [(->tokens form)]))
 
+;; DOM utils
+
+(defn focus+select [input]
+  (doto input .focus .select))
+
+(defn move-caret-to-end [input]
+  (let [idx (count (.-value input))]
+    (set! (.-selectionStart input) idx)
+    (set! (.-selectionEnd input) idx)))
+
+(defn rem [n]
+  (str n "rem"))
+
 ;; Om components
 
 (defn atom-view [form owner opts]
@@ -123,13 +135,13 @@
     om/IDidMount
     (did-mount [_]
       (when (:selected? form)
-        (udom/focus+select (om/get-node owner))))
+        (focus+select (om/get-node owner))))
     om/IDidUpdate
     (did-update [_ prev _]
       (let [input (om/get-node owner)]
         (if (:selected? form)
           (when (or (not (:selected? prev)) (model/placeholder? form))
-            (udom/focus+select input))
+            (focus+select input))
           (when (:selected? prev)
             (.blur input)))))))
 
@@ -160,14 +172,14 @@
       (when (:editing? form)
         (let [input (om/get-node owner "content")]
           (if (model/placeholder? form)
-            (udom/focus+select input)
-            (udom/move-caret-to-end input)))))
+            (focus+select input)
+            (move-caret-to-end input)))))
     om/IDidUpdate
     (did-update [_ prev _]
       (let [input (om/get-node owner "content")]
         (if (:editing? form)
           (when-not (:editing? prev)
-            (udom/move-caret-to-end input))
+            (move-caret-to-end input))
           (when (:editing? prev)
             (.blur input)))))))
 
