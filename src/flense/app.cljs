@@ -7,7 +7,6 @@
             flense.actions.clojure
             flense.actions.movement
             flense.actions.paredit
-            [flense.keymap :as keymap]
             [flense.model :as model]
             [flense.ui.cli :refer [cli-view]]
             [flense.ui.editor :refer [editor-view]]
@@ -15,7 +14,8 @@
             [flense.ui.error :refer [error-bar-view]]
             [flense.util.dom :as udom]
             fs
-            [om.core :as om])
+            [om.core :as om]
+            [phalanges.core :as phalanges])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (enable-console-print!)
@@ -69,34 +69,42 @@
     (raise! "Must specify a filepath to open")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; application setup and wiring
+;; keybinds
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def ^:dynamic *keymap*)
+
+(defn- bound-action [ev]
+  (-> ev phalanges/key-set *keymap* (@actions)))
 
 (defaction :flense/text-command :edit identity) ; dummy action to trap ctrl+x keybind
 
 (defn- handle-key [ev]
-  (when-let [action (keymap/bound-action ev)]
+  (when-let [action (bound-action ev)]
     (if (= (:name action) :flense/text-command)
       (.. js/document (getElementById "cli") focus)
       (do (.preventDefault ev)
           (async/put! edit-chan action)))))
 
+(defn- propagate-keypress? [ev form]
+  (when-let [action (bound-action ev)]
+    (if (model/stringlike? form)
+      ;; prevent all keybinds except those that end editing
+      (#{:flense/text-command :move/up :paredit/insert-outside} (:name action))
+      ;; prevent delete keybind unless text fully selected
+      (or (not= (:name action) :flense/remove)
+          (udom/fully-selected? (.-target ev))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; application setup and wiring
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn- handle-tx [{:keys [new-state tag] :or {tag #{}}}]
   (when-not (tag :history)
     (hist/push-state! new-state)))
 
-(defn- propagate-keypress? [ev form]
-  (if (model/stringlike? form)
-    ;; prevent all keybinds except those that end editing
-    (-> ev keymap/bound-action :name
-        #{:flense/text-command :move/up :paredit/insert-outside})
-    ;; prevent delete keybind unless text fully selected
-    (or (not= (:name (keymap/bound-action ev)) :flense/remove)
-        (udom/fully-selected? (.-target ev)))))
-
 (defn init []
-  (set! keymap/*bindings*
-    (rdr/read-string (fs/slurp "resources/config/keymap.edn")))
+  (set! *keymap* (rdr/read-string (fs/slurp "resources/config/keymap.edn")))
   (let [command-chan (async/chan)]
     (hist/push-state! @app-state)
     (om/root editor-view app-state
