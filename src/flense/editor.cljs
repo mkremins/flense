@@ -1,4 +1,4 @@
-(ns flense.ui.editor
+(ns flense.editor
   (:refer-clojure :exclude [chars rem])
   (:require [clojure.string :as str]
             [flense.model :as model]

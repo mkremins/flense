@@ -1,5 +1,5 @@
-(ns flense.ui.editor.layout
-  (:require [flense.ui.editor :refer [delimiters ->lines ->lines* spacer ->tokens]]))
+(ns flense.editor.layout
+  (:require [flense.editor :refer [delimiters ->lines ->lines* spacer ->tokens]]))
 
 (defn- update-last [v f & args]
   (conj (pop v) (apply f (peek v) args)))

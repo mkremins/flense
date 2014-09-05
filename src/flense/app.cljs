@@ -7,10 +7,10 @@
             flense.actions.clojure
             flense.actions.movement
             flense.actions.paredit
+            [flense.editor :refer [editor-view]]
+            flense.editor.layout
             [flense.model :as model]
             [flense.ui.cli :refer [cli-view]]
-            [flense.ui.editor :refer [editor-view]]
-            flense.ui.editor.layout
             [flense.ui.error :refer [error-bar-view]]
             fs
             [om.core :as om]
