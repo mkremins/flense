@@ -1,4 +1,4 @@
-(ns flense.ui.error
+(ns flense-nw.error
   (:require [cljs.core.async :as async :refer [alts!]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true])

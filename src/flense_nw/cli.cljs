@@ -1,4 +1,4 @@
-(ns flense.ui.cli
+(ns flense-nw.cli
   (:require [cljs.core.async :as async]
             [clojure.string :as string]
             [om.core :as om :include-macros true]

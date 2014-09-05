@@ -1,4 +1,4 @@
-(ns flense.app
+(ns flense-nw.app
   (:require [cljs.core.async :as async :refer [<!]]
             [cljs.reader :as rdr]
             [flense.actions :refer [actions defaction]]
@@ -10,8 +10,8 @@
             [flense.editor :refer [editor-view]]
             flense.editor.layout
             [flense.model :as model]
-            [flense.ui.cli :refer [cli-view]]
-            [flense.ui.error :refer [error-bar-view]]
+            [flense-nw.cli :refer [cli-view]]
+            [flense-nw.error :refer [error-bar-view]]
             fs
             [om.core :as om]
             [phalanges.core :as phalanges])
