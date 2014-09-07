@@ -1,25 +1,31 @@
-.selected,
-.selected.stringlike:not(.editing)::before,
-.selected.stringlike:not(.editing)::after,
-.selected.stringlike.editing textarea {
+.editor {
+  font-family: 'Source Code Pro', monospace;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.editor .selected,
+.editor .selected.stringlike:not(.editing)::before,
+.editor .selected.stringlike:not(.editing)::after,
+.editor .selected.stringlike.editing textarea {
   background: rgb(170,203,249);
 }
 
-.keyword {
+.editor .keyword {
   color: rgb(198,115,91);
 }
 
-.stringlike textarea {
+.editor .stringlike textarea {
   color: rgb(21,144,155);
 }
 
-.symbol.head {
+.editor .symbol.head {
   color: rgb(119,39,6);
   font-weight: bold;
 }
 
-.delimiter,
-.stringlike::before,
-.stringlike::after {
+.editor .delimiter,
+.editor .stringlike::before,
+.editor .stringlike::after {
   color: #777;
 }

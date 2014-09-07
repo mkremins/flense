@@ -1,90 +1,35 @@
-@import url(http://fonts.googleapis.com/css?family=Source+Code+Pro);
-
-/* generic styles applying to the entire page */
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  outline: none;
-}
-
-body {
-  font-family: 'Source Code Pro';
-  font-size: 14px;
-  line-height: 1.4;
-  margin-left: 5%;
-  margin-top: 40px;
-}
-
-/* main editor view styles */
-
-.editor {
-  margin-bottom: 80px;
-}
-.editor > * {
+.editor .form {
   margin-bottom: 1rem;
-  margin-left: 0;
 }
 
-.atom, .stringlike textarea {
+.editor .atom,
+.editor .stringlike textarea {
   border: none;
   font-family: inherit;
   font-size: inherit;
+  margin: 0;
+  outline: none;
+  padding: 0;
   resize: none;
 }
 
-.stringlike {
+.editor .stringlike {
   display: inline-block;
   line-height: 0;
   vertical-align: top;
 }
-.stringlike::before,
-.stringlike::after {
+
+.editor .stringlike::before,
+.editor .stringlike::after {
   line-height: 1;
   vertical-align: top;
 }
 
-.regex::before  { content: "#\""; }
-.regex::after   { content:  "\""; }
-.string::before { content:  "\""; }
-.string::after  { content:  "\""; }
+.editor .regex::before  { content: "#\""; }
+.editor .regex::after   { content:  "\""; }
+.editor .string::before { content:  "\""; }
+.editor .string::after  { content:  "\""; }
 
-.spacer {
+.editor .spacer {
   white-space: pre;
-}
-
-/* styles for stuff other than the main editor view */
-
-#cli {
-  border: none;
-  border-top: 1px solid #ccc;
-  bottom: 0;
-  font-family: inherit;
-  font-size: inherit;
-  left: 0;
-  padding: 1rem;
-  position: fixed;
-  width: 100%;
-}
-
-#error-bar {
-  -webkit-backface-visibility: hidden;
-  background: rgb(200,0,0);
-  border-bottom-left-radius: 0.25rem;
-  color: white;
-  padding: 0.5rem;
-  position: fixed;
-  right: 0;
-  top: 0;
-}
-#error-bar.visible {
-  opacity: 1;
-}
-#error-bar.hidden {
-  opacity: 0;
-  transition: opacity 2s ease-out;
-}
-#error-bar:empty {
-  visibility: hidden;
 }
