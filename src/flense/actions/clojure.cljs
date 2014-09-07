@@ -3,7 +3,7 @@
   (:require [clojure.string :as str]
             [flense.actions :refer [defaction]]
             [flense.model :refer [find-placeholder form->tree tree->form]]
-            [flense.util :refer [maybe seek update]]
+            [flense.util :refer [seek update]]
             [xyzzy.core :as z]))
 
 ;; expand templates
@@ -31,7 +31,7 @@
 
 (defaction :clojure/toggle-dispatch
   :when #(contains? dispatch-types (-> % z/node :type))
-  :edit #(z/edit % update :type (partial maybe dispatch-types)))
+  :edit #(z/edit % update :type dispatch-types))
 
 ;; expand and collapse macro forms
 

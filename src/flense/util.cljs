@@ -5,11 +5,6 @@
   [m k1 k2]
   (assoc m k1 (get m k2) k2 (get m k1)))
 
-(defn maybe
-  "Returns `(f x)` if its value is non-nil, `x` otherwise."
-  [f x]
-  (or (f x) x))
-
 (defn seek
   "Returns the first value in `coll` for which `pred` returns truthy."
   [pred coll]
