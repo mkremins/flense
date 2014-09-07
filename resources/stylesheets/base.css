@@ -1,9 +1,9 @@
-.editor .form {
+.flense .toplevel {
   margin-bottom: 1rem;
 }
 
-.editor .atom,
-.editor .stringlike textarea {
+.flense .atom,
+.flense .stringlike textarea {
   border: none;
   font-family: inherit;
   font-size: inherit;
@@ -13,23 +13,23 @@
   resize: none;
 }
 
-.editor .stringlike {
+.flense .stringlike {
   display: inline-block;
   line-height: 0;
   vertical-align: top;
 }
 
-.editor .stringlike::before,
-.editor .stringlike::after {
+.flense .stringlike::before,
+.flense .stringlike::after {
   line-height: 1;
   vertical-align: top;
 }
 
-.editor .regex::before  { content: "#\""; }
-.editor .regex::after   { content:  "\""; }
-.editor .string::before { content:  "\""; }
-.editor .string::after  { content:  "\""; }
+.flense .regex::before  { content: "#\""; }
+.flense .regex::after   { content:  "\""; }
+.flense .string::before { content:  "\""; }
+.flense .string::after  { content:  "\""; }
 
-.editor .spacer {
+.flense .spacer {
   white-space: pre;
 }

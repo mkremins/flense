@@ -186,7 +186,7 @@
 (defn form-view [form owner opts]
   (reify om/IRender
     (render [_]
-      (apply dom/div #js {:className "form"}
+      (apply dom/div #js {:className "toplevel"}
         (for [line (->lines form)]
           (apply dom/div #js {:className "line"}
             (for [token line]
@@ -211,6 +211,6 @@
     om/IRender
     (render [_]
       (let [{:keys [tree]} (z/edit document assoc :selected? true)]
-        (apply dom/div #js {:className "editor"}
+        (apply dom/div #js {:className "flense"}
           (om/build-all form-view (:children tree)
             {:opts (select-keys opts [:propagate-keypress?])}))))))

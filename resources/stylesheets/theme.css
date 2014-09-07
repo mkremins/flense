@@ -1,31 +1,31 @@
-.editor {
+.flense {
   font-family: 'Source Code Pro', monospace;
   font-size: 14px;
   line-height: 1.4;
 }
 
-.editor .selected,
-.editor .selected.stringlike:not(.editing)::before,
-.editor .selected.stringlike:not(.editing)::after,
-.editor .selected.stringlike.editing textarea {
+.flense .selected,
+.flense .selected.stringlike:not(.editing)::before,
+.flense .selected.stringlike:not(.editing)::after,
+.flense .selected.stringlike.editing textarea {
   background: rgb(170,203,249);
 }
 
-.editor .keyword {
+.flense .keyword {
   color: rgb(198,115,91);
 }
 
-.editor .stringlike textarea {
+.flense .stringlike textarea {
   color: rgb(21,144,155);
 }
 
-.editor .symbol.head {
+.flense .symbol.head {
   color: rgb(119,39,6);
   font-weight: bold;
 }
 
-.editor .delimiter,
-.editor .stringlike::before,
-.editor .stringlike::after {
+.flense .delimiter,
+.flense .stringlike::before,
+.flense .stringlike::after {
   color: #777;
 }
