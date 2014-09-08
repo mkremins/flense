@@ -1,5 +1,6 @@
 (ns flense.editor.layout
-  (:require [flense.editor :refer [delimiters ->lines ->lines* spacer ->tokens]]))
+  (:require [flense.editor
+             :refer [chars delimiters ->lines ->lines* MAX_CHARS_PER_LINE spacer ->tokens]]))
 
 (defn- update-last [v f & args]
   (conj (pop v) (apply f (peek v) args)))
@@ -10,19 +11,41 @@
   (let [[opener closer] (delimiters form)
         [inits rests] (split-at headc (:children form))
         init-line (concat opener (apply concat (interpose (spacer) (map ->tokens inits))))
-        rest-lines (map #(concat (spacer 2) %) (mapcat ->lines rests))
-        lines `[~init-line ~@rest-lines]]
-    (update-last lines concat closer)))
+        rest-lines (map #(concat (spacer 2) %) (mapcat ->lines rests))]
+    (update-last `[~init-line ~@rest-lines] concat closer)))
 
 (def header-counts
-  '{-> 2, ->> 2, as-> 3, case 2, cond 1, cond-> 2, cond->> 2, condp 3, def 2, definline 2,
-    definterface 2, defmacro 2, defmethod 3, defmulti 2, defn 2, defn- 2, defonce 2, defprotocol 2,
-    defrecord 3, defstruct 2, deftype 3, do 2, dotimes 2, extend 2, extend-protocol 2,
-    extend-type 2,if 2, if-let 2, if-not 2, if-some 2, proxy 3, reify 1, some-> 2, some->> 2,
-    specify 2, specify! 2, when 2, when-first 2, when-let 2, when-not 2, when-some 2})
+  '{-> 2, ->> 2, as-> 3, def 2, definline 2, definterface 2, defmacro 2, defmethod 3, defmulti 2,
+    defn 2, defn- 2, defonce 2, defprotocol 2, defrecord 3, defstruct 2, deftype 3, do 2,
+    dotimes 2, extend 2, extend-protocol 2, extend-type 2, if 2, if-let 2, if-not 2, if-some 2,
+    proxy 3, reify 1, some-> 2, some->> 2, specify 2, specify! 2, when 2, when-first 2, when-let 2,
+    when-not 2, when-some 2})
 
 (doseq [[core-macro headc] header-counts]
   (defmethod ->lines* core-macro [form] (header+body->lines form headc)))
+
+;; "header+pairs" works for several other core macros
+
+(defn pair->lines [[left right]]
+  (if (> (+ (chars left) 1 (chars right)) MAX_CHARS_PER_LINE)
+    (vec (concat (->lines left) (map #(concat (spacer 2) %) (->lines right))))
+    [(concat (->tokens left) (spacer) (->tokens right))]))
+
+(defn header+pairs->lines [form headc]
+  (let [[opener closer] (delimiters form)
+        [inits rests] (split-at headc (:children form))
+        init-line (concat opener (apply concat (interpose (spacer) (map ->tokens inits))))
+        pairs (partition 2 rests)
+        extra (when (odd? (count rests)) (last rests))
+        rest-lines (mapv #(concat (spacer 2) %) (mapcat pair->lines pairs))
+        rest-lines (cond-> rest-lines extra (conj (concat (spacer 2) (->tokens extra))))]
+    (update-last `[~init-line ~@rest-lines] concat closer)))
+
+(def paired-header-counts
+  '{case 2, cond 1, cond-> 2, cond->> 2, condp 3})
+
+(doseq [[core-macro headc] paired-header-counts]
+  (defmethod ->lines* core-macro [form] (header+pairs->lines form headc)))
 
 ;; letlike core macros need their own layout algorithm
 

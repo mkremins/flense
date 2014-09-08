@@ -7,7 +7,7 @@
             [xyzzy.core :as z])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
-(def ^:private MAX_CHARS_PER_LINE 72)
+(def MAX_CHARS_PER_LINE 72)
 
 (defn class-name [classes]
   (->> classes (map name) (str/join " ")))
