@@ -39,6 +39,9 @@
     (update-in form [:children 0] assoc :head? true)
     form))
 
+(defn update-last [v f & args]
+  (conj (pop v) (apply f (peek v) args)))
+
 (defn ->tokens [form]
   (if (model/collection? form)
     (let [[opener closer] (delimiters form)]
@@ -66,6 +69,22 @@
       (symbol (get-in form [:children 0 :text])))))
 
 (declare ->lines)
+
+(defn pair->lines [[left right]]
+  (if (> (+ (chars left) 1 (chars right)) MAX_CHARS_PER_LINE)
+    (vec (concat (->lines left) (map #(concat (spacer 2) %) (->lines right))))
+    [(concat (->tokens left) (spacer) (->tokens right))]))
+
+(defn map->lines [form]
+  (let [[opener closer] (delimiters form)
+        children (:children form)
+        pairs (partition 2 children)
+        extra (when (odd? (count children)) (last children))
+        [init-line & rest-lines] (mapcat pair->lines pairs)
+        init-line (concat opener init-line)
+        rest-lines (mapv #(concat (spacer) %) rest-lines)
+        rest-lines (cond-> rest-lines extra (conj (concat (spacer) (->tokens extra))))]
+    (update-last `[~init-line ~@rest-lines] #(concat % closer))))
 
 (defmethod ->lines* :default [form]
   (let [children (:children form)
@@ -95,9 +114,12 @@
           (conj (pop lines) (concat (peek lines) closer)))))))
 
 (defn ->lines [form]
-  (if (and (model/collection? form) (not (fits-on-own-line? form)))
-    (->lines* (annotate-head form))
-    [(->tokens form)]))
+  (if (or (not (model/collection? form)) (fits-on-own-line? form))
+    [(->tokens form)]
+    (case (:type form)
+      :map (map->lines form)
+      :seq (->lines* (annotate-head form))
+      (:vec :set) (->lines* form))))
 
 ;; DOM utils
 

@@ -1,9 +1,7 @@
 (ns flense.editor.layout
   (:require [flense.editor
-             :refer [chars delimiters ->lines ->lines* MAX_CHARS_PER_LINE spacer ->tokens]]))
-
-(defn- update-last [v f & args]
-  (conj (pop v) (apply f (peek v) args)))
+             :refer [chars delimiters ->lines ->lines* MAX_CHARS_PER_LINE pair->lines spacer
+                     ->tokens update-last]]))
 
 ;; simple "header+body" layout is good enough for most core macros
 
@@ -25,11 +23,6 @@
   (defmethod ->lines* core-macro [form] (header+body->lines form headc)))
 
 ;; "header+pairs" works for several other core macros
-
-(defn pair->lines [[left right]]
-  (if (> (+ (chars left) 1 (chars right)) MAX_CHARS_PER_LINE)
-    (vec (concat (->lines left) (map #(concat (spacer 2) %) (->lines right))))
-    [(concat (->tokens left) (spacer) (->tokens right))]))
 
 (defn header+pairs->lines [form headc]
   (let [[opener closer] (delimiters form)
