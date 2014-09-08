@@ -1,7 +1,7 @@
 (ns flense.editor.layout
   (:require [flense.editor
-             :refer [chars delimiters ->lines ->lines* MAX_CHARS_PER_LINE pair->lines spacer
-                     ->tokens update-last]]))
+             :refer [chars delimiters ->lines ->lines* map->lines MAX_CHARS_PER_LINE pairs->lines
+                     spacer ->tokens update-last]]))
 
 ;; simple "header+body" layout is good enough for most core macros
 
@@ -28,10 +28,7 @@
   (let [[opener closer] (delimiters form)
         [inits rests] (split-at headc (:children form))
         init-line (concat opener (apply concat (interpose (spacer) (map ->tokens inits))))
-        pairs (partition 2 rests)
-        extra (when (odd? (count rests)) (last rests))
-        rest-lines (mapv #(concat (spacer 2) %) (mapcat pair->lines pairs))
-        rest-lines (cond-> rest-lines extra (conj (concat (spacer 2) (->tokens extra))))]
+        rest-lines (map #(concat (spacer 2) %) (pairs->lines rests))]
     (update-last `[~init-line ~@rest-lines] concat closer)))
 
 (def paired-header-counts
@@ -42,27 +39,11 @@
 
 ;; letlike core macros need their own layout algorithm
 
-(defn bpair->tokens [[bform bval]]
-  (concat (->tokens bform) (spacer) (->tokens bval)))
-
-(defn bvec->lines [form]
-  (let [[opener closer] (delimiters form)
-        children (:children form)
-        pairs (partition 2 children)
-        extra (when (odd? (count children)) (last children))]
-    (if (seq pairs)
-      (let [init-line (concat opener (bpair->tokens (first pairs)))
-            rest-lines (mapv #(concat (spacer) (bpair->tokens %)) (rest pairs))
-            rest-lines (cond-> rest-lines extra (conj (concat (spacer) (->tokens extra))))
-            lines (vec (concat [init-line] rest-lines))]
-        (update-last lines concat closer))
-      [(concat opener (when extra (->tokens extra)) closer)])))
-
 (defn letlike->lines [form]
   (let [[head bvec & body] (:children form)]
     (if (= (:type bvec) :vec)
       (let [[opener closer] (delimiters form)
-            bvec-lines (bvec->lines bvec)
+            bvec-lines (map->lines bvec)
             body-lines (mapv #(concat (spacer 2) %) (mapcat ->lines body))
             body-lines (update-last body-lines concat closer)
             init-line (concat opener (->tokens head) (spacer) (first bvec-lines))

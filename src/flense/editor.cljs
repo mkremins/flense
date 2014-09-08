@@ -75,16 +75,18 @@
     (vec (concat (->lines left) (map #(concat (spacer 2) %) (->lines right))))
     [(concat (->tokens left) (spacer) (->tokens right))]))
 
+(defn pairs->lines [forms]
+  (let [pairs (partition 2 forms)
+        extra (when (odd? (count forms)) (last forms))
+        lines (cond-> (mapcat pair->lines pairs) extra (concat (->lines extra)))]
+    (vec lines)))
+
 (defn map->lines [form]
   (let [[opener closer] (delimiters form)
-        children (:children form)
-        pairs (partition 2 children)
-        extra (when (odd? (count children)) (last children))
-        [init-line & rest-lines] (mapcat pair->lines pairs)
-        init-line (concat opener init-line)
-        rest-lines (mapv #(concat (spacer) %) rest-lines)
-        rest-lines (cond-> rest-lines extra (conj (concat (spacer) (->tokens extra))))]
-    (update-last `[~init-line ~@rest-lines] #(concat % closer))))
+        lines (pairs->lines (:children form))
+        init-line (concat opener (first lines))
+        rest-lines (map #(concat (spacer) %) (rest lines))]
+    (update-last `[~init-line ~@rest-lines] concat closer)))
 
 (defmethod ->lines* :default [form]
   (let [children (:children form)
