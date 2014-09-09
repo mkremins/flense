@@ -1,6 +1,7 @@
 (ns flense.editor
   (:refer-clojure :exclude [chars rem])
-  (:require [clojure.string :as str]
+  (:require [cljs.core.async :as async]
+            [clojure.string :as str]
             [flense.model :as model]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
@@ -23,11 +24,16 @@
 (defn line-count [text]
   (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
 
-(defn delimiters [{:keys [selected? type]}]
+(defn path-to [form]
+  (filterv number? (om/path form)))
+
+(defn delimiters [{:keys [selected? type] :as form}]
   [[{:classes (cond-> #{:delimiter type :left} selected? (conj :selected))
-     :content (case type :seq "(" :vec "[" :map "{" :set "#{")}]
+     :content (case type :seq "(" :vec "[" :map "{" :set "#{")
+     :path (path-to form)}]
    [{:classes (cond-> #{:delimiter type :right} selected? (conj :selected))
-     :content (case type :seq ")" :vec "]" (:map :set) "}")}]])
+     :content (case type :seq ")" :vec "]" (:map :set) "}")
+     :path (path-to form)}]])
 
 (defn spacer
   ([] (spacer 1))
@@ -151,6 +157,8 @@
                    (:collapsed-form form) (conj :macroexpanded)))
         :onChange
           #(om/update! form (model/string->atom (.. % -target -value)))
+        :onClick
+          #(async/put! (:nav-chan opts) (path-to form))
         :onKeyDown
           #(when-not ((:propagate-keypress? opts) % @form)
              (.stopPropagation %))
@@ -183,6 +191,8 @@
           (dom/textarea #js {
             :onChange
               #(om/update! form :text (.. % -target -value))
+            :onClick
+              #(async/put! (:nav-chan opts) (path-to form))
             :onKeyDown
               #(when-not ((:propagate-keypress? opts) % @form)
                  (.stopPropagation %))
@@ -207,6 +217,14 @@
           (when (:editing? prev)
             (.blur input)))))))
 
+(defn delimiter-view [token owner opts]
+  (reify om/IRender
+    (render [_]
+      (dom/span #js {
+        :className (class-name (:classes token))
+        :onClick #(async/put! (:nav-chan opts) (:path token))}
+        (:content token)))))
+
 (defn form-view [form owner opts]
   (reify om/IRender
     (render [_]
@@ -215,26 +233,37 @@
           (apply dom/div #js {:className "line"}
             (for [token line]
               (cond
+                (contains? (:classes token) :delimiter)
+                  (om/build delimiter-view token {:opts opts})
                 (presentational? token)
-                (dom/span #js {:className (class-name (:classes token))}
-                  (:content token))
+                  (dom/span #js {:className (class-name (:classes token))}
+                    (:content token))
                 (model/stringlike? token)
-                (om/build stringlike-view token {:opts opts})
+                  (om/build stringlike-view token {:opts opts})
                 :else
-                (om/build atom-view token {:opts opts})))))))))
+                  (om/build atom-view token {:opts opts})))))))))
 
 (defn editor-view [document owner opts]
   (reify
+    om/IInitState
+    (init-state [_]
+      {:nav-chan (async/chan)})
     om/IWillMount
     (will-mount [_]
       (go-loop []
         (let [action (<! (:edit-chan opts))]
           (when ((:pred action) @document)
             (om/transact! document [] (:edit action) (:tags action))))
+        (recur))
+      (go-loop []
+        (let [new-path (<! (om/get-state owner :nav-chan))]
+          (om/transact! document []
+            #(-> % (z/edit dissoc :editing?) (assoc :path new-path))))
         (recur)))
-    om/IRender
-    (render [_]
+    om/IRenderState
+    (render-state [_ {:keys [nav-chan]}]
       (let [{:keys [tree]} (z/edit document assoc :selected? true)]
         (apply dom/div #js {:className "flense"}
           (om/build-all form-view (:children tree)
-            {:opts (select-keys opts [:propagate-keypress?])}))))))
+            {:opts (-> opts (select-keys [:propagate-keypress?])
+                            (assoc :nav-chan nav-chan))}))))))
