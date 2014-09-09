@@ -256,15 +256,18 @@
     om/IWillMount
     (will-mount [_]
       (go-loop []
-        (let [action (<! (:edit-chan opts))]
+        (when-let [action (<! (:edit-chan opts))]
           (when ((:pred action) @document)
-            (om/transact! document [] (:edit action) (:tags action))))
-        (recur))
+            (om/transact! document [] (:edit action) (:tags action)))
+          (recur)))
       (go-loop []
-        (let [new-path (<! (om/get-state owner :nav-chan))]
+        (when-let [new-path (<! (om/get-state owner :nav-chan))]
           (om/transact! document []
-            #(-> % (z/edit dissoc :editing?) (assoc :path new-path))))
-        (recur)))
+            #(-> % (z/edit dissoc :editing?) (assoc :path new-path)))
+          (recur))))
+    om/IWillUnmount
+    (will-unmount [_]
+      (async/close! (om/get-state owner :nav-chan)))
     om/IRenderState
     (render-state [_ {:keys [nav-chan]}]
       (let [{:keys [tree]} (z/edit document assoc :selected? true)]
