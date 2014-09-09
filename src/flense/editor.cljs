@@ -13,11 +13,14 @@
 (defn class-name [classes]
   (->> classes (map name) (str/join " ")))
 
-(defn presentational? [token-or-form]
-  (contains? token-or-form :content))
+(defn delimiter? [token]
+  (contains? (:classes token) :delimiter))
+
+(defn spacer? [token]
+  (contains? (:classes token) :spacer))
 
 (defn chars [token-or-form]
-  (if (presentational? token-or-form)
+  (if (contains? token-or-form :content)
     (count (:content token-or-form))
     (count (model/tree->string token-or-form))))
 
@@ -232,16 +235,11 @@
         (for [line (->lines form)]
           (apply dom/div #js {:className "line"}
             (for [token line]
-              (cond
-                (contains? (:classes token) :delimiter)
-                  (om/build delimiter-view token {:opts opts})
-                (presentational? token)
-                  (dom/span #js {:className (class-name (:classes token))}
-                    (:content token))
-                (model/stringlike? token)
-                  (om/build stringlike-view token {:opts opts})
-                :else
-                  (om/build atom-view token {:opts opts})))))))))
+              (condp apply [token]
+                spacer? (dom/span #js {:className "spacer"} (:content token))
+                delimiter? (om/build delimiter-view token {:opts opts})
+                model/stringlike? (om/build stringlike-view token {:opts opts})
+                (om/build atom-view token {:opts opts})))))))))
 
 (defn editor-view [document owner opts]
   (reify
