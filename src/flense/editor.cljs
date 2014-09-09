@@ -97,9 +97,16 @@
         rest-lines (map #(concat (spacer) %) (rest lines))]
     (update-last `[~init-line ~@rest-lines] concat closer)))
 
+(defn indent-size [form]
+  (case (:type form)
+    :seq (let [head (first (:children form))]
+           (+ 2 (when (#{:symbol :keyword} (:type head)) (count (:text head)))))
+    :set 2
+    1))
+
 (defmethod ->lines* :default [form]
   (let [children (:children form)
-        indent (if (#{:seq :set} (:type form)) (spacer 2) (spacer))
+        indent (spacer (indent-size form))
         [opener closer] (delimiters form)]
     (loop [lines []
            line (concat opener (->tokens (first children)))
