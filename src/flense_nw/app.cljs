@@ -12,7 +12,7 @@
             [flense.model :as model]
             [flense-nw.cli :refer [cli-view]]
             [flense-nw.error :refer [error-bar-view]]
-            fs
+            [fs.core :as fs]
             [om.core :as om]
             [phalanges.core :as phalanges])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))

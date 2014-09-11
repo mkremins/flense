@@ -2,12 +2,12 @@
   :dependencies
   [[org.clojure/clojure "1.6.0"]
    [org.clojure/clojurescript "0.0-2322"]
-   [org.clojure/core.async "0.1.303.0-886421-alpha"]
+   [org.clojure/core.async "0.1.338.0-5c5012-alpha"]
    [com.facebook/react "0.11.1"]
    [om "0.7.1"]
    [spellhouse/phalanges "0.1.3"]
-   [mkremins/fs "0.2.0"]
-   [mkremins/xyzzy "0.1.9"]]
+   [mkremins/fs "0.3.0"]
+   [mkremins/xyzzy "0.2.1"]]
 
   :plugins
   [[lein-cljsbuild "1.0.3"]]
