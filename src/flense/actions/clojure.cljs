@@ -1,7 +1,6 @@
 (ns flense.actions.clojure
   (:refer-clojure :exclude [macroexpand macroexpand-1])
-  (:require [clojure.string :as str]
-            [flense.actions :refer [defaction]]
+  (:require [flense.actions :refer [defaction]]
             [flense.model :refer [find-placeholder form->tree tree->form]]
             [flense.util :refer [seek update]]
             [xyzzy.core :as z]))
@@ -62,7 +61,7 @@
 (defn- find-def-form [loc sym-name]
   (z/find-next-node loc
     #(let [[head sym] (:children %)]
-       (and (= (str/join (take 3 (:text head))) "def")
+       (and (= (subs (:text head) 0 3) "def")
             (= (:text sym) sym-name)))
     z/next))
 
