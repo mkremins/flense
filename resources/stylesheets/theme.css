@@ -4,7 +4,8 @@
   line-height: 1.4;
 }
 
-.flense .selected,
+.flense .selected.atom,
+.flense .selected.delimiter,
 .flense .selected.stringlike:not(.editing)::before,
 .flense .selected.stringlike:not(.editing)::after,
 .flense .selected.stringlike.editing textarea {
