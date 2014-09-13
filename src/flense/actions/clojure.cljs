@@ -24,7 +24,7 @@
 ;; toggle dispatch reader macro
 
 (def ^:private dispatch-types
-  {:map :set, :set :map, :string :regex, :regex :string})
+  {:fn :seq, :seq :fn, :map :set, :set :map, :string :regex, :regex :string})
 
 (defaction :clojure/toggle-dispatch
   :when #(contains? dispatch-types (-> % z/node :type))

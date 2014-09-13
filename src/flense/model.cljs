@@ -13,7 +13,7 @@
   (#{:bool :char :keyword :nil :number :symbol} (:type node)))
 
 (defn collection? [node]
-  (#{:map :seq :set :vec} (:type node)))
+  (#{:fn :map :seq :set :vec} (:type node)))
 
 (defn nonempty? [node]
   (seq (:children node)))
@@ -92,13 +92,21 @@
     :string (:text tree)
     :regex (js/RegExp. (:text tree))))
 
+(defn left-delimiter [type]
+  (case type
+    :fn "#(" :map "{" :seq "(" :set "#{" :vec "[" :string "\"" :regex "#\""))
+
+(defn right-delimiter [type]
+  (case type
+    (:fn :seq) ")" (:map :set) "}" :vec "]" (:string :regex) "\""))
+
 (defn tree->string [{:keys [type] :as tree}]
   (cond
     (collection? tree)
-    (str (case type :map "{" :seq "(" :set "#{" :vec "[")
+    (str (left-delimiter type)
          (str/join \space (map tree->string (:children tree)))
-         (case type (:map :set) "}" :seq ")" :vec "]"))
+         (right-delimiter type))
     (stringlike? tree)
-    (str (if (= type :regex) "#\"" \") (:text tree) \")
+    (str (left-delimiter type) (:text tree) (right-delimiter type))
     :else
     (:text tree)))

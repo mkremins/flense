@@ -3,13 +3,16 @@
              :refer [chars delimiters ->lines ->lines* map->lines MAX_CHARS_PER_LINE pairs->lines
                      spacer ->tokens update-last]]))
 
+(defn indent-size [form]
+  (if (= (:type form) :fn) 3 2))
+
 ;; simple "header+body" layout is good enough for most core macros
 
 (defn header+body->lines [form headc]
   (let [[opener closer] (delimiters form)
         [inits rests] (split-at headc (:children form))
         init-line (concat opener (apply concat (interpose (spacer) (map ->tokens inits))))
-        rest-lines (map #(concat (spacer 2) %) (mapcat ->lines rests))]
+        rest-lines (map #(concat (spacer (indent-size form)) %) (mapcat ->lines rests))]
     (update-last `[~init-line ~@rest-lines] concat closer)))
 
 (def header-counts
@@ -28,7 +31,7 @@
   (let [[opener closer] (delimiters form)
         [inits rests] (split-at headc (:children form))
         init-line (concat opener (apply concat (interpose (spacer) (map ->tokens inits))))
-        rest-lines (map #(concat (spacer 2) %) (pairs->lines rests))]
+        rest-lines (map #(concat (spacer (indent-size form)) %) (pairs->lines rests))]
     (update-last `[~init-line ~@rest-lines] concat closer)))
 
 (def paired-header-counts
@@ -43,11 +46,12 @@
   (let [[head bvec & body] (:children form)]
     (if (= (:type bvec) :vec)
       (let [[opener closer] (delimiters form)
+            indent (indent-size form)
             bvec-lines (map->lines bvec)
-            body-lines (mapv #(concat (spacer 2) %) (mapcat ->lines body))
+            body-lines (mapv #(concat (spacer indent) %) (mapcat ->lines body))
             body-lines (update-last body-lines concat closer)
             init-line (concat opener (->tokens head) (spacer) (first bvec-lines))
-            bvec-indent (spacer (+ (count (:text head)) 2))
+            bvec-indent (spacer (+ (count (:text head)) indent))
             bvec-lines (map #(concat bvec-indent %) (rest bvec-lines))]
         `[~init-line ~@bvec-lines ~@body-lines])
       ((get-method ->lines* :default) form))))

@@ -30,18 +30,15 @@
 (defn path-to [form]
   (filterv number? (om/path form)))
 
-(defn delimiter-contents [type]
-  (case type
-    :seq ["(" ")"] :vec ["[" "]"] :map ["{" "}"] :set ["#{" "}"]
-    :string ["\"" "\""] :regex ["#\"" "\""]))
-
 (defn delimiters [{:keys [editing? selected? type] :as form}]
   (let [classes (cond-> #{:delimiter type}
-                  editing? (conj :editing) selected? (conj :selected))
-        path (path-to form)
-        [opener closer] (delimiter-contents type)]
-    [[{:classes (conj classes :left), :content opener, :path path}]
-     [{:classes (conj classes :right), :content closer, :path path}]]))
+                  editing? (conj :editing) selected? (conj :selected))]
+    [[{:classes (conj classes :left)
+       :content (model/left-delimiter type)
+       :path (path-to form)}]
+     [{:classes (conj classes :right)
+       :content (model/right-delimiter type)
+       :path (path-to form)}]]))
 
 (defn spacer
   ([] (spacer 1))
@@ -49,7 +46,7 @@
          :content (str/join (repeat n \space))}]))
 
 (defn annotate-head [form]
-  (if (and (= (:type form) :seq) (seq (:children form)))
+  (if (and (#{:fn :seq} (:type form)) (seq (:children form)))
     (update-in form [:children 0] assoc :head? true)
     form))
 
@@ -83,7 +80,7 @@
 
 (defmulti ->lines*
   (fn [form]
-    (when (and (= (:type form) :seq)
+    (when (and (#{:fn :seq} (:type form))
                (= (:type (first (:children form))) :symbol))
       (symbol (get-in form [:children 0 :text])))))
 
@@ -108,11 +105,11 @@
     (update-last `[~init-line ~@rest-lines] concat closer)))
 
 (defn indent-size [form]
-  (case (:type form)
-    :seq (let [head (first (:children form))]
-           (+ 2 (when (#{:symbol :keyword} (:type head)) (count (:text head)))))
-    :set 2
-    1))
+  (letfn [(head-size [form]
+            (let [head (first (:children form))]
+              (when (#{:symbol :keyword} (:type head)) (count (:text head)))))]
+    (case (:type form)
+      :fn (+ 3 (head-size form)), :seq (+ 2 (head-size form)), :set 2, 1)))
 
 (defmethod ->lines* :default [form]
   (let [children (:children form)
@@ -146,7 +143,7 @@
     [(->tokens form)]
     (case (:type form)
       :map (map->lines form)
-      :seq (->lines* (annotate-head form))
+      (:fn :seq) (->lines* (annotate-head form))
       (:vec :set) (->lines* form))))
 
 ;; DOM utils
