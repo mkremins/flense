@@ -3,7 +3,7 @@
 }
 
 .flense .atom,
-.flense .stringlike textarea {
+.flense .stringlike {
   border: none;
   font-family: inherit;
   font-size: inherit;
@@ -15,20 +15,15 @@
 
 .flense .stringlike {
   display: inline-block;
-  line-height: 0;
-  vertical-align: top;
+  margin-top: -0.3rem;
+  position: relative;
+  top: 0.3rem;
 }
 
-.flense .stringlike::before,
-.flense .stringlike::after {
-  line-height: 1;
+.flense .delimiter.string,
+.flense .delimiter.regex {
   vertical-align: top;
 }
-
-.flense .regex::before  { content: "#\""; }
-.flense .regex::after   { content:  "\""; }
-.flense .string::before { content:  "\""; }
-.flense .string::after  { content:  "\""; }
 
 .flense .spacer {
   white-space: pre;

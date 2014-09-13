@@ -5,10 +5,8 @@
 }
 
 .flense .selected.atom,
-.flense .selected.delimiter,
-.flense .selected.stringlike:not(.editing)::before,
-.flense .selected.stringlike:not(.editing)::after,
-.flense .selected.stringlike.editing textarea {
+.flense .selected.delimiter:not(.editing),
+.flense .selected.stringlike.editing {
   background: rgb(170,203,249);
 }
 
@@ -16,7 +14,7 @@
   color: rgb(198,115,91);
 }
 
-.flense .stringlike textarea {
+.flense .stringlike {
   color: rgb(21,144,155);
 }
 
@@ -25,8 +23,6 @@
   font-weight: bold;
 }
 
-.flense .delimiter,
-.flense .stringlike::before,
-.flense .stringlike::after {
+.flense .delimiter {
   color: #777;
 }

@@ -30,13 +30,18 @@
 (defn path-to [form]
   (filterv number? (om/path form)))
 
-(defn delimiters [{:keys [selected? type] :as form}]
-  [[{:classes (cond-> #{:delimiter type :left} selected? (conj :selected))
-     :content (case type :seq "(" :vec "[" :map "{" :set "#{")
-     :path (path-to form)}]
-   [{:classes (cond-> #{:delimiter type :right} selected? (conj :selected))
-     :content (case type :seq ")" :vec "]" (:map :set) "}")
-     :path (path-to form)}]])
+(defn delimiter-contents [type]
+  (case type
+    :seq ["(" ")"] :vec ["[" "]"] :map ["{" "}"] :set ["#{" "}"]
+    :string ["\"" "\""] :regex ["#\"" "\""]))
+
+(defn delimiters [{:keys [editing? selected? type] :as form}]
+  (let [classes (cond-> #{:delimiter type}
+                  editing? (conj :editing) selected? (conj :selected))
+        path (path-to form)
+        [opener closer] (delimiter-contents type)]
+    [[{:classes (conj classes :left), :content opener, :path path}]
+     [{:classes (conj classes :right), :content closer, :path path}]]))
 
 (defn spacer
   ([] (spacer 1))
@@ -52,7 +57,8 @@
   (conj (pop v) (apply f (peek v) args)))
 
 (defn ->tokens [form]
-  (if (model/collection? form)
+  (condp apply [form]
+    model/collection?
     (let [[opener closer] (delimiters form)]
       (concat opener
         (->> (:children (annotate-head form))
@@ -60,6 +66,10 @@
              (interpose (spacer))
              (apply concat))
         closer))
+    model/stringlike?
+    (let [[opener closer] (delimiters form)]
+      (concat opener [form] closer))
+    ;else
     [form]))
 
 (defn fits-on-line? [line form]
@@ -191,36 +201,34 @@
   (reify
     om/IRender
     (render [_]
-      (dom/div #js {
-        :className
-          (class-name
-           (cond-> #{:stringlike (:type form)}
-                   (:editing? form) (conj :editing)
-                   (:selected? form) (conj :selected)))}
-        (let [text (str/replace (:text form) #"\s+" " ")]
-          (dom/textarea #js {
-            :onChange
-              #(om/update! form :text (.. % -target -value))
-            :onClick
-              #(async/put! (:nav-chan opts) (path-to form))
-            :onKeyDown
-              #(when-not ((:propagate-keypress? opts) % @form)
-                 (.stopPropagation %))
-            :ref "content"
+      (let [text (str/replace (:text form) #"\s+" " ")]
+        (dom/textarea #js {
+          :className
+            (class-name
+             (cond-> #{:stringlike (:type form)}
+                     (:editing? form) (conj :editing)
+                     (:selected? form) (conj :selected)))
+          :onChange
+            #(om/update! form :text (.. % -target -value))
+          :onClick
+            #(async/put! (:nav-chan opts) (path-to form))
+          :onKeyDown
+            #(when-not ((:propagate-keypress? opts) % @form)
+               (.stopPropagation %))
             :style #js {
               :height (rem (* 1.2 (line-count text)))
               :width  (rem (/ (min (count text) MAX_CHARS_PER_LINE) 2))}
-            :value text}))))
+            :value text})))
     om/IDidMount
     (did-mount [_]
       (when (:editing? form)
-        (let [input (om/get-node owner "content")]
+        (let [input (om/get-node owner)]
           (if (model/placeholder? form)
             (focus+select input)
             (move-caret-to-end input)))))
     om/IDidUpdate
     (did-update [_ prev _]
-      (let [input (om/get-node owner "content")]
+      (let [input (om/get-node owner)]
         (if (:editing? form)
           (when-not (:editing? prev)
             (move-caret-to-end input))
