@@ -10,13 +10,12 @@
   margin: 0;
   outline: none;
   padding: 0;
-  resize: none;
 }
 
 .flense .stringlike {
-  display: inline-block;
   margin-top: -0.3rem;
   position: relative;
+  resize: none;
   top: 0.3rem;
 }
 
