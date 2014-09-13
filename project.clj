@@ -1,4 +1,4 @@
-(defproject mkremins/flense "0.0-278"
+(defproject mkremins/flense "0.0-SNAPSHOT"
   :description "Experimental structural editor for Clojure code"
   :url "https://github.com/mkremins/flense"
   :license {:name "MIT License"
