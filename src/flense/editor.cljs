@@ -216,7 +216,7 @@
             #(when-not ((:propagate-keypress? opts) % @form)
                (.stopPropagation %))
             :style #js {
-              :height (rem (* 1.2 (line-count text)))
+              :height (rem (* 1.15 (line-count text)))
               :width  (rem (/ (min (count text) MAX_CHARS_PER_LINE) 2))}
             :value text})))
     om/IDidMount
