@@ -14,10 +14,8 @@
 (defn spacer? [token]
   (contains? (:classes token) :spacer))
 
-(defn chars [token-or-form]
-  (if (contains? token-or-form :content)
-    (count (:content token-or-form))
-    (count (model/tree->string token-or-form))))
+(defn chars [token]
+  (count (or (:text token) (model/tree->string token))))
 
 (defn text-height [text]
   (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
@@ -32,16 +30,16 @@
   (let [classes (cond-> #{:delimiter type}
                   editing? (conj :editing) selected? (conj :selected))]
     [[{:classes (conj classes :left)
-       :content (model/left-delimiter type)
-       :path (path-to form)}]
+       :path (path-to form)
+       :text (model/left-delimiter type)}]
      [{:classes (conj classes :right)
-       :content (model/right-delimiter type)
-       :path (path-to form)}]]))
+       :path (path-to form)
+       :text (model/right-delimiter type)}]]))
 
 (defn spacer
   ([] (spacer 1))
   ([n] [{:classes #{:spacer}
-         :content (apply str (repeat n \space))}]))
+         :text (apply str (repeat n \space))}]))
 
 (defn annotate-head [form]
   (if (and (#{:fn :seq} (:type form)) (seq (:children form)))

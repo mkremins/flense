@@ -104,7 +104,7 @@
       (dom/span #js {
         :className (class-name (:classes token))
         :onClick #(async/put! (:nav-chan opts) (:path token))}
-        (:content token)))))
+        (:text token)))))
 
 (defn form-view [form owner opts]
   (reify om/IRender
@@ -114,7 +114,7 @@
           (apply dom/div #js {:className "line"}
             (for [token line]
               (condp apply [token]
-                layout/spacer? (dom/span #js {:className "spacer"} (:content token))
+                layout/spacer? (dom/span #js {:className "spacer"} (:text token))
                 layout/delimiter? (om/build delimiter-view token {:opts opts})
                 model/stringlike? (om/build stringlike-view token {:opts opts})
                 (om/build atom-view token {:opts opts})))))))))
