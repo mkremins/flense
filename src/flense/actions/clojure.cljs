@@ -61,7 +61,8 @@
 (defn- find-def-form [loc sym-name]
   (z/find-next-node loc
     #(let [[head sym] (:children %)]
-       (and (= (subs (:text head) 0 3) "def")
+       (and (:text head)
+            (= (subs (:text head) 0 3) "def")
             (= (:text sym) sym-name)))
     z/next))
 
