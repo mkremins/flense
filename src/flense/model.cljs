@@ -92,21 +92,21 @@
     :string (:text tree)
     :regex (js/RegExp. (:text tree))))
 
-(defn left-delimiter [type]
+(defn opener [type]
   (case type
     :fn "#(" :map "{" :seq "(" :set "#{" :vec "[" :string "\"" :regex "#\""))
 
-(defn right-delimiter [type]
+(defn closer [type]
   (case type
     (:fn :seq) ")" (:map :set) "}" :vec "]" (:string :regex) "\""))
 
 (defn tree->string [{:keys [type] :as tree}]
   (cond
     (collection? tree)
-    (str (left-delimiter type)
+    (str (opener type)
          (str/join \space (map tree->string (:children tree)))
-         (right-delimiter type))
+         (closer type))
     (stringlike? tree)
-    (str (left-delimiter type) (:text tree) (right-delimiter type))
+    (str (opener type) (:text tree) (closer type))
     :else
     (:text tree)))
