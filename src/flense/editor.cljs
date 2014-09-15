@@ -45,8 +45,8 @@
         :onKeyDown
           #(when-not ((:propagate-keypress? opts) % @form)
              (.stopPropagation %))
-         :style #js {:width (rem (/ (layout/chars form) 2))}
-         :value (:text form)}))
+        :style #js {:width (rem (/ (layout/chars form) 2))}
+        :value (:text form)}))
     om/IDidMount
     (did-mount [_]
       (when (:selected? form)
@@ -78,10 +78,10 @@
           :onKeyDown
             #(when-not ((:propagate-keypress? opts) % @form)
                (.stopPropagation %))
-            :style #js {
-              :height (rem (* 1.15 (layout/text-height text)))
-              :width  (rem (/ (layout/text-width text) 2))}
-            :value text})))
+          :style #js {
+            :height (rem (* 1.15 (layout/text-height text)))
+            :width  (rem (/ (layout/text-width text) 2))}
+          :value text})))
     om/IDidMount
     (did-mount [_]
       (when (:editing? form)
