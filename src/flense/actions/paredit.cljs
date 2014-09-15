@@ -61,7 +61,7 @@
   :when collection-loc? :edit #(z/edit % assoc :type :vec))
 
 (defaction :paredit/raise
-  :when z/up :edit #(-> % z/up (z/replace (z/node %))))
+  :when (comp z/up z/up) :edit #(-> % z/up (z/replace (z/node %))))
 
 (defaction :paredit/remove
   :when z/up
