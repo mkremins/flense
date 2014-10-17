@@ -147,17 +147,17 @@
 ;; simple "header+body" layout is good enough for most core macros
 
 (defn header+body->lines [form headc]
-  (let [[inits rests] (split-at headc (:children form))
+  (let [[inits rests] (split-at (inc headc) (:children form))
         init-line (concat (opener form) (apply concat (interpose (spacer) (map ->tokens inits))))
         rest-lines (map #(concat (spacer (indent-size* form)) %) (mapcat ->lines rests))]
     (update-last `[~init-line ~@rest-lines] concat (closer form))))
 
 (def header-counts
-  '{-> 2, ->> 2, as-> 3, def 2, definline 2, definterface 2, defmacro 2, defmethod 3, defmulti 2,
-    defn 2, defn- 2, defonce 2, defprotocol 2, defrecord 3, defstruct 2, deftype 3, do 2,
-    dotimes 2, extend 2, extend-protocol 2, extend-type 2, if 2, if-let 2, if-not 2, if-some 2,
-    proxy 3, reify 1, some-> 2, some->> 2, specify 2, specify! 2, when 2, when-first 2, when-let 2,
-    when-not 2, when-some 2})
+  '{-> 1, ->> 1, as-> 2, def 1, definline 1, definterface 1, defmacro 1, defmethod 2, defmulti 1,
+    defn 1, defn- 1, defonce 1, defprotocol 1, defrecord 2, defstruct 1, deftype 2, do 1,
+    dotimes 1, extend 1, extend-protocol 1, extend-type 1, if 1, if-let 1, if-not 1, if-some 1,
+    proxy 2, reify 0, some-> 1, some->> 1, specify 1, specify! 1, when 1, when-first 1, when-let 1,
+    when-not 1, when-some 1})
 
 (doseq [[core-macro headc] header-counts]
   (defmethod ->lines* core-macro [form] (header+body->lines form headc)))
@@ -165,13 +165,13 @@
 ;; "header+pairs" works for several other core macros
 
 (defn header+pairs->lines [form headc]
-  (let [[inits rests] (split-at headc (:children form))
+  (let [[inits rests] (split-at (inc headc) (:children form))
         init-line (concat (opener form) (apply concat (interpose (spacer) (map ->tokens inits))))
         rest-lines (map #(concat (spacer (indent-size* form)) %) (pairs->lines rests))]
     (update-last `[~init-line ~@rest-lines] concat (closer form))))
 
 (def paired-header-counts
-  '{case 2, cond 1, cond-> 2, cond->> 2, condp 3})
+  '{case 1, cond 0, cond-> 1, cond->> 1, condp 2})
 
 (doseq [[core-macro headc] paired-header-counts]
   (defmethod ->lines* core-macro [form] (header+pairs->lines form headc)))
