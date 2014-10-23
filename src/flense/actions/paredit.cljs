@@ -1,148 +1,139 @@
 (ns flense.actions.paredit
-  (:require [flense.actions :refer [defaction]]
-            [flense.model
+  (:refer-clojure :exclude [remove])
+  (:require [flense.model
              :refer [atom-loc? collection-loc? nonempty-loc? placeholder
                      placeholder-loc?]]
             [flense.util :refer [exchange update]]
             [xyzzy.core :as z]))
 
-(defaction :paredit/grow-left
-  :when #(and (z/left %) (collection-loc? %))
-  :edit (fn [loc]
-          (let [n   (-> loc :path peek dec)
-                sib (-> loc z/left z/node)]
-            (-> loc z/up
-                (z/remove-child n) (z/child n)
-                (z/insert-child 0 sib)))))
+(defn grow-left [loc]
+  (when ((every-pred z/left collection-loc?) loc)
+    (let [n   (-> loc :path peek dec)
+          sib (-> loc z/left z/node)]
+      (-> loc z/up (z/remove-child n) (z/child n) (z/insert-child 0 sib)))))
 
-(defaction :paredit/grow-right
-  :when #(and (z/right %) (collection-loc? %))
-  :edit (fn [loc]
-          (let [n   (-> loc :path peek)
-                sib (-> loc z/right z/node)]
-            (-> loc z/up (z/remove-child (inc n)) (z/child n)
-                (z/edit #(update % :children conj sib))))))
+(defn grow-right [loc]
+  (when ((every-pred z/right collection-loc?) loc)
+    (let [n   (-> loc :path peek)
+          sib (-> loc z/right z/node)]
+      (-> loc z/up (z/remove-child (inc n)) (z/child n)
+          (z/edit #(update % :children conj sib))))))
 
-(defaction :paredit/insert-left
-  :when z/up :edit #(-> % (z/insert-left placeholder) z/left))
+(defn insert-outside [loc]
+  (when (z/up (z/up loc))
+    (-> loc z/up (z/insert-right placeholder) z/right)))
 
-(defaction :paredit/insert-outside
-  :when (comp z/up z/up)
-  :edit #(-> % z/up (z/insert-right placeholder) z/right))
+(defn join-left [loc]
+  (when ((every-pred collection-loc? (comp collection-loc? z/left)) loc)
+    (let [n  (-> loc :path peek dec)
+          cs (-> loc z/left z/node :children)]
+      (-> loc
+          (z/edit (fn [form] (update form :children #(vec (concat cs %)))))
+          z/up (z/remove-child n) (z/child n)))))
 
-(defaction :paredit/insert-right
-  :when z/up :edit #(-> % (z/insert-right placeholder) z/right))
+(defn join-right [loc]
+  (when ((every-pred collection-loc? (comp collection-loc? z/right)) loc)
+    (let [n  (-> loc :path peek)
+          cs (-> loc z/right z/node :children)]
+      (-> loc
+          (z/edit (fn [form] (update form :children #(vec (concat % cs)))))
+          z/up (z/remove-child (inc n)) (z/child n)))))
 
-(defaction :paredit/join-left
-  :when #(and (collection-loc? %) (-> % z/left collection-loc?))
-  :edit (fn [loc]
-          (let [n  (-> loc :path peek dec)
-                cs (-> loc z/left z/node :children)]
-            (-> loc
-                (z/edit (fn [form] (update form :children #(vec (concat cs %)))))
-                z/up (z/remove-child n) (z/child n)))))
+(defn raise [loc]
+  (when (z/up (z/up loc))
+    (z/replace (z/up loc) (z/node loc))))
 
-(defaction :paredit/join-right
-  :when #(and (collection-loc? %) (-> % z/right collection-loc?))
-  :edit (fn [loc]
-          (let [n  (-> loc :path peek)
-                cs (-> loc z/right z/node :children)]
-            (-> loc
-                (z/edit (fn [form] (update form :children #(vec (concat % cs)))))
-                z/up (z/remove-child (inc n)) (z/child n)))))
+(defn remove [loc]
+  (when (z/up loc)
+    (if (placeholder-loc? loc)
+      (if (and (not (-> loc z/up z/up))
+               (= (-> loc z/up z/node :children count) 1))
+        loc
+        (z/remove loc))
+      (z/replace loc placeholder))))
 
-(defaction :paredit/make-curly
-  :when collection-loc? :edit #(z/edit % assoc :type :map))
+(defn shrink-left [loc]
+  (when ((every-pred z/up collection-loc? nonempty-loc?) loc)
+    (let [sib (-> loc z/down z/node)]
+      (-> loc (z/remove-child 0) (z/insert-left sib)))))
 
-(defaction :paredit/make-round
-  :when collection-loc? :edit #(z/edit % assoc :type :seq))
+(defn shrink-right [loc]
+  (when ((every-pred z/up collection-loc? nonempty-loc?) loc)
+    (let [sib (-> loc z/down z/rightmost z/node)]
+      (-> loc (z/edit #(update % :children (comp vec butlast)))
+          (z/insert-right sib)))))
 
-(defaction :paredit/make-square
-  :when collection-loc? :edit #(z/edit % assoc :type :vec))
+(defn splice [loc]
+  (when ((every-pred z/up collection-loc? nonempty-loc?) loc)
+    (let [n  (-> loc :path peek)
+          cs (-> loc z/node :children)]
+      (-> loc z/up
+          (z/edit #(-> % (assoc-in [:children n] cs)
+                         (update :children (comp vec flatten))))
+          (z/child n)))))
 
-(defaction :paredit/raise
-  :when (comp z/up z/up) :edit #(-> % z/up (z/replace (z/node %))))
+(defn split-left [loc]
+  (when (z/up (z/up loc))
+    (let [split (-> loc :path peek)
+          node  (-> loc z/up z/node)
+          [ls rs] (map vec (split-at split (:children node)))]
+      (-> loc z/up
+          (z/edit assoc :children rs)
+          (z/insert-left (assoc node :children ls))
+          z/down))))
 
-(defaction :paredit/remove
-  :when z/up
-  :edit #(if (placeholder-loc? %)
-             (if (and (not (-> % z/up z/up))
-                      (= (-> % z/up z/node :children count) 1))
-                 %
-                 (z/remove %))
-             (z/replace % placeholder)))
+(defn split-right [loc]
+  (when (z/up (z/up loc))
+    (let [split (-> loc :path peek inc)
+          node  (-> loc z/up z/node)
+          [ls rs] (map vec (split-at split (:children node)))]
+      (-> loc z/up
+          (z/edit assoc :children ls)
+          (z/insert-right (assoc node :children rs))
+          z/down z/rightmost))))
 
-(defaction :paredit/shrink-left
-  :when #(and (z/up %) (collection-loc? %) (nonempty-loc? %))
-  :edit (fn [loc]
-          (let [sib (-> loc z/down z/node)]
-            (-> loc (z/remove-child 0) (z/insert-left sib)))))
+(defn swap-left [loc]
+  (when (z/left loc)
+    (let [i (-> loc :path peek) j (dec i)]
+      (-> loc z/up (z/edit update :children exchange i j) (z/child j)))))
 
-(defaction :paredit/shrink-right
-  :when #(and (z/up %) (collection-loc? %) (nonempty-loc? %))
-  :edit (fn [loc]
-          (let [sib (-> loc z/down z/rightmost z/node)]
-            (-> loc (z/edit #(update % :children (comp vec butlast)))
-                (z/insert-right sib)))))
+(defn swap-right [loc]
+  (when (z/right loc)
+    (let [i (-> loc :path peek) j (inc i)]
+      (-> loc z/up (z/edit update :children exchange i j) (z/child j)))))
 
-(defaction :paredit/splice
-  :when #(and (z/up %) (collection-loc? %) (nonempty-loc? %))
-  :edit (fn [loc]
-          (let [n  (-> loc :path peek)
-                cs (-> loc z/node :children)]
-            (-> loc z/up
-                (z/edit #(-> % (assoc-in [:children n] cs)
-                               (update :children (comp vec flatten))))
-                (z/child n)))))
+(defn- set-type [type loc]
+  (when (collection-loc? loc)
+    (z/edit loc assoc :type type)))
 
-(defaction :paredit/split-left
-  :when (comp z/up z/up)
-  :edit (fn [loc]
-          (let [split (-> loc :path peek)
-                node  (-> loc z/up z/node)
-                [ls rs] (map vec (split-at split (:children node)))]
-            (-> loc z/up
-                (z/edit assoc :children rs)
-                (z/insert-left (assoc node :children ls))
-                z/down))))
+(defn- wrap-type [type loc]
+  (z/down (z/edit loc #(-> {:type %2 :children [%1]}) type)))
 
-(defaction :paredit/split-right
-  :when (comp z/up z/up)
-  :edit (fn [loc]
-          (let [split (-> loc :path peek inc)
-                node  (-> loc z/up z/node)
-                [ls rs] (map vec (split-at split (:children node)))]
-            (-> loc z/up
-                (z/edit assoc :children ls)
-                (z/insert-right (assoc node :children rs))
-                z/down z/rightmost))))
+(defn wrap-quote [loc]
+  (when (atom-loc? loc)
+    (z/edit loc assoc :type :string :editing? true)))
 
-(defaction :paredit/swap-left
-  :when z/left
-  :edit (fn [loc]
-          (let [i (-> loc :path peek) j (dec i)]
-            (-> loc z/up (z/edit update :children exchange i j)
-                (z/child j)))))
-
-(defaction :paredit/swap-right
-  :when z/right
-  :edit (fn [loc]
-          (let [i (-> loc :path peek) j (inc i)]
-            (-> loc z/up (z/edit update :children exchange i j)
-                (z/child j)))))
-
-(defn- wrap [form type]
-  {:type type :children [form]})
-
-(defaction :paredit/wrap-curly
-  :edit #(-> % (z/edit wrap :map) z/down))
-
-(defaction :paredit/wrap-quote
-  :when atom-loc?
-  :edit #(z/edit % assoc :type :string :editing? true))
-
-(defaction :paredit/wrap-round
-  :edit #(-> % (z/edit wrap :seq) z/down))
-
-(defaction :paredit/wrap-square
-  :edit #(-> % (z/edit wrap :vec) z/down))
+(def actions
+  {:paredit/grow-left       grow-left
+   :paredit/grow-right      grow-right
+   :paredit/insert-left     #(-> % (z/insert-left placeholder) z/left)
+   :paredit/insert-outside  (with-meta insert-outside {:tags #{:end-text-editing}})
+   :paredit/insert-right    #(-> % (z/insert-right placeholder) z/right)
+   :paredit/join-left       join-left
+   :paredit/join-right      join-right
+   :paredit/make-curly      (partial set-type :map)
+   :paredit/make-round      (partial set-type :seq)
+   :paredit/make-square     (partial set-type :vec)
+   :paredit/raise           raise
+   :paredit/remove          (with-meta remove {:tags #{:remove}})
+   :paredit/shrink-left     shrink-left
+   :paredit/shrink-right    shrink-right
+   :paredit/splice          splice
+   :paredit/split-left      split-left
+   :paredit/split-right     split-right
+   :paredit/swap-left       swap-left
+   :paredit/swap-right      swap-right
+   :paredit/wrap-curly      (partial wrap-type :map)
+   :paredit/wrap-quote      wrap-quote
+   :paredit/wrap-round      (partial wrap-type :seq)
+   :paredit/wrap-square     (partial wrap-type :vec)})

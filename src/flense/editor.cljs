@@ -128,8 +128,7 @@
     (will-mount [_]
       (go-loop []
         (when-let [action (<! (:edit-chan opts))]
-          (when ((:pred action) @document)
-            (om/transact! document [] (:edit action) (:tags action)))
+          (om/transact! document [] #(or (action %) %) (:tags (meta action) #{}))
           (recur)))
       (go-loop []
         (when-let [new-path (<! (om/get-state owner :nav-chan))]

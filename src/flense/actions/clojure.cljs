@@ -1,7 +1,6 @@
 (ns flense.actions.clojure
   (:refer-clojure :exclude [macroexpand macroexpand-1])
-  (:require [flense.actions :refer [defaction]]
-            [flense.model :refer [find-placeholder form->tree tree->form]]
+  (:require [flense.model :refer [find-placeholder form->tree tree->form]]
             [flense.util :refer [seek update]]
             [xyzzy.core :as z]))
 
@@ -16,19 +15,10 @@
    "let"   '(let [... ...] ...)
    "when"  '(when ... ...)})
 
-(defaction :clojure/expand-template
-  :when (comp templates :text z/node)
-  :edit #(-> % (z/edit (comp form->tree templates :text))
-           (find-placeholder z/next)))
-
 ;; toggle dispatch reader macro
 
 (def ^:private dispatch-types
   {:fn :seq, :seq :fn, :map :set, :set :map, :string :regex, :regex :string})
-
-(defaction :clojure/toggle-dispatch
-  :when #(contains? dispatch-types (-> % z/node :type))
-  :edit #(z/edit % update :type dispatch-types))
 
 ;; expand and collapse macro forms
 
@@ -46,15 +36,6 @@
     (if (macro-form? expanded)
       (recur expanded)
       expanded)))
-
-(defaction :clojure/expand-macro
-  :when #(-> % z/node tree->form macro-form?)
-  :edit #(-> % (z/edit (comp form->tree macroexpand tree->form))
-               (z/edit assoc :collapsed-form (z/node %))))
-
-(defaction :clojure/collapse-macro
-  :when #(-> % z/node :collapsed-form)
-  :edit #(z/edit % :collapsed-form))
 
 ;; jump to definition
 
@@ -97,6 +78,25 @@
         (recur loc' sym-name))
     (-> (find-def-form loc sym-name) z/down z/right)))
 
-(defaction :clojure/jump-to-definition
-  :when #(= (:type (z/node %)) :symbol)
-  :edit #(or (find-definition % (:text (z/node %))) %))
+;; define actions map for export
+
+(def actions
+  {:clojure/expand-template
+   #(when-let [template (templates (:text (z/node %)))]
+      (-> % (z/replace (form->tree template)) (find-placeholder z/next)))
+
+   :clojure/toggle-dispatch
+   #(when (contains? dispatch-types (z/node (type %)))
+      (z/edit % update :type dispatch-types))
+
+   :clojure/expand-macro
+   #(when (-> % z/node tree->form macro-form?)
+      (-> % (z/edit (comp form->tree macroexpand tree->form))
+            (z/edit assoc :collapsed-form (z/node %))))
+
+   :clojure/collapse-macro
+   #(z/edit % :collapsed-form)
+
+   :clojure/jump-to-definition
+   #(when (= (:type (z/node %)) :symbol)
+      (find-definition % (:text (z/node %))))})

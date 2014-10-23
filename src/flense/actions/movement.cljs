@@ -1,27 +1,24 @@
 (ns flense.actions.movement
-  (:require [flense.actions :refer [defaction]]
-            [flense.model :refer [find-placeholder stringlike-loc?]]
+  (:require [flense.model :refer [find-placeholder stringlike-loc?]]
             [xyzzy.core :as z]))
 
-(doseq [[name move]
-        {:move/left   z/left-or-wrap
-         :move/next   z/next
-         :move/next-placeholder #(find-placeholder % z/next)
-         :move/prev   z/prev
-         :move/prev-placeholder #(find-placeholder % z/prev)
-         :move/right  z/right-or-wrap}]
-  (defaction name :when move :edit move))
+(defn down [loc]
+  (if (stringlike-loc? loc)
+    (when-not (:editing? (z/node loc))
+      (z/edit loc assoc :editing? true))
+    (z/down loc)))
 
-(defaction :move/down
-  :when #(if (stringlike-loc? %)
-           (not (:editing? (z/node %)))
-           (z/down %))
-  :edit #(if (stringlike-loc? %)
-           (z/edit % assoc :editing? true)
-           (z/down %)))
+(defn up [loc]
+  (if (and (stringlike-loc? loc) (:editing? (z/node loc)))
+    (z/edit loc dissoc :editing?)
+    (z/up loc)))
 
-(defaction :move/up
-  :when z/up
-  :edit #(if (and (stringlike-loc? %) (:editing? (z/node %)))
-           (z/edit % dissoc :editing?)
-           (z/up %)))
+(def actions
+  {:move/down down
+   :move/up (with-meta up {:tags #{:end-text-editing}})
+   :move/left z/left-or-wrap
+   :move/right z/right-or-wrap
+   :move/next z/next
+   :move/prev z/prev
+   :move/next-placeholder #(find-placeholder % z/next)
+   :move/prev-placeholder #(find-placeholder % z/prev)})
