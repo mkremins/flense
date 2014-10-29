@@ -64,7 +64,8 @@
   (reify
     om/IRender
     (render [_]
-      (let [text (str/replace (:text form) #"\s+" " ")]
+      (let [text (str/replace (:text form) #"\s+" " ")
+            {:keys [line-length]} opts]
         (dom/textarea #js {
           :className
             (class-name
@@ -79,8 +80,8 @@
             #(when-not ((:propagate-keypress? opts) % @form)
                (.stopPropagation %))
           :style #js {
-            :height (rem (* 1.15 (layout/text-height text)))
-            :width  (rem (/ (layout/text-width text) 2))}
+            :height (rem (* 1.15 (layout/text-height text line-length)))
+            :width  (rem (/ (layout/text-width text line-length) 2))}
           :value text})))
     om/IDidMount
     (did-mount [_]
@@ -110,7 +111,7 @@
   (reify om/IRender
     (render [_]
       (apply dom/div #js {:className "toplevel"}
-        (for [line (layout/->lines form)]
+        (for [line (layout/->lines form (:line-length opts))]
           (apply dom/div #js {:className "line"}
             (for [token line]
               (condp apply [token]
@@ -144,4 +145,5 @@
         (apply dom/div #js {:className "flense"}
           (om/build-all form-view (:children tree)
             {:opts (-> opts (select-keys [:propagate-keypress?])
+                            (assoc :line-length (:line-length opts 72))
                             (assoc :nav-chan nav-chan))}))))))

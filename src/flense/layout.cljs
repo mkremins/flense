@@ -6,7 +6,7 @@
 ;; render forms to tokens
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def MAX_CHARS_PER_LINE 72)
+(def ^:dynamic *line-length*)
 
 (defn delimiter? [token]
   (contains? (:classes token) :delimiter))
@@ -17,11 +17,11 @@
 (defn chars [token]
   (count (or (:text token) (model/tree->string token))))
 
-(defn text-height [text]
-  (inc (int (/ (count text) (- MAX_CHARS_PER_LINE 2)))))
+(defn text-height [text line-length]
+  (inc (int (/ (count text) (- line-length 2)))))
 
-(defn text-width [text]
-  (min (count text) MAX_CHARS_PER_LINE))
+(defn text-width [text line-length]
+  (min (count text) line-length))
 
 (defn path-to [form]
   (filterv number? (om/path form)))
@@ -64,10 +64,10 @@
   (conj (pop v) (apply f (peek v) args)))
 
 (defn fits-on-line? [line form]
-  (<= (+ (apply + (map chars line)) 1 (chars form)) MAX_CHARS_PER_LINE))
+  (<= (apply + (chars form) 1 (map chars line)) *line-length*))
 
 (defn fits-on-own-line? [form]
-  (<= (chars form) MAX_CHARS_PER_LINE))
+  (<= (chars form) *line-length*))
 
 (defn has-content? [line]
   (not-every? #(contains? (:classes %) :spacer) line))
@@ -81,7 +81,7 @@
 (declare ->lines)
 
 (defn pair->lines [[left right]]
-  (if (> (+ (chars left) 1 (chars right)) MAX_CHARS_PER_LINE)
+  (if (> (+ (chars left) 1 (chars right)) *line-length*)
     (vec (concat (->lines left) (map #(concat (spacer 2) %) (->lines right))))
     [(concat (->tokens left) (spacer) (->tokens right))]))
 
@@ -133,13 +133,16 @@
           (conj lines (concat line (closer form)))
           (conj (pop lines) (concat (peek lines) (closer form))))))))
 
-(defn ->lines [form]
-  (if (or (not (model/collection? form)) (fits-on-own-line? form))
-    [(->tokens form)]
-    (case (:type form)
-      :map (map->lines form)
-      (:fn :seq) (->lines* (annotate-head form))
-      (:vec :set) (->lines* form))))
+(defn ->lines
+  ([form] (->lines form *line-length*))
+  ([form line-length]
+    (binding [*line-length* line-length]
+      (if (or (not (model/collection? form)) (fits-on-own-line? form))
+        [(->tokens form)]
+        (case (:type form)
+          :map (map->lines form)
+          (:fn :seq) (->lines* (annotate-head form))
+          (:vec :set) (->lines* form))))))
 
 ;; lay out clojure.core macros
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
