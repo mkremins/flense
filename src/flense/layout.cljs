@@ -158,9 +158,9 @@
 (def header-counts
   '{-> 1, ->> 1, as-> 2, def 1, definline 1, definterface 1, defmacro 1, defmethod 2, defmulti 1,
     defn 1, defn- 1, defonce 1, defprotocol 1, defrecord 2, defstruct 1, deftype 2, do 1,
-    dotimes 1, extend 1, extend-protocol 1, extend-type 1, if 1, if-let 1, if-not 1, if-some 1,
-    proxy 2, reify 0, some-> 1, some->> 1, specify 1, specify! 1, when 1, when-first 1, when-let 1,
-    when-not 1, when-some 1})
+    dotimes 1, extend 1, extend-protocol 1, extend-type 1, fn 1, if 1, if-let 1, if-not 1,
+    if-some 1, proxy 2, reify 0, some-> 1, some->> 1, specify 1, specify! 1, when 1, when-first 1,
+    when-let 1, when-not 1, when-some 1})
 
 (doseq [[core-macro headc] header-counts]
   (defmethod ->lines* core-macro [form] (header+body->lines form headc)))
