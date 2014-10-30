@@ -4,25 +4,23 @@
             [xyzzy.core :as z]))
 
 (defn delete [loc]
-  (when (z/up loc)
-    (let [{:keys [text] :as node} (z/node loc)]
-      (cond
-        (m/placeholder? node)
-          (when (or (z/up (z/up loc))
-                    (> (-> loc z/up z/node :children count) 1))
-            (z/remove loc))
-        (and text (pos? (count text)))
-          (z/replace loc (m/string->atom (subs text 0 (dec (count text)))))
-        :else
-          (z/replace loc m/placeholder)))))
+  (let [{:keys [text] :as node} (z/node loc)]
+    (cond
+      (m/placeholder? node)
+        (when (or (z/up (z/up loc))
+                  (> (-> loc z/up z/node :children count) 1))
+          (z/remove loc))
+      (and text (pos? (count text)))
+        (z/replace loc (m/string->atom (subs text 0 (dec (count text)))))
+      :else
+        (z/replace loc m/placeholder))))
 
 (defn delete-hard [loc]
-  (when (z/up loc)
-    (if (m/placeholder-loc? loc)
-      (when (or (z/up (z/up loc))
-                (> (-> loc z/up z/node :children count) 1))
-        (z/remove loc))
-      (z/replace loc m/placeholder))))
+  (if (m/placeholder-loc? loc)
+    (when (or (z/up (z/up loc))
+              (> (-> loc z/up z/node :children count) 1))
+      (z/remove loc))
+    (z/replace loc m/placeholder)))
 
 (defn grow-left [loc]
   (when ((every-pred z/left m/collection-loc?) loc)
