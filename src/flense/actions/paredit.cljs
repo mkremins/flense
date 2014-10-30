@@ -16,6 +16,14 @@
         :else
           (z/replace loc m/placeholder)))))
 
+(defn delete-hard [loc]
+  (when (z/up loc)
+    (if (m/placeholder-loc? loc)
+      (when (or (z/up (z/up loc))
+                (> (-> loc z/up z/node :children count) 1))
+        (z/remove loc))
+      (z/replace loc m/placeholder))))
+
 (defn grow-left [loc]
   (when ((every-pred z/left m/collection-loc?) loc)
     (let [n   (-> loc :path peek dec)
@@ -115,7 +123,8 @@
     (z/edit loc assoc :type :string :editing? true)))
 
 (def actions
-  {:paredit/delete          (with-meta delete {:tags #{:delete}})
+  {:paredit/delete          delete
+   :paredit/delete-hard     delete-hard
    :paredit/grow-left       grow-left
    :paredit/grow-right      grow-right
    :paredit/insert-left     #(-> % (z/insert-left m/placeholder) z/left)
