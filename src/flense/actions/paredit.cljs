@@ -10,7 +10,7 @@
         (when (or (z/up (z/up loc))
                   (> (-> loc z/up z/node :children count) 1))
           (z/remove loc))
-      (and text (pos? (count text)))
+      (and text (> (count text) 1))
         (z/replace loc (m/string->atom (subs text 0 (dec (count text)))))
       :else
         (z/replace loc m/placeholder))))
