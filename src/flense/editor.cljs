@@ -28,37 +28,18 @@
 ;; Om components
 
 (defn atom-view [form owner opts]
-  (reify
-    om/IRender
+  (reify om/IRender
     (render [_]
-      (dom/input #js {
+      (dom/span #js {
         :className
           (class-name
-           (cond-> #{:atom (:type form)}
-             (:head? form) (conj :head)
-             (:selected? form) (conj :selected)
-             (:collapsed-form form) (conj :macroexpanded)))
-        :onChange
-          #(om/update! form (model/string->atom (.. % -target -value)))
+            (cond-> #{:atom (:type form)}
+              (:head? form) (conj :head)
+              (:selected? form) (conj :selected)
+              (:collapsed-form form) (conj :macroexpanded)))
         :onClick
-          #(async/put! (:nav-chan opts) (layout/path-to form))
-        :onKeyDown
-          #(when-not ((:propagate-keypress? opts) % @form)
-             (.stopPropagation %))
-        :style #js {:width (rem (/ (layout/chars form) 2))}
-        :value (:text form)}))
-    om/IDidMount
-    (did-mount [_]
-      (when (:selected? form)
-        (focus+select (om/get-node owner))))
-    om/IDidUpdate
-    (did-update [_ prev _]
-      (let [input (om/get-node owner)]
-        (if (:selected? form)
-          (when (or (not (:selected? prev)) (model/placeholder? form))
-            (focus+select input))
-          (when (:selected? prev)
-            (.blur input)))))))
+          #(async/put! (:nav-chan opts) (layout/path-to form))}
+        (:text form)))))
 
 (defn stringlike-view [form owner opts]
   (reify

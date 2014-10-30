@@ -1,19 +1,29 @@
 (ns flense.actions.paredit
-  (:refer-clojure :exclude [remove])
-  (:require [flense.model
-             :refer [atom-loc? collection-loc? nonempty-loc? placeholder
-                     placeholder-loc?]]
+  (:require [flense.model :as m]
             [flense.util :refer [exchange update]]
             [xyzzy.core :as z]))
 
+(defn delete [loc]
+  (when (z/up loc)
+    (let [{:keys [text] :as node} (z/node loc)]
+      (cond
+        (m/placeholder? node)
+          (when (or (z/up (z/up loc))
+                    (> (-> loc z/up z/node :children count) 1))
+            (z/remove loc))
+        (and text (pos? (count text)))
+          (z/replace loc (m/string->atom (subs text 0 (dec (count text)))))
+        :else
+          (z/replace loc m/placeholder)))))
+
 (defn grow-left [loc]
-  (when ((every-pred z/left collection-loc?) loc)
+  (when ((every-pred z/left m/collection-loc?) loc)
     (let [n   (-> loc :path peek dec)
           sib (-> loc z/left z/node)]
       (-> loc z/up (z/remove-child n) (z/child n) (z/insert-child 0 sib)))))
 
 (defn grow-right [loc]
-  (when ((every-pred z/right collection-loc?) loc)
+  (when ((every-pred z/right m/collection-loc?) loc)
     (let [n   (-> loc :path peek)
           sib (-> loc z/right z/node)]
       (-> loc z/up (z/remove-child (inc n)) (z/child n)
@@ -21,10 +31,10 @@
 
 (defn insert-outside [loc]
   (when (z/up (z/up loc))
-    (-> loc z/up (z/insert-right placeholder) z/right)))
+    (-> loc z/up (z/insert-right m/placeholder) z/right)))
 
 (defn join-left [loc]
-  (when ((every-pred collection-loc? (comp collection-loc? z/left)) loc)
+  (when ((every-pred m/collection-loc? (comp m/collection-loc? z/left)) loc)
     (let [n  (-> loc :path peek dec)
           cs (-> loc z/left z/node :children)]
       (-> loc
@@ -32,7 +42,7 @@
           z/up (z/remove-child n) (z/child n)))))
 
 (defn join-right [loc]
-  (when ((every-pred collection-loc? (comp collection-loc? z/right)) loc)
+  (when ((every-pred m/collection-loc? (comp m/collection-loc? z/right)) loc)
     (let [n  (-> loc :path peek)
           cs (-> loc z/right z/node :children)]
       (-> loc
@@ -43,28 +53,19 @@
   (when (z/up (z/up loc))
     (z/replace (z/up loc) (z/node loc))))
 
-(defn remove [loc]
-  (when (z/up loc)
-    (if (placeholder-loc? loc)
-      (if (and (not (-> loc z/up z/up))
-               (= (-> loc z/up z/node :children count) 1))
-        loc
-        (z/remove loc))
-      (z/replace loc placeholder))))
-
 (defn shrink-left [loc]
-  (when ((every-pred z/up collection-loc? nonempty-loc?) loc)
+  (when ((every-pred z/up m/collection-loc? m/nonempty-loc?) loc)
     (let [sib (-> loc z/down z/node)]
       (-> loc (z/remove-child 0) (z/insert-left sib)))))
 
 (defn shrink-right [loc]
-  (when ((every-pred z/up collection-loc? nonempty-loc?) loc)
+  (when ((every-pred z/up m/collection-loc? m/nonempty-loc?) loc)
     (let [sib (-> loc z/down z/rightmost z/node)]
       (-> loc (z/edit #(update % :children (comp vec butlast)))
           (z/insert-right sib)))))
 
 (defn splice [loc]
-  (when ((every-pred z/up collection-loc? nonempty-loc?) loc)
+  (when ((every-pred z/up m/collection-loc? m/nonempty-loc?) loc)
     (let [n  (-> loc :path peek)
           cs (-> loc z/node :children)]
       (-> loc z/up
@@ -103,29 +104,29 @@
       (-> loc z/up (z/edit update :children exchange i j) (z/child j)))))
 
 (defn- set-type [type loc]
-  (when (collection-loc? loc)
+  (when (m/collection-loc? loc)
     (z/edit loc assoc :type type)))
 
 (defn- wrap-type [type loc]
   (z/down (z/edit loc #(-> {:type %2 :children [%1]}) type)))
 
 (defn wrap-quote [loc]
-  (when (atom-loc? loc)
+  (when (m/atom-loc? loc)
     (z/edit loc assoc :type :string :editing? true)))
 
 (def actions
-  {:paredit/grow-left       grow-left
+  {:paredit/delete          (with-meta delete {:tags #{:delete}})
+   :paredit/grow-left       grow-left
    :paredit/grow-right      grow-right
-   :paredit/insert-left     #(-> % (z/insert-left placeholder) z/left)
+   :paredit/insert-left     #(-> % (z/insert-left m/placeholder) z/left)
    :paredit/insert-outside  (with-meta insert-outside {:tags #{:end-text-editing}})
-   :paredit/insert-right    #(-> % (z/insert-right placeholder) z/right)
+   :paredit/insert-right    #(-> % (z/insert-right m/placeholder) z/right)
    :paredit/join-left       join-left
    :paredit/join-right      join-right
    :paredit/make-curly      (partial set-type :map)
    :paredit/make-round      (partial set-type :seq)
    :paredit/make-square     (partial set-type :vec)
    :paredit/raise           raise
-   :paredit/remove          (with-meta remove {:tags #{:remove}})
    :paredit/shrink-left     shrink-left
    :paredit/shrink-right    shrink-right
    :paredit/splice          splice
