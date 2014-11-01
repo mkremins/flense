@@ -104,6 +104,14 @@
                 model/stringlike? (om/build stringlike-view token {:opts opts})
                 (om/build atom-view token {:opts opts})))))))))
 
+(defn perform [f tags]
+  (fn [loc]
+    (if-let [loc' (f loc)]
+      (if (contains? tags :history)
+        loc'
+        (-> loc' (assoc :prev loc) (dissoc :next)))
+      loc)))
+
 (defn editor-view [document owner opts]
   (reify
     om/IInitState
@@ -113,7 +121,8 @@
     (will-mount [_]
       (go-loop []
         (when-let [action (<! (:edit-chan opts))]
-          (om/transact! document [] #(or (action %) %) (:tags (meta action) #{}))
+          (let [{:keys [tags] :or {tags #{}}} (meta action)]
+            (om/transact! document [] (perform action tags) tags))
           (recur)))
       (go-loop []
         (when-let [new-path (<! (om/get-state owner :nav-chan))]
