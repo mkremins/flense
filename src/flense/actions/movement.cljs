@@ -15,7 +15,7 @@
 
 (def actions
   {:move/down down
-   :move/up (with-meta up {:tags #{:end-text-editing}})
+   :move/up up
    :move/left z/left-or-wrap
    :move/right z/right-or-wrap
    :move/next z/next

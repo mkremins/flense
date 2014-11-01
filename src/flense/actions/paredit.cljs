@@ -10,7 +10,7 @@
         (when (or (z/up (z/up loc))
                   (> (-> loc z/up z/node :children count) 1))
           (z/remove loc))
-      (and text (> (count text) 1))
+      (and (not (m/stringlike? node)) text (> (count text) 1))
         (z/replace loc (m/string->atom (subs text 0 (dec (count text)))))
       :else
         (z/replace loc m/placeholder))))
@@ -126,7 +126,7 @@
    :paredit/grow-left       grow-left
    :paredit/grow-right      grow-right
    :paredit/insert-left     #(-> % (z/insert-left m/placeholder) z/left)
-   :paredit/insert-outside  (with-meta insert-outside {:tags #{:end-text-editing}})
+   :paredit/insert-outside  insert-outside
    :paredit/insert-right    #(-> % (z/insert-right m/placeholder) z/right)
    :paredit/join-left       join-left
    :paredit/join-right      join-right

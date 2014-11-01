@@ -4,6 +4,7 @@
             [clojure.string :as str]
             [flense.layout :as layout]
             [flense.model :as model]
+            [flense.util :refer [update]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [xyzzy.core :as z])
@@ -58,8 +59,10 @@
           :onClick
             #(async/put! (:nav-chan opts) (layout/path-to form))
           :onKeyDown
-            #(when-not ((:propagate-keypress? opts) % @form)
+            #(when (and (:editing? @form) (not= (.-keyCode %) 38)) ;; up key
                (.stopPropagation %))
+          :onKeyPress
+            #(.stopPropagation %)
           :style #js {
             :height (rem (* 1.15 (layout/text-height text line-length)))
             :width  (rem (/ (layout/text-width text line-length) 2))}
@@ -125,6 +128,5 @@
       (let [{:keys [tree]} (z/edit document assoc :selected? true)]
         (apply dom/div #js {:className "flense"}
           (om/build-all form-view (:children tree)
-            {:opts (-> opts (select-keys [:propagate-keypress?])
-                            (assoc :line-length (:line-length opts 72))
+            {:opts (-> opts (update :line-length (fnil identity 72))
                             (assoc :nav-chan nav-chan))}))))))

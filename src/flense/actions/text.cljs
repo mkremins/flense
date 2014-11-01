@@ -13,6 +13,6 @@
   (let [uppers (map (comp js/String.fromCharCode (partial + 65)) (range 26))
         lowers (map (comp js/String.fromCharCode (partial + 97)) (range 26))
         digits (map str (range 10))
-        puncts [\. \! \? \$ \% \&  \+ \- \* \/ \= \< \> \_ \: \' \\ \|]]
+        puncts [\. \! \? \$ \% \& \+ \- \* \/ \= \< \> \_ \: \' \\ \|]]
     (into {} (for [c (concat uppers lowers digits puncts)]
                [(keyword "text" (str "insert-" c)) (partial insert-char c)]))))
