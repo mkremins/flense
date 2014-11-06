@@ -85,6 +85,10 @@
         :map {:children (mapv form->tree (interleave (keys form) (vals form)))}
         :regex {:text (.-source form)}))))
 
+(defn forms->document [forms]
+  {:path [0]
+   :tree {:children (mapv form->tree forms)}})
+
 (defn tree->form [tree]
   (case (:type tree)
     (:bool :char :keyword :nil :number :symbol) (rdr/read-string (:text tree))
