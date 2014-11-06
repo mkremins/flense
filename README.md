@@ -17,25 +17,12 @@ Flense is an experimental editor interface for Clojure code that takes the ideas
 Add to your `project.clj`:
 
 ```clojure
-[mkremins/flense "0.0-278"]
+[mkremins/flense "0.0-SNAPSHOT"]
 ```
 
-Build a Flense editor component:
+(You'll have to `lein install` this repo yourself first. I'm not regularly deploying snapshots to Clojars at this time.)
 
-```clojure
-(ns foo.bar
-  (:require [flense.editor :refer [editor-view]]
-            [om.core :as om]))
-
-(om/root editor-view app-state
-  {:target ...
-   :opts {:edit-chan ...
-          :propagate-keypress? ...}})
-```
-
-Documentation of the expected `app-state` and `:opts` coming soon. Until then, the adventurous can look at [flense-nw](https://github.com/mkremins/flense-nw) for example usage.
-
-Remember to include the stylesheets from `resources/stylesheets` in your HTML. `base.css` defines bare-minimum ground rules for code layout within Flense editor views, and should always be included; `theme.css` adds syntax highlighting and some typography improvements, and can be left out or replaced with your own theme if you want.
+Now refer to [`setup.md`](https://github.com/mkremins/flense/blob/master/doc/setup.md) for a more detailed walkthrough of how to embed a Flense editor component in your app.
 
 ## License
 
