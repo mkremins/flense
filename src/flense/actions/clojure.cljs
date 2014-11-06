@@ -15,10 +15,18 @@
    "let"   '(let [... ...] ...)
    "when"  '(when ... ...)})
 
+(defn expand-template [loc]
+  (when-let [template (templates (:text (z/node loc)))]
+    (-> loc (z/replace (form->tree template)) (find-placeholder z/next))))
+
 ;; toggle dispatch reader macro
 
 (def ^:private dispatch-types
   {:fn :seq, :seq :fn, :map :set, :set :map, :string :regex, :regex :string})
+
+(defn toggle-dispatch [loc]
+  (when (contains? dispatch-types (:type (z/node loc)))
+    (z/edit loc update :type dispatch-types)))
 
 ;; expand and collapse macro forms
 
@@ -36,6 +44,15 @@
     (if (macro-form? expanded)
       (recur expanded)
       expanded)))
+
+(defn expand-macro [loc]
+  (let [node (z/node loc)]
+    (when (-> node tree->form macro-form?)
+      (-> loc (z/edit (comp form->tree macroexpand tree->form))
+              (z/edit assoc :collapsed-form node)))))
+
+(defn collapse-macro [loc]
+  (z/edit loc :collapsed-form))
 
 ;; jump to definition
 
@@ -78,25 +95,7 @@
         (recur loc' sym-name))
     (-> (find-def-form loc sym-name) z/down z/right)))
 
-;; define actions map for export
-
-(def actions
-  {:clojure/expand-template
-   #(when-let [template (templates (:text (z/node %)))]
-      (-> % (z/replace (form->tree template)) (find-placeholder z/next)))
-
-   :clojure/toggle-dispatch
-   #(when (contains? dispatch-types (z/node (type %)))
-      (z/edit % update :type dispatch-types))
-
-   :clojure/expand-macro
-   #(when (-> % z/node tree->form macro-form?)
-      (-> % (z/edit (comp form->tree macroexpand tree->form))
-            (z/edit assoc :collapsed-form (z/node %))))
-
-   :clojure/collapse-macro
-   #(z/edit % :collapsed-form)
-
-   :clojure/jump-to-definition
-   #(when (= (:type (z/node %)) :symbol)
-      (find-definition % (:text (z/node %))))})
+(defn jump-to-definition [loc]
+  (let [node (z/node loc)]
+    (when (= (:type node) :symbol)
+      (find-definition loc (:text node)))))

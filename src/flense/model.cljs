@@ -35,6 +35,9 @@
 (defn find-placeholder [loc direction]
   (z/find-next loc placeholder-loc? direction))
 
+(def prev-placeholder #(find-placeholder % z/prev))
+(def next-placeholder #(find-placeholder % z/next))
+
 ;; conversions between raw strings, EDN data, parse tree nodes
 
 (defn- string->forms [string]

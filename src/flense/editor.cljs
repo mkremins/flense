@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as str]
+            [flense.actions.history :as history]
             [flense.layout :as layout]
             [flense.model :as model]
             [flense.util :refer [update]]
@@ -107,9 +108,7 @@
 (defn perform [f tags]
   (fn [loc]
     (if-let [loc' (f loc)]
-      (if (contains? tags :history)
-        loc'
-        (-> loc' (assoc :prev loc) (dissoc :next)))
+      (cond-> loc' (not (:history tags)) (history/save loc))
       loc)))
 
 (defn editor-view [document owner opts]
