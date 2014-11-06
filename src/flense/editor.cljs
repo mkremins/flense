@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as str]
-            [flense.actions.history :as history]
+            [flense.actions.history :as hist]
             [flense.layout :as layout]
             [flense.model :as model]
             [flense.util :refer [update]]
@@ -105,10 +105,10 @@
                 model/stringlike? (om/build stringlike-view token {:opts opts})
                 (om/build atom-view token {:opts opts})))))))))
 
-(defn perform [f tags]
+(defn perform [f]
   (fn [loc]
     (if-let [loc' (f loc)]
-      (cond-> loc' (not (:history tags)) (history/save loc))
+      (cond-> loc' (not (#{hist/redo hist/undo} f)) (hist/save loc))
       loc)))
 
 (defn editor-view [document owner opts]
@@ -120,8 +120,7 @@
     (will-mount [_]
       (go-loop []
         (when-let [action (<! (:edit-chan opts))]
-          (let [{:keys [tags] :or {tags #{}}} (meta action)]
-            (om/transact! document [] (perform action tags) tags))
+          (om/transact! document [] (perform action))
           (recur)))
       (go-loop []
         (when-let [new-path (<! (om/get-state owner :nav-chan))]
