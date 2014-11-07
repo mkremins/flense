@@ -40,13 +40,6 @@
 
 ;; conversions between raw strings, EDN data, parse tree nodes
 
-(defn- string->forms [string]
-  (let [reader (rdr/push-back-reader string)]
-    (loop [forms []]
-      (if-let [form (rdr/read reader false nil false)]
-        (recur (conj forms form))
-        forms))))
-
 (defn string->atom [string]
   {:text string
    :type (cond (#{"false" "true"} string) :bool
@@ -110,10 +103,10 @@
 (defn tree->string [{:keys [type] :as tree}]
   (cond
     (collection? tree)
-    (str (opener type)
-         (str/join \space (map tree->string (:children tree)))
-         (closer type))
+      (str (opener type)
+           (str/join \space (map tree->string (:children tree)))
+           (closer type))
     (stringlike? tree)
-    (str (opener type) (:text tree) (closer type))
+      (str (opener type) (:text tree) (closer type))
     :else
-    (:text tree)))
+      (:text tree)))
