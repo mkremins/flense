@@ -185,13 +185,12 @@
   (let [[head bvec & body] (:children form)]
     (if (= (:type bvec) :vec)
       (let [indent (indent-size* form)
-            bvec-lines (map->lines bvec)
-            body-lines (mapv #(concat (spacer indent) %) (mapcat ->lines body))
-            body-lines (close-off body-lines (closer form))
-            init-line (concat (opener form) (->tokens head) (spacer) (first bvec-lines))
+            [init & more] (map->lines bvec)
+            init-line (concat (opener form) (->tokens head) (spacer) init)
             bvec-indent (spacer (+ (count (:text head)) indent))
-            bvec-lines (map #(concat bvec-indent %) (rest bvec-lines))]
-        `[~init-line ~@bvec-lines ~@body-lines])
+            bvec-lines (map #(concat bvec-indent %) more)
+            body-lines (map #(concat (spacer indent) %) (mapcat ->lines body))]
+        (close-off `[~init-line ~@bvec-lines ~@body-lines] (closer form)))
       ((get-method ->lines* :default) form))))
 
 (doseq [letlike '[binding doseq for let loop]]
