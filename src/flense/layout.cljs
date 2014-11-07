@@ -48,20 +48,20 @@
 (defn ->tokens [form]
   (cond
     (model/collection? form)
-    (concat (opener form)
-            (->> (:children (annotate-head form))
-                 (map ->tokens) (interpose (spacer)) (apply concat))
-            (closer form))
+      (concat (opener form)
+              (->> (:children (annotate-head form))
+                   (map ->tokens) (interpose (spacer)) (apply concat))
+              (closer form))
     (model/stringlike? form)
-    (concat (opener form) [form] (closer form))
+      (concat (opener form) [form] (closer form))
     :else
-    [form]))
+      [form]))
 
 ;; lay out tokens across multiple lines
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn update-last [v f & args]
-  (conj (pop v) (apply f (peek v) args)))
+(defn close-off [lines closer]
+  (conj (pop lines) (concat (peek lines) closer)))
 
 (defn fits-on-line? [line form]
   (<= (apply + (chars form) 1 (map chars line)) *line-length*))
@@ -95,7 +95,7 @@
   (let [lines (pairs->lines (:children form))
         init-line (concat (opener form) (first lines))
         rest-lines (map #(concat (spacer) %) (rest lines))]
-    (update-last `[~init-line ~@rest-lines] concat (closer form))))
+    (close-off `[~init-line ~@rest-lines] (closer form))))
 
 (defn indent-size* [form]
   (if (= (:type form) :fn) 3 2))
@@ -131,7 +131,7 @@
                    (rest children))))
         (if (has-content? line)
           (conj lines (concat line (closer form)))
-          (conj (pop lines) (concat (peek lines) (closer form))))))))
+          (close-off lines (closer form)))))))
 
 (defn ->lines
   ([form] (->lines form *line-length*))
@@ -151,16 +151,16 @@
 
 (defn header+body->lines [form headc]
   (let [[inits rests] (split-at (inc headc) (:children form))
-        init-line (concat (opener form) (apply concat (interpose (spacer) (map ->tokens inits))))
+        init-line (apply concat (opener form) (interpose (spacer) (map ->tokens inits)))
         rest-lines (map #(concat (spacer (indent-size* form)) %) (mapcat ->lines rests))]
-    (update-last `[~init-line ~@rest-lines] concat (closer form))))
+    (close-off `[~init-line ~@rest-lines] (closer form))))
 
 (def header-counts
-  '{-> 1, ->> 1, as-> 2, def 1, definline 1, definterface 1, defmacro 1, defmethod 2, defmulti 1,
-    defn 1, defn- 1, defonce 1, defprotocol 1, defrecord 2, defstruct 1, deftype 2, do 1,
-    dotimes 1, extend 1, extend-protocol 1, extend-type 1, fn 1, if 1, if-let 1, if-not 1,
-    if-some 1, proxy 2, reify 0, some-> 1, some->> 1, specify 1, specify! 1, when 1, when-first 1,
-    when-let 1, when-not 1, when-some 1})
+  '{-> 1, ->> 1, as-> 2, def 1, definline 1, definterface 1, defmacro 1, defmethod 2,
+    defmulti 1, defn 1, defn- 1, defonce 1, defprotocol 1, defrecord 2, defstruct 1,
+    deftype 2, do 1, dotimes 1, extend 1, extend-protocol 1, extend-type 1, fn 1, if 1,
+    if-let 1, if-not 1, if-some 1, proxy 2, reify 0, some-> 1, some->> 1, specify 1,
+    specify! 1, when 1, when-first 1, when-let 1, when-not 1, when-some 1})
 
 (doseq [[core-macro headc] header-counts]
   (defmethod ->lines* core-macro [form] (header+body->lines form headc)))
@@ -169,9 +169,9 @@
 
 (defn header+pairs->lines [form headc]
   (let [[inits rests] (split-at (inc headc) (:children form))
-        init-line (concat (opener form) (apply concat (interpose (spacer) (map ->tokens inits))))
+        init-line (apply concat (opener form) (interpose (spacer) (map ->tokens inits)))
         rest-lines (map #(concat (spacer (indent-size* form)) %) (pairs->lines rests))]
-    (update-last `[~init-line ~@rest-lines] concat (closer form))))
+    (close-off `[~init-line ~@rest-lines] (closer form))))
 
 (def paired-header-counts
   '{case 1, cond 0, cond-> 1, cond->> 1, condp 2})
@@ -187,7 +187,7 @@
       (let [indent (indent-size* form)
             bvec-lines (map->lines bvec)
             body-lines (mapv #(concat (spacer indent) %) (mapcat ->lines body))
-            body-lines (update-last body-lines concat (closer form))
+            body-lines (close-off body-lines (closer form))
             init-line (concat (opener form) (->tokens head) (spacer) (first bvec-lines))
             bvec-indent (spacer (+ (count (:text head)) indent))
             bvec-lines (map #(concat bvec-indent %) (rest bvec-lines))]
