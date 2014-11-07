@@ -68,7 +68,12 @@
     symbol?  :symbol
     vector?  :vec))
 
-(defn form->tree [form]
+(defn form->tree
+  "Returns the parse tree representation of a single Clojure `form`. A parse
+  tree node is a map containing at minimum a `:type` keyword and either a
+  `:text` string (if representing an atom) or a `:children` vector (if
+  representing a collection)."
+  [form]
   (let [type (classify form)]
     (merge {:type type}
       (case type
@@ -78,7 +83,11 @@
         :map {:children (mapv form->tree (interleave (keys form) (vals form)))}
         :regex {:text (.-source form)}))))
 
-(defn forms->document [forms]
+(defn forms->document
+  "Returns a document representing a seq of Clojure `forms`. A document is an
+  xyzzy zipper over a Clojure parse tree, suitable for use as a Flense editor
+  component's top-level state."
+  [forms]
   {:path [0]
    :tree {:children (mapv form->tree forms)}})
 
