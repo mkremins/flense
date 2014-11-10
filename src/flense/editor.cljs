@@ -1,5 +1,5 @@
 (ns flense.editor
-  (:refer-clojure :exclude [rem])
+  (:refer-clojure :exclude [atom rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as str]
             [flense.actions.history :as hist]
@@ -29,7 +29,7 @@
 
 ;; Om components
 
-(defn atom-view [form owner opts]
+(defn atom [form owner opts]
   (reify om/IRender
     (render [_]
       (dom/span #js {
@@ -43,7 +43,7 @@
           #(async/put! (:nav-chan opts) (layout/path-to form))}
         (:text form)))))
 
-(defn stringlike-view [form owner opts]
+(defn stringlike [form owner opts]
   (reify
     om/IRender
     (render [_]
@@ -84,7 +84,7 @@
           (when (:editing? prev)
             (.blur input)))))))
 
-(defn delimiter-view [token owner opts]
+(defn delimiter [token owner opts]
   (reify om/IRender
     (render [_]
       (dom/span #js {
@@ -92,7 +92,7 @@
         :onClick #(async/put! (:nav-chan opts) (:path token))}
         (:text token)))))
 
-(defn form-view [form owner opts]
+(defn top-level-form [form owner opts]
   (reify om/IRender
     (render [_]
       (apply dom/div #js {:className "toplevel"}
@@ -101,9 +101,9 @@
             (for [token line]
               (condp apply [token]
                 layout/spacer? (dom/span #js {:className "spacer"} (:text token))
-                layout/delimiter? (om/build delimiter-view token {:opts opts})
-                model/stringlike? (om/build stringlike-view token {:opts opts})
-                (om/build atom-view token {:opts opts})))))))))
+                layout/delimiter? (om/build delimiter token {:opts opts})
+                model/stringlike? (om/build stringlike token {:opts opts})
+                (om/build atom token {:opts opts})))))))))
 
 (defn perform [f]
   (fn [loc]
@@ -111,7 +111,7 @@
       (cond-> loc' (not (#{hist/redo hist/undo} f)) (hist/save loc))
       loc)))
 
-(defn editor-view [document owner opts]
+(defn editor [document owner opts]
   (reify
     om/IInitState
     (init-state [_]
@@ -134,6 +134,6 @@
     (render-state [_ {:keys [nav-chan]}]
       (let [{:keys [tree]} (z/edit document assoc :selected? true)]
         (apply dom/div #js {:className "flense"}
-          (om/build-all form-view (:children tree)
+          (om/build-all top-level-form (:children tree)
             {:opts (-> opts (update :line-length (fnil identity 72))
                             (assoc :nav-chan nav-chan))}))))))

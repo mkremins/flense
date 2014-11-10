@@ -5,7 +5,7 @@ To embed a Flense editor component in your own project, you'll need to do a litt
 ```clojure
 (ns foo.bar
   (:require [cljs.core.async :as async]
-            [flense.editor :refer [editor-view]]
+            [flense.editor :as flense]
             [flense.model :refer [forms->document]]
             [om.core :as om]))
 
@@ -22,7 +22,7 @@ To embed a Flense editor component in your own project, you'll need to do a litt
 `app-state` should be an atom containing a *document*: that is, an [xyzzy](https://github.com/mkremins/xyzzy) zipper over a Clojure parse tree. Flense provides a helper function (`flense.model/forms->document`) that takes a seq of Clojure forms and returns an appropriately structured zipper, which you can then use as a document.
 
 ```clojure
-(om/root editor-view app-state
+(om/root flense/editor app-state
   {:target (.getElementById js/document "flense")
    :opts {:edit-chan edit-chan
           :line-length 72}})
