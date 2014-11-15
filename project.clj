@@ -11,7 +11,7 @@
    [org.clojure/core.async "0.1.346.0-17112a-alpha"]
    [com.facebook/react "0.11.2"]
    [om "0.7.3"]
-   [mkremins/xyzzy "0.3.0"]]
+   [mkremins/xyzzy "0.3.1"]]
 
   :plugins
   [[lein-cljsbuild "1.0.3"]]
