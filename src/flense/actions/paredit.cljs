@@ -4,20 +4,20 @@
             [xyzzy.core :as z]))
 
 (defn delete [loc]
-  (if (m/placeholder-loc? loc)
+  (if (m/placeholder? loc)
     (when (or (z/up (z/up loc))
               (> (-> loc z/up z/node :children count) 1))
       (z/remove loc))
     (z/replace loc m/placeholder)))
 
 (defn grow-left [loc]
-  (when ((every-pred z/left m/collection-loc?) loc)
+  (when ((every-pred z/left m/coll?) loc)
     (let [n   (-> loc :path peek dec)
           sib (-> loc z/left z/node)]
       (-> loc z/up (z/remove-child n) (z/child n) (z/insert-child 0 sib)))))
 
 (defn grow-right [loc]
-  (when ((every-pred z/right m/collection-loc?) loc)
+  (when ((every-pred z/right m/coll?) loc)
     (let [n   (-> loc :path peek)
           sib (-> loc z/right z/node)]
       (-> loc z/up (z/remove-child (inc n)) (z/child n)
@@ -34,7 +34,7 @@
   (-> loc (z/insert-right m/placeholder) z/right))
 
 (defn join-left [loc]
-  (when ((every-pred m/collection-loc? (comp m/collection-loc? z/left)) loc)
+  (when ((every-pred m/coll? (comp m/coll? z/left)) loc)
     (let [n  (-> loc :path peek dec)
           cs (-> loc z/left z/node :children)]
       (-> loc
@@ -42,7 +42,7 @@
           z/up (z/remove-child n) (z/child n)))))
 
 (defn join-right [loc]
-  (when ((every-pred m/collection-loc? (comp m/collection-loc? z/right)) loc)
+  (when ((every-pred m/coll? (comp m/coll? z/right)) loc)
     (let [n  (-> loc :path peek)
           cs (-> loc z/right z/node :children)]
       (-> loc
@@ -50,7 +50,7 @@
           z/up (z/remove-child (inc n)) (z/child n)))))
 
 (defn- make-type [type loc]
-  (when (m/collection-loc? loc)
+  (when (m/coll? loc)
     (z/edit loc assoc :type type)))
 
 (def make-map (partial make-type :map))
@@ -68,18 +68,18 @@
     (z/replace (z/up loc) (z/node loc))))
 
 (defn shrink-left [loc]
-  (when ((every-pred z/up m/collection-loc? m/nonempty-loc?) loc)
+  (when ((every-pred z/up m/coll? m/nonempty?) loc)
     (let [sib (-> loc z/down z/node)]
       (-> loc (z/remove-child 0) (z/insert-left sib)))))
 
 (defn shrink-right [loc]
-  (when ((every-pred z/up m/collection-loc? m/nonempty-loc?) loc)
+  (when ((every-pred z/up m/coll? m/nonempty?) loc)
     (let [sib (-> loc z/down z/rightmost z/node)]
       (-> loc (z/edit #(update % :children (comp vec butlast)))
           (z/insert-right sib)))))
 
 (defn splice [loc]
-  (when ((every-pred z/up m/collection-loc? m/nonempty-loc?) loc)
+  (when ((every-pred z/up m/coll? m/nonempty?) loc)
     (let [n  (-> loc :path peek)
           cs (-> loc z/node :children)]
       (-> loc z/up

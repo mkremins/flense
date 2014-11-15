@@ -1,39 +1,40 @@
 (ns flense.model
   "Functions for constructing, querying and manipulating xyzzy-compatible
    Clojure parse trees."
+  (:refer-clojure
+    :exclude [coll? fn? keyword? map? nil? number? seq? set? string? symbol?])
   (:require [cljs.reader :as rdr]
             [clojure.string :as str]
             [xyzzy.core :as z]))
 
-;; parse tree nodes
-
 (def placeholder {:type :symbol :text "..."})
 
-(defn atom? [node]
-  (#{:bool :char :keyword :nil :number :symbol} (:type node)))
+(defn unwrap [m]
+  (or (z/node m) m))
 
-(defn collection? [node]
-  (#{:fn :map :seq :set :vec} (:type node)))
+(defn type-pred [& types]
+  (comp (set types) :type unwrap))
 
-(defn nonempty? [node]
-  (seq (:children node)))
-
-(defn placeholder? [node]
-  (= (:text node) "..."))
-
-(defn stringlike? [node]
-  (#{:regex :string} (:type node)))
-
-;; parse tree zippers
-
-(def atom-loc?        (comp atom? z/node))
-(def collection-loc?  (comp collection? z/node))
-(def nonempty-loc?    (comp nonempty? z/node))
-(def placeholder-loc? (comp placeholder? z/node))
-(def stringlike-loc?  (comp stringlike? z/node))
+(def atom? (type-pred :bool :keyword :nil :number :symbol))
+(def bool? (type-pred :bool))
+(def coll? (type-pred :fn :map :seq :set :vec))
+(def fn? (type-pred :fn))
+(def keyword? (type-pred :keyword))
+(def map? (type-pred :map))
+(def nil? (type-pred :nil))
+(def nonempty? (comp seq :children unwrap))
+(def number? (type-pred :number))
+(def placeholder? (comp (partial = "...") :text unwrap))
+(def regex? (type-pred :regex))
+(def seq? (type-pred :seq))
+(def set? (type-pred :set))
+(def string? (type-pred :string))
+(def stringlike? (type-pred :regex :string))
+(def symbol? (type-pred :symbol))
+(def vec? (type-pred :vec))
 
 (defn find-placeholder [loc direction]
-  (z/find-next loc placeholder-loc? direction))
+  (z/find-next loc placeholder? direction))
 
 (def prev-placeholder #(find-placeholder % z/prev))
 (def next-placeholder #(find-placeholder % z/next))
@@ -48,25 +49,19 @@
                :else (let [number (js/parseFloat string)]
                        (if (js/isNaN number) :symbol :number)))})
 
-(defn- bool? [x]
-  (or (true? x) (false? x)))
-
-(defn- regex? [x]
-  (instance? js/RegExp x))
-
 (defn classify [x]
-  (condp apply [x]
-    bool?    :bool
-    keyword? :keyword
-    map?     :map
-    nil?     :nil
-    number?  :number
-    regex?   :regex
-    seq?     :seq
-    set?     :set
-    string?  :string
-    symbol?  :symbol
-    vector?  :vec))
+  (condp #(%1 %2) x
+    (some-fn true? false?) :bool
+    cljs.core/keyword? :keyword
+    cljs.core/map? :map
+    cljs.core/nil? :nil
+    cljs.core/number? :number
+    #(instance? js/RegExp %) :regex
+    cljs.core/seq? :seq
+    cljs.core/set? :set
+    cljs.core/string? :string
+    cljs.core/symbol? :symbol
+    vector? :vec))
 
 (defn form->tree
   "Returns the parse tree representation of a single Clojure `form`. A parse
@@ -111,7 +106,7 @@
 
 (defn tree->string [{:keys [type] :as tree}]
   (cond
-    (collection? tree)
+    (coll? tree)
       (str (opener type)
            (str/join \space (map tree->string (:children tree)))
            (closer type))

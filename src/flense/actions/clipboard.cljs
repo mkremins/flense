@@ -9,5 +9,5 @@
   (-> loc copy (z/replace model/placeholder)))
 
 (defn paste [loc]
-  (when (model/placeholder-loc? loc)
+  (when (model/placeholder? loc)
     (z/replace loc (:clipboard loc))))

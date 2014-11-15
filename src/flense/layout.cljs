@@ -47,7 +47,7 @@
 
 (defn ->tokens [form]
   (cond
-    (model/collection? form)
+    (model/coll? form)
       (concat (opener form)
               (->> (:children (annotate-head form))
                    (map ->tokens) (interpose (spacer)) (apply concat))
@@ -137,7 +137,7 @@
   ([form] (->lines form *line-length*))
   ([form line-length]
     (binding [*line-length* line-length]
-      (if (or (not (model/collection? form)) (fits-on-own-line? form))
+      (if (or (not (model/coll? form)) (fits-on-own-line? form))
         [(->tokens form)]
         (case (:type form)
           :map (map->lines form)
