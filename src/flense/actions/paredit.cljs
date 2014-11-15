@@ -27,8 +27,7 @@
   (-> loc (z/insert-left m/placeholder) z/left))
 
 (defn insert-outside [loc]
-  (when (z/up (z/up loc))
-    (-> loc z/up (z/insert-right m/placeholder) z/right)))
+  (some-> loc z/up (z/ensure z/up) (z/insert-right m/placeholder) z/right))
 
 (defn insert-right [loc]
   (-> loc (z/insert-right m/placeholder) z/right))
@@ -50,36 +49,25 @@
           z/up (z/remove-child (inc n)) (z/child n)))))
 
 (defn- make-type [type loc]
-  (when (m/coll? loc)
-    (z/edit loc assoc :type type)))
+  (when (m/coll? loc) (z/edit loc assoc :type type)))
 
 (def make-map (partial make-type :map))
 (def make-seq (partial make-type :seq))
 (def make-vec (partial make-type :vec))
 
-(defn next-placeholder [loc]
-  (m/find-placeholder loc z/next))
-
-(defn prev-placeholder [loc]
-  (m/find-placeholder loc z/prev))
-
 (defn raise [loc]
-  (when (z/up (z/up loc))
-    (z/replace (z/up loc) (z/node loc))))
+  (some-> loc z/up (z/ensure z/up) (z/replace (z/node loc))))
 
 (defn shrink-left [loc]
-  (when ((every-pred z/up m/coll? m/nonempty?) loc)
-    (let [sib (-> loc z/down z/node)]
-      (-> loc (z/remove-child 0) (z/insert-left sib)))))
+  (when-let [sib (some-> loc (z/ensure z/up) z/down z/node)]
+    (-> loc (z/remove-child 0) (z/insert-left sib))))
 
 (defn shrink-right [loc]
-  (when ((every-pred z/up m/coll? m/nonempty?) loc)
-    (let [sib (-> loc z/down z/rightmost z/node)]
-      (-> loc (z/edit #(update % :children (comp vec butlast)))
-          (z/insert-right sib)))))
+  (when-let [sib (some-> loc (z/ensure z/up) z/down z/rightmost z/node)]
+    (-> loc (z/edit #(update % :children pop)) (z/insert-right sib))))
 
 (defn splice [loc]
-  (when ((every-pred z/up m/coll? m/nonempty?) loc)
+  (when ((every-pred z/up m/nonempty?) loc)
     (let [n  (-> loc :path peek)
           cs (-> loc z/node :children)]
       (-> loc z/up
