@@ -33,6 +33,24 @@
 (def symbol? (type-pred :symbol))
 (def vec? (type-pred :vec))
 
+(defn deflike? [m]
+  (let [{[head sym] :children :as node} (unwrap m)]
+    (and (seq? node)
+         (= (subs (:text head) 0 3) "def")
+         (symbol? sym))))
+
+(defn fnlike? [m]
+  (let [{[head] :children :as node} (unwrap m)]
+    (and (seq? node)
+         (#{"defmacro" "defmethod" "defn" "defn-" "fn"} (:text head)))))
+
+(defn letlike? [m]
+  (let [{[head bvec] :children :as node} (unwrap m)]
+    (and (seq? node)
+         (#{"binding" "doseq" "for" "if-let" "if-some" "let" "loop"
+            "when-first" "when-let" "when-some"} (:text head))
+         (vec? bvec))))
+
 (defn find-placeholder [loc direction]
   (z/find-next loc placeholder? direction))
 

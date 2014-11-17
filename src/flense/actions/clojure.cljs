@@ -1,6 +1,6 @@
 (ns flense.actions.clojure
   (:refer-clojure :exclude [macroexpand macroexpand-1])
-  (:require [flense.model :refer [find-placeholder form->tree tree->form]]
+  (:require [flense.model :as m]
             [flense.util :refer [seek update]]
             [xyzzy.core :as z]))
 
@@ -17,7 +17,7 @@
 
 (defn expand-template [loc]
   (when-let [template (templates (:text (z/node loc)))]
-    (-> loc (z/replace (form->tree template)) (find-placeholder z/next))))
+    (-> loc (z/replace (m/form->tree template)) (m/find-placeholder z/next))))
 
 ;; toggle dispatch reader macro
 
@@ -47,8 +47,8 @@
 
 (defn expand-macro [loc]
   (let [node (z/node loc)]
-    (when (-> node tree->form macro-form?)
-      (-> loc (z/edit (comp form->tree macroexpand tree->form))
+    (when (-> node m/tree->form macro-form?)
+      (-> loc (z/edit (comp m/form->tree macroexpand m/tree->form))
               (z/edit assoc :collapsed-form node)))))
 
 (defn collapse-macro [loc]
@@ -58,10 +58,7 @@
 
 (defn- find-def-form [loc sym-name]
   (z/find-next-node loc
-    #(let [[head sym] (:children %)]
-       (and (:text head)
-            (= (subs (:text head) 0 3) "def")
-            (= (:text sym) sym-name)))
+    (every-pred m/deflike? (comp #{sym-name} :text second :children))
     z/next))
 
 (defn- bsym-locs [loc]
@@ -70,32 +67,21 @@
     (:map :vec) (mapcat bsym-locs (z/children loc))
     []))
 
-(defmulti binding-locs
-  (fn [loc] (some-> loc z/node :children first :text symbol)))
-
-(defmethod binding-locs :default [_] ())
-
-(doseq [fnlike '[defmacro defmethod defn defn- fn]]
-  (defmethod binding-locs fnlike [loc]
-    (->> (seek #(= (:type (z/node %)) :vec) (z/children loc))
-         z/children
-         (mapcat bsym-locs))))
-
-(doseq [letlike '[binding doseq for if-let if-some let loop when-first when-let when-some]]
-  (defmethod binding-locs letlike [loc]
-    (when (= (-> loc z/node :children second :type) :vec)
-      (->> (z/children (-> loc z/down z/right))
-           (partition 2)
-           (map first)
-           (mapcat bsym-locs)))))
-
-(defn- find-definition [loc sym-name]
-  (if-let [loc' (z/up loc)]
-    (or (seek #(= (:text (z/node %)) sym-name) (binding-locs loc))
-        (recur loc' sym-name))
-    (-> (find-def-form loc sym-name) z/down z/right)))
+(defn binding-locs [loc]
+  (condp #(%1 %2) loc
+    m/fnlike?
+      (->> loc z/children (seek #(= (:type (z/node %)) :vec))
+           z/children (mapcat bsym-locs))
+    m/letlike?
+      (->> loc z/down z/right z/children
+           (partition 2) (map first) (mapcat bsym-locs))
+    ()))
 
 (defn jump-to-definition [loc]
-  (let [node (z/node loc)]
-    (when (= (:type node) :symbol)
-      (find-definition loc (:text node)))))
+  (when (m/symbol? loc)
+    (let [sym-name (:text (z/node loc))]
+      (loop [loc loc]
+        (if-let [loc' (z/up loc)]
+          (or (seek #(= (:text (z/node %)) sym-name) (binding-locs loc))
+              (recur loc'))
+          (some-> (find-def-form loc sym-name) z/down z/right))))))
