@@ -36,7 +36,7 @@
 (defn deflike? [m]
   (let [{[head sym] :children :as node} (unwrap m)]
     (and (seq? node)
-         (= (subs (:text head) 0 3) "def")
+         (symbol? head) (= (subs (:text head) 0 3) "def")
          (symbol? sym))))
 
 (defn fnlike? [m]
