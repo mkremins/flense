@@ -16,9 +16,6 @@
 (defn class-name [classes]
   (->> classes (map name) (str/join " ")))
 
-(defn focus+select [input]
-  (doto input .focus .select))
-
 (defn move-caret-to-end [input]
   (let [idx (count (.-value input))]
     (set! (.-selectionStart input) idx)
@@ -73,7 +70,7 @@
       (when (:editing? form)
         (let [input (om/get-node owner)]
           (if (model/placeholder? form)
-            (focus+select input)
+            (doto input .focus .select)
             (move-caret-to-end input)))))
     om/IDidUpdate
     (did-update [_ prev _]
