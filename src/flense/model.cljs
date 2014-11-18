@@ -44,6 +44,9 @@
     (and (seq? node)
          (#{"defmacro" "defmethod" "defn" "defn-" "fn"} (:text head)))))
 
+(def fnlike-method?
+  (every-pred seq? (comp vec? first :children unwrap)))
+
 (defn letlike? [m]
   (let [{[head bvec] :children :as node} (unwrap m)]
     (and (seq? node)

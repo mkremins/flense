@@ -72,6 +72,8 @@
     m/fnlike?
       (->> loc z/children (seek #(= (:type (z/node %)) :vec))
            z/children (mapcat bsym-locs))
+    m/fnlike-method?
+      (->> loc z/children first z/children (mapcat bsym-locs))
     m/letlike?
       (->> loc z/down z/right z/children
            (partition 2) (map first) (mapcat bsym-locs))
