@@ -10,11 +10,24 @@
   margin: 0;
   outline: none;
   padding: 0;
+  position: relative;
+}
+
+.flense .atom {
+  display: inline-block;
+}
+
+.flense .atom .autocomplete {
+  background: #eee;
+  list-style: none;
+  padding: 0 0.25rem;
+  position: absolute;
+  top: 1.2rem;
+  z-index: 100;
 }
 
 .flense .stringlike {
   margin-top: -0.3rem;
-  position: relative;
   resize: none;
   top: 0.3rem;
 }

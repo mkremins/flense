@@ -29,7 +29,7 @@
 (defn atom [form owner opts]
   (reify om/IRender
     (render [_]
-      (dom/span #js {
+      (dom/div #js {
         :className
           (class-name
             (cond-> #{:atom (:type form)}
@@ -38,7 +38,10 @@
               (:collapsed-form form) (conj :macroexpanded)))
         :onClick
           #(async/put! (:nav-chan opts) (layout/path-to form))}
-        (:text form)))))
+        (when (seq (:completions form))
+          (apply dom/ul #js {:className "autocomplete"}
+            (map #(dom/li nil %) (:completions form))))
+        (dom/span nil (:text form))))))
 
 (defn stringlike [form owner opts]
   (reify
