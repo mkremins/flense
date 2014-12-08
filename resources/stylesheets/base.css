@@ -17,13 +17,20 @@
   display: inline-block;
 }
 
-.flense .atom .autocomplete {
+.flense .completions {
   background: #eee;
   list-style: none;
-  padding: 0 0.25rem;
   position: absolute;
   top: 1.2rem;
   z-index: 100;
+}
+
+.flense .completion {
+  padding: 0 0.25rem;
+}
+
+.flense .completion.selected {
+  background: #ccc;
 }
 
 .flense .stringlike {

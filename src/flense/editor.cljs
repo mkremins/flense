@@ -26,6 +26,18 @@
 
 ;; Om components
 
+(defn completions [form owner]
+  (reify om/IRender
+    (render [_]
+      (let [{:keys [completions selected-completion]} form]
+        (apply dom/ul #js {:className "completions"}
+          (for [i (range (count completions))
+                :let [selected? (= i selected-completion)]]
+            (dom/li #js {
+              :className (class-name
+                           (cond-> #{:completion} selected? (conj :selected)))}
+              (nth completions i))))))))
+
 (defn atom [form owner opts]
   (reify om/IRender
     (render [_]
@@ -38,9 +50,8 @@
               (:collapsed-form form) (conj :macroexpanded)))
         :onClick
           #(async/put! (:nav-chan opts) (layout/path-to form))}
-        (when (seq (:completions form))
-          (apply dom/ul #js {:className "autocomplete"}
-            (map #(dom/li nil %) (:completions form))))
+        (when (and (:selected? form) (seq (:completions form)))
+          (om/build completions form))
         (dom/span nil (:text form))))))
 
 (defn stringlike [form owner opts]
