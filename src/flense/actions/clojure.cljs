@@ -79,6 +79,12 @@
            (partition 2) (map first) (mapcat bsym-locs))
     ()))
 
+(defn collect-binding-locs [loc]
+  (loop [loc loc locs ()]
+    (if-let [loc' (z/up loc)]
+      (recur loc' (concat locs (binding-locs loc')))
+      locs)))
+
 (defn jump-to-definition [loc]
   (when (m/symbol? loc)
     (let [sym-name (:text (z/node loc))]

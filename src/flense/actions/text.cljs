@@ -1,5 +1,6 @@
 (ns flense.actions.text
-  (:require [flense.model :as m]
+  (:require [flense.actions.completions :as completions]
+            [flense.model :as m]
             [xyzzy.core :as z]))
 
 (defn delete-char [loc]
@@ -18,7 +19,7 @@
 (defn down [loc]
   (if (and (m/stringlike? loc) (not (:editing? (z/node loc))))
     (z/edit loc assoc :editing? true)
-    (z/down loc)))
+    (or (completions/next-completion loc) (z/down loc))))
 
 (defn up [loc]
   (if (and (m/stringlike? loc) (:editing? (z/node loc)))

@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [atom rem])
   (:require [cljs.core.async :as async]
             [clojure.string :as str]
+            [flense.actions.completions :as completions]
             [flense.actions.history :as hist]
             [flense.layout :as layout]
             [flense.model :as model]
@@ -29,7 +30,8 @@
 (defn completions [form owner]
   (reify om/IRender
     (render [_]
-      (let [{:keys [completions selected-completion]} form]
+      (let [{:keys [completions selected-completion]} form
+            selected-completion (or selected-completion 0)]
         (apply dom/ul #js {:className "completions"}
           (for [i (range (count completions))
                 :let [selected? (= i selected-completion)]]
@@ -119,7 +121,8 @@
 (defn perform [f]
   (fn [loc]
     (if-let [loc' (f loc)]
-      (cond-> loc' (not (#{hist/redo hist/undo} f)) (hist/save loc))
+      (cond-> loc' (not (#{hist/redo hist/undo} f)) (hist/save loc)
+                   :always completions/update-completions)
       loc)))
 
 (defn editor [document owner opts]
