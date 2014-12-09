@@ -1,7 +1,6 @@
 (ns flense.actions.completions
   (:require [flense.actions.clojure :as clj]
             [flense.model :as m]
-            [flense.util :refer [update]]
             [xyzzy.core :as z]))
 
 (defn has-completions? [x]

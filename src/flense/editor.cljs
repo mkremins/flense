@@ -6,7 +6,6 @@
             [flense.actions.history :as hist]
             [flense.layout :as layout]
             [flense.model :as model]
-            [flense.util :refer [update]]
             [om.core :as om :include-macros true]
             [om.dom :as dom :include-macros true]
             [xyzzy.core :as z])

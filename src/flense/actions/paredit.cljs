@@ -1,6 +1,6 @@
 (ns flense.actions.paredit
   (:require [flense.model :as m]
-            [flense.util :refer [exchange update]]
+            [flense.util :refer [exchange]]
             [xyzzy.core :as z]))
 
 (defn delete [loc]

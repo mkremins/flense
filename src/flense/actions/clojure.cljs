@@ -1,7 +1,7 @@
 (ns flense.actions.clojure
   (:refer-clojure :exclude [macroexpand macroexpand-1])
   (:require [flense.model :as m]
-            [flense.util :refer [seek update]]
+            [flense.util :refer [seek]]
             [xyzzy.core :as z]))
 
 ;; toggle dispatch reader macro
