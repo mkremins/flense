@@ -27,10 +27,16 @@
 
 .flense .completion {
   padding: 0 0.25rem;
+  white-space: nowrap;
 }
 
 .flense .completion.selected {
   background: #ccc;
+}
+
+.flense .completion.template {
+  color: blue;
+  font-weight: normal;
 }
 
 .flense .stringlike {

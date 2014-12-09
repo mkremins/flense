@@ -4,21 +4,6 @@
             [flense.util :refer [seek update]]
             [xyzzy.core :as z]))
 
-;; expand templates
-
-(def templates
-  {"def"   '(def ... ...)
-   "defn"  '(defn ... [...] ...)
-   "defn-" '(defn- ... [...] ...)
-   "fn"    '(fn [...] ...)
-   "if"    '(if ... ... ...)
-   "let"   '(let [... ...] ...)
-   "when"  '(when ... ...)})
-
-(defn expand-template [loc]
-  (when-let [template (templates (:text (z/node loc)))]
-    (-> loc (z/replace (m/form->tree template)) (m/find-placeholder z/next))))
-
 ;; toggle dispatch reader macro
 
 (def ^:private dispatch-types

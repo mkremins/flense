@@ -34,11 +34,13 @@
             selected-completion (or selected-completion 0)]
         (apply dom/ul #js {:className "completions"}
           (for [i (range (count completions))
-                :let [selected? (= i selected-completion)]]
+                :let [selected? (= i selected-completion)
+                      [type form] (nth completions i)]]
             (dom/li #js {
-              :className (class-name
-                           (cond-> #{:completion} selected? (conj :selected)))}
-              (nth completions i))))))))
+              :className
+                (class-name
+                  (cond-> #{:completion type} selected? (conj :selected)))}
+              (pr-str form))))))))
 
 (defn atom [form owner opts]
   (reify om/IRender
