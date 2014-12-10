@@ -27,8 +27,8 @@
         (z/edit loc update :selected-completion dec)
         (z/edit loc assoc :selected-completion (dec (count completions)))))))
 
-(defn locals [loc]
-  (distinct (map (comp symbol :text z/node) (clj/collect-binding-locs loc))))
+(defn local-names [loc]
+  (distinct (map (comp :text z/node) (clj/collect-binding-locs loc))))
 
 (def templates
   '{"def"       (def ... ...)
@@ -43,11 +43,31 @@
     "when"      (when ... ...)
     "when-let"  (when-let [... ...] ...)})
 
-(defn completions [loc]
+(defn similarity
+  "Given two strings `s1` and `s2`, returns a non-negative number that is
+  greater when the strings are more similar. Note that this is an ad-hoc string
+  similarity algorithm I made up on the spot, not a well-documented solution;
+  at some point it should probably be swapped out for something better."
+  [s1 s2]
+  (let [freqs1 (frequencies s1)
+        freqs2 (frequencies s2)]
+    (/ (reduce (fn [score c] (+ score (min (freqs1 c) (freqs2 c))))
+               0 (distinct (concat (keys freqs1) (keys freqs2))))
+       (inc (js/Math.abs (- (count s1) (count s2)))))))
+
+(defn completions
+  "Given a location `loc`, returns a seq of completions that might be inserted
+  at that location. Each completion is a tuple `[type form]`, where `type` is a
+  keyword naming the type of thing to insert and `form` is a Clojure form."
+  [loc]
   (when (m/atom? loc)
-    (concat (when-let [template (templates (:text (z/node loc)))]
-              [[:template template]])
-            (map #(-> [:local %]) (locals loc)))))
+    (let [text (:text (z/node loc))
+          best-of #(->> (map (juxt identity (partial similarity text)) %)
+                        (filter (comp pos? second)) (sort-by second >)
+                        (map first) (take 3))]
+      (concat (when-let [template (templates text)] [[:template template]])
+              (map #(-> [:local (symbol %)]) (best-of (local-names loc)))
+              (map #(-> [:core (symbol %)]) (best-of (keys templates)))))))
 
 (defn update-completions [loc]
   (if (m/atom? loc)
