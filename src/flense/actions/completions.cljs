@@ -10,8 +10,8 @@
   (when (has-completions? loc)
     (let [{:keys [completions selected-completion]} (z/node loc)
           [type form] (nth completions (or selected-completion 0))]
-      (cond-> loc :always (z/replace (m/form->tree form))
-                  (= type :template) m/next-placeholder))))
+      (cond-> (z/replace loc (m/form->tree form))
+              (= type :template) m/next-placeholder))))
 
 (defn next-completion [loc]
   (when (has-completions? loc)
@@ -21,11 +21,8 @@
         (z/edit loc assoc :selected-completion 0)))))
 
 (defn prev-completion [loc]
-  (when (has-completions? loc)
-    (let [{:keys [completions selected-completion]} (z/node loc)]
-      (if (pos? selected-completion)
-        (z/edit loc update :selected-completion dec)
-        (z/edit loc assoc :selected-completion (dec (count completions)))))))
+  (when (and (has-completions? loc) (pos? (:selected-completion (z/node loc))))
+    (z/edit loc update :selected-completion dec)))
 
 (defn local-names [loc]
   (distinct (map (comp :text z/node) (clj/collect-binding-locs loc))))
