@@ -41,16 +41,13 @@
     "when-let"  (when-let [... ...] ...)})
 
 (defn similarity
-  "Given two strings `s1` and `s2`, returns a non-negative number that is
-  greater when the strings are more similar. Note that this is an ad-hoc string
-  similarity algorithm I made up on the spot, not a well-documented solution;
-  at some point it should probably be swapped out for something better."
+  "Naïve string similarity algorithm. Returns the length of the longest prefix
+  shared by `s1` and `s2`. Should probably be replaced by something better at
+  some point in the future."
   [s1 s2]
-  (let [freqs1 (frequencies s1)
-        freqs2 (frequencies s2)]
-    (/ (reduce (fn [score c] (+ score (min (freqs1 c) (freqs2 c))))
-               0 (distinct (concat (keys freqs1) (keys freqs2))))
-       (inc (js/Math.abs (- (count s1) (count s2)))))))
+  (cond (= s1 s2) (count s1)
+        (= (first s1) (first s2)) (inc (similarity (rest s1) (rest s2)))
+        :else 0))
 
 (defn completions
   "Given a location `loc`, returns a seq of completions that might be inserted
