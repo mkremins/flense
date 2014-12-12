@@ -53,8 +53,7 @@
               (:collapsed-form form) (conj :macroexpanded)))
         :onClick
           #(async/put! (:nav-chan opts) (layout/path-to form))}
-        (when (and (:selected? form) (seq (:completions form)))
-          (om/build completions form))
+        (when (:selected? form) (om/build completions form))
         (dom/span nil (:text form))))))
 
 (defn stringlike [form owner opts]
