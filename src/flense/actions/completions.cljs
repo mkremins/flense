@@ -25,7 +25,8 @@
     (z/edit loc update :selected-completion dec)))
 
 (defn local-names [loc]
-  (distinct (map (comp :text z/node) (clj/collect-binding-locs loc))))
+  (->> (clj/collect-binding-locs loc)
+       (map (comp :text z/node)) (remove #{"..."}) distinct))
 
 (def templates
   '{"def"       (def ... ...)
@@ -55,13 +56,16 @@
   keyword naming the type of thing to insert and `form` is a Clojure form."
   [loc]
   (when (m/atom? loc)
-    (let [text (:text (z/node loc))
-          best-of #(->> (map (juxt identity (partial similarity text)) %)
-                        (filter (comp pos? second)) (sort-by second >)
-                        (map first) (take 3))]
-      (concat (when-let [template (templates text)] [[:template template]])
-              (map #(-> [:local (symbol %)]) (best-of (local-names loc)))
-              (map #(-> [:core (symbol %)]) (best-of (keys templates)))))))
+    (if (m/placeholder? loc)
+      (concat (map #(-> [:local (symbol %)]) (take 3 (local-names loc)))
+              (map #(-> [:core %]) '[fn if let loop when]))
+      (let [text (:text (z/node loc))
+            best-of #(->> (map (juxt identity (partial similarity text)) %)
+                          (filter (comp pos? second)) (sort-by second >)
+                          (map first) (take 3))]
+        (concat (when-let [template (templates text)] [[:template template]])
+                (map #(-> [:local (symbol %)]) (best-of (local-names loc)))
+                (map #(-> [:core (symbol %)]) (best-of (keys templates))))))))
 
 (defn update-completions [loc]
   (if (m/atom? loc)
