@@ -118,10 +118,15 @@
                 model/stringlike? (om/build stringlike token {:opts opts})
                 (om/build atom token {:opts opts})))))))))
 
-(defn perform [f]
+(defn perform
+  "Given an `action` function, returns a wrapper action that will perform
+  necessary bookkeeping before and after executing `action` itself. Generally,
+  you should use `perform` to wrap any action you intend to execute on a Flense
+  editor state using `om.core/transact!` or `cljs.core/swap!`."
+  [action]
   (fn [loc]
-    (if-let [loc' (f loc)]
-      (cond-> loc' (not (#{hist/redo hist/undo} f)) (hist/save loc)
+    (if-let [loc' (action loc)]
+      (cond-> loc' (not (#{hist/redo hist/undo} action)) (hist/save loc)
                    :always completions/update-completions)
       loc)))
 
@@ -132,10 +137,6 @@
       {:nav-chan (async/chan)})
     om/IWillMount
     (will-mount [_]
-      (go-loop []
-        (when-let [action (<! (:edit-chan opts))]
-          (om/transact! document [] (perform action))
-          (recur)))
       (go-loop []
         (when-let [new-path (<! (om/get-state owner :nav-chan))]
           (om/transact! document []
