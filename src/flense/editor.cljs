@@ -52,7 +52,7 @@
               (:selected? form) (conj :selected)
               (:collapsed-form form) (conj :macroexpanded)))
         :onClick
-          #(async/put! (:nav-chan opts) (layout/path-to form))}
+          #(async/put! (:nav-chan opts) (:path @form))}
         (when (:selected? form) (om/build completions form))
         (dom/span nil (:text form))))))
 
@@ -71,7 +71,7 @@
           :onChange
             #(om/update! form :text (.. % -target -value))
           :onClick
-            #(async/put! (:nav-chan opts) (layout/path-to form))
+            #(async/put! (:nav-chan opts) (:path @form))
           :onKeyDown
             #(when (and (:editing? @form) (not= (.-keyCode %) 38)) ;; up key
                (.stopPropagation %))
@@ -102,7 +102,7 @@
     (render [_]
       (dom/span #js {
         :className (class-name (:classes token))
-        :onClick #(async/put! (:nav-chan opts) (:path token))}
+        :onClick #(async/put! (:nav-chan opts) @(:path token))}
         (:text token)))))
 
 (defn top-level-form [form owner opts]
@@ -127,7 +127,8 @@
   (fn [loc]
     (if-let [loc' (action loc)]
       (cond-> loc' (not (#{hist/redo hist/undo} action)) (hist/save loc)
-                   :always completions/update-completions)
+                   :always completions/update-completions
+                   :always (update :tree model/annotate-paths))
       loc)))
 
 (defn editor [document owner opts]

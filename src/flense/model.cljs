@@ -99,13 +99,22 @@
         :map {:children (mapv form->tree (interleave (keys form) (vals form)))}
         :regex {:text (.-source form)}))))
 
+(defn annotate-paths
+  "Given a parse `tree` representing a tree of Clojure forms, returns a copy of
+  the tree with `:path` information attached to each node."
+  [{:keys [children path] :or {path []} :as tree}]
+  (cond-> tree (seq children)
+          (assoc :children
+                 (->> (map-indexed #(assoc %2 :path (conj path %1)) children)
+                      (mapv annotate-paths)))))
+
 (defn forms->document
   "Returns a document representing a seq of Clojure `forms`. A document is an
   xyzzy zipper over a Clojure parse tree, suitable for use as a Flense editor
   component's top-level state."
   [forms]
   {:path [0]
-   :tree {:children (mapv form->tree forms)}})
+   :tree (annotate-paths {:children (mapv form->tree forms)})})
 
 (defn tree->form [tree]
   (case (:type tree)

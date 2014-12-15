@@ -1,7 +1,6 @@
 (ns flense.layout
   (:refer-clojure :exclude [chars])
-  (:require [flense.model :as model]
-            [om.core :as om]))
+  (:require [flense.model :as model]))
 
 ;; render forms to tokens
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -23,13 +22,10 @@
 (defn text-width [text line-length]
   (min (count text) line-length))
 
-(defn path-to [form]
-  (filterv number? (om/path form)))
-
 (defn delimiter [opener? {:keys [editing? selected? type] :as form}]
   [{:classes (cond-> #{:delimiter (if opener? :left :right) type}
-               editing? (conj :editing) selected? (conj :selected))
-    :path (path-to form)
+                     editing? (conj :editing) selected? (conj :selected))
+    :path (:path form)
     :text ((if opener? model/opener model/closer) type)}])
 
 (def opener (partial delimiter true))
