@@ -1,15 +1,13 @@
 (ns flense.editor
   (:refer-clojure :exclude [atom rem])
-  (:require [cljs.core.async :as async]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [flense.actions.completions :as completions]
             [flense.actions.history :as hist]
             [flense.layout :as layout]
             [flense.model :as model]
             [om.core :as om :include-macros true]
             [om.dom :as dom]
-            [xyzzy.core :as z])
-  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
+            [xyzzy.core :as z]))
 
 ;; DOM utils
 
@@ -50,7 +48,7 @@
             (:selected? form) (conj :selected)
             (:collapsed-form form) (conj :macroexpanded)))
       :onClick
-        #(async/put! (:nav-chan opts) (:path @form))}
+        #((:nav-cb opts) (:path @form))}
       (when (:selected? form) (om/build completions form))
       (dom/span nil (:text form)))))
 
@@ -69,7 +67,7 @@
           :onChange
             #(om/update! form :text (.. % -target -value))
           :onClick
-            #(async/put! (:nav-chan opts) (:path @form))
+            #((:nav-cb opts) (:path @form))
           :onKeyDown
             #(when (and (:editing? @form) (not= (.-keyCode %) 38)) ;; up key
                (.stopPropagation %))
@@ -99,7 +97,7 @@
   (om/component
     (dom/span #js {
       :className (class-name (:classes token))
-      :onClick #(async/put! (:nav-chan opts) @(:path token))}
+      :onClick #((:nav-cb opts) @(:path token))}
       (:text token))))
 
 (defn top-level-form [form owner opts]
@@ -128,24 +126,12 @@
       loc)))
 
 (defn editor [document owner opts]
-  (reify
-    om/IInitState
-    (init-state [_]
-      {:nav-chan (async/chan)})
-    om/IWillMount
-    (will-mount [_]
-      (go-loop []
-        (when-let [new-path (<! (om/get-state owner :nav-chan))]
-          (om/transact! document []
-            #(-> % (z/edit dissoc :editing?) (assoc :path new-path)))
-          (recur))))
-    om/IWillUnmount
-    (will-unmount [_]
-      (async/close! (om/get-state owner :nav-chan)))
-    om/IRenderState
-    (render-state [_ {:keys [nav-chan]}]
-      (let [{:keys [tree]} (z/edit document assoc :selected? true)]
-        (apply dom/div #js {:className "flense"}
-          (om/build-all top-level-form (:children tree)
-            {:opts (-> opts (update :line-length (fnil identity 72))
-                            (assoc :nav-chan nav-chan))}))))))
+  (om/component
+    (let [{:keys [tree]} (z/edit document assoc :selected? true)
+          nav-cb (fn [path]
+                   (om/transact! document []
+                     #(-> % (z/edit dissoc :editing?) (assoc :path path))))]
+      (apply dom/div #js {:className "flense"}
+        (om/build-all top-level-form (:children tree)
+          {:opts (-> opts (update :line-length (fnil identity 72))
+                          (assoc :nav-cb nav-cb))})))))
