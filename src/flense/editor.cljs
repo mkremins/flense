@@ -7,7 +7,7 @@
             [flense.layout :as layout]
             [flense.model :as model]
             [om.core :as om :include-macros true]
-            [om.dom :as dom :include-macros true]
+            [om.dom :as dom]
             [xyzzy.core :as z])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
@@ -27,34 +27,32 @@
 ;; Om components
 
 (defn completions [form owner]
-  (reify om/IRender
-    (render [_]
-      (let [{:keys [completions selected-completion]} form
-            selected-completion (or selected-completion 0)]
-        (apply dom/ul #js {:className "completions"}
-          (for [i (range (count completions))
-                :let [selected? (= i selected-completion)
-                      [type form] (nth completions i)]]
-            (dom/li #js {
-              :className
-                (class-name
-                  (cond-> #{:completion type} selected? (conj :selected)))}
-              (pr-str form))))))))
+  (om/component
+    (let [{:keys [completions selected-completion]} form
+          selected-completion (or selected-completion 0)]
+      (apply dom/ul #js {:className "completions"}
+        (for [i (range (count completions))
+              :let [selected? (= i selected-completion)
+                    [type form] (nth completions i)]]
+          (dom/li #js {
+            :className
+              (class-name
+                (cond-> #{:completion type} selected? (conj :selected)))}
+            (pr-str form)))))))
 
 (defn atom [form owner opts]
-  (reify om/IRender
-    (render [_]
-      (dom/div #js {
-        :className
-          (class-name
-            (cond-> #{:atom (:type form)}
-              (:head? form) (conj :head)
-              (:selected? form) (conj :selected)
-              (:collapsed-form form) (conj :macroexpanded)))
-        :onClick
-          #(async/put! (:nav-chan opts) (:path @form))}
-        (when (:selected? form) (om/build completions form))
-        (dom/span nil (:text form))))))
+  (om/component
+    (dom/div #js {
+      :className
+        (class-name
+          (cond-> #{:atom (:type form)}
+            (:head? form) (conj :head)
+            (:selected? form) (conj :selected)
+            (:collapsed-form form) (conj :macroexpanded)))
+      :onClick
+        #(async/put! (:nav-chan opts) (:path @form))}
+      (when (:selected? form) (om/build completions form))
+      (dom/span nil (:text form)))))
 
 (defn stringlike [form owner opts]
   (reify
@@ -98,25 +96,23 @@
             (.blur input)))))))
 
 (defn delimiter [token owner opts]
-  (reify om/IRender
-    (render [_]
-      (dom/span #js {
-        :className (class-name (:classes token))
-        :onClick #(async/put! (:nav-chan opts) @(:path token))}
-        (:text token)))))
+  (om/component
+    (dom/span #js {
+      :className (class-name (:classes token))
+      :onClick #(async/put! (:nav-chan opts) @(:path token))}
+      (:text token))))
 
 (defn top-level-form [form owner opts]
-  (reify om/IRender
-    (render [_]
-      (apply dom/div #js {:className "toplevel"}
-        (for [line (layout/->lines form (:line-length opts))]
-          (apply dom/div #js {:className "line"}
-            (for [token line]
-              (condp apply [token]
-                layout/spacer? (dom/span #js {:className "spacer"} (:text token))
-                layout/delimiter? (om/build delimiter token {:opts opts})
-                model/stringlike? (om/build stringlike token {:opts opts})
-                (om/build atom token {:opts opts})))))))))
+  (om/component
+    (apply dom/div #js {:className "toplevel"}
+      (for [line (layout/->lines form (:line-length opts))]
+        (apply dom/div #js {:className "line"}
+          (for [token line]
+            (condp apply [token]
+              layout/spacer? (dom/span #js {:className "spacer"} (:text token))
+              layout/delimiter? (om/build delimiter token {:opts opts})
+              model/stringlike? (om/build stringlike token {:opts opts})
+              (om/build atom token {:opts opts}))))))))
 
 (defn perform
   "Given an `action` function, returns a wrapper action that will perform
