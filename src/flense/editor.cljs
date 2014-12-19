@@ -1,5 +1,5 @@
 (ns flense.editor
-  (:refer-clojure :exclude [atom rem])
+  (:refer-clojure :exclude [atom])
   (:require [clojure.string :as str]
             [flense.actions.completions :as completions]
             [flense.actions.history :as hist]
@@ -9,21 +9,6 @@
             [om.dom :as dom]
             [xyzzy.core :as z]))
 
-;; DOM utils
-
-(defn class-name [classes]
-  (->> classes (map name) (str/join " ")))
-
-(defn move-caret-to-end [input]
-  (let [idx (count (.-value input))]
-    (set! (.-selectionStart input) idx)
-    (set! (.-selectionEnd input) idx)))
-
-(defn rem [n]
-  (str n "rem"))
-
-;; Om components
-
 (defn completions [form owner]
   (om/component
     (let [{:keys [completions selected-completion]} form
@@ -32,72 +17,63 @@
         (for [i (range (count completions))
               :let [selected? (= i selected-completion)
                     [type form] (nth completions i)]]
-          (dom/li #js {
-            :className
-              (class-name
-                (cond-> #{:completion type} selected? (conj :selected)))}
+          (dom/li #js {:className (cond-> (str "completion " (name type))
+                                          selected? (str " selected"))}
             (pr-str form)))))))
 
 (defn atom [form owner opts]
   (om/component
     (dom/div #js {
-      :className
-        (class-name
-          (cond-> #{:atom (:type form)}
-            (:head? form) (conj :head)
-            (:selected? form) (conj :selected)
-            (:collapsed-form form) (conj :macroexpanded)))
-      :onClick
-        #((:nav-cb opts) (:path @form))}
+      :className (cond-> (str "atom " (name (:type form)))
+                         (:head? form) (str " head")
+                         (:selected? form) (str " selected")
+                         (:collapsed-form form) (str " macroexpanded"))
+      :onClick #((:nav-cb opts) (:path @form))}
       (when (:selected? form) (om/build completions form))
       (dom/span nil (:text form)))))
+
+(defn stringlike-styles [text line-length]
+  (let [charc (count text)]
+    #js {:height (str (* 1.15 (inc (int (/ charc (- line-length 2))))) "rem")
+         :width  (str (/ (min charc line-length) 2) "rem")}))
+
+(defn move-caret-to-end [input]
+  (let [idx (count (.-value input))]
+    (set! (.-selectionStart input) idx)
+    (set! (.-selectionEnd input) idx)))
 
 (defn stringlike [form owner opts]
   (reify
     om/IRender
     (render [_]
-      (let [text (str/replace (:text form) #"\s+" " ")
-            {:keys [line-length]} opts]
+      (let [text (str/replace (:text form) #"\s+" " ")]
         (dom/textarea #js {
-          :className
-            (class-name
-             (cond-> #{:stringlike (:type form)}
-               (:editing? form) (conj :editing)
-               (:selected? form) (conj :selected)))
-          :onChange
-            #(om/update! form :text (.. % -target -value))
-          :onClick
-            #((:nav-cb opts) (:path @form))
-          :onKeyDown
-            #(when (and (:editing? @form) (not= (.-keyCode %) 38)) ;; up key
-               (.stopPropagation %))
-          :onKeyPress
-            #(.stopPropagation %)
-          :style #js {
-            :height (rem (* 1.15 (layout/text-height text line-length)))
-            :width  (rem (/ (layout/text-width text line-length) 2))}
+          :className (cond-> (str "stringlike " (name (:type form)))
+                             (:editing? form) (str " editing")
+                             (:selected? form) (str " selected"))
+          :onChange #(om/update! form :text (.. % -target -value))
+          :onClick #((:nav-cb opts) (:path @form))
+          :onKeyDown #(when (and (:editing? @form) (not= (.-keyCode %) 38))
+                        (.stopPropagation %))
+          :onKeyPress #(.stopPropagation %)
+          :style (stringlike-styles text (:line-length opts))
           :value text})))
     om/IDidMount
     (did-mount [_]
       (when (:editing? form)
-        (let [input (om/get-node owner)]
-          (if (model/placeholder? form)
-            (doto input .focus .select)
-            (move-caret-to-end input)))))
+        (if (model/placeholder? form)
+          (doto (om/get-node owner) .focus .select)
+          (move-caret-to-end (om/get-node owner)))))
     om/IDidUpdate
     (did-update [_ prev _]
-      (let [input (om/get-node owner)]
-        (if (:editing? form)
-          (when-not (:editing? prev)
-            (move-caret-to-end input))
-          (when (:editing? prev)
-            (.blur input)))))))
+      (if (:editing? form)
+        (when-not (:editing? prev) (move-caret-to-end (om/get-node owner)))
+        (when (:editing? prev) (.blur (om/get-node owner)))))))
 
 (defn delimiter [token owner opts]
   (om/component
-    (dom/span #js {
-      :className (class-name (:classes token))
-      :onClick #((:nav-cb opts) @(:path token))}
+    (dom/span #js {:className (str/join " " (map name (:classes token)))
+                   :onClick #((:nav-cb opts) @(:path token))}
       (:text token))))
 
 (defn top-level-form [form owner opts]
@@ -106,7 +82,7 @@
       (for [line (layout/->lines form (:line-length opts))]
         (apply dom/div #js {:className "line"}
           (for [token line]
-            (condp apply [token]
+            (condp #(%1 %2) token
               layout/spacer? (dom/span #js {:className "spacer"} (:text token))
               layout/delimiter? (om/build delimiter token {:opts opts})
               model/stringlike? (om/build stringlike token {:opts opts})

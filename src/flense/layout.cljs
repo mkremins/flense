@@ -16,12 +16,6 @@
 (defn chars [token]
   (count (or (:text token) (model/tree->string token))))
 
-(defn text-height [text line-length]
-  (inc (int (/ (count text) (- line-length 2)))))
-
-(defn text-width [text line-length]
-  (min (count text) line-length))
-
 (defn delimiter [opener? {:keys [editing? selected? type] :as form}]
   [{:classes (cond-> #{:delimiter (if opener? :left :right) type}
                      editing? (conj :editing) selected? (conj :selected))
