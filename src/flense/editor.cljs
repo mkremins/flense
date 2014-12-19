@@ -1,5 +1,4 @@
 (ns flense.editor
-  (:refer-clojure :exclude [atom])
   (:require [clojure.string :as str]
             [flense.actions.completions :as completions]
             [flense.actions.history :as hist]
@@ -9,7 +8,7 @@
             [om.dom :as dom]
             [xyzzy.core :as z]))
 
-(defn completions [form owner]
+(defn- completions [form owner]
   (om/component
     (let [{:keys [completions selected-completion]} form
           selected-completion (or selected-completion 0)]
@@ -21,7 +20,7 @@
                                           selected? (str " selected"))}
             (pr-str form)))))))
 
-(defn atom [form owner opts]
+(defn- atom* [form owner opts]
   (om/component
     (dom/div #js {
       :className (cond-> (str "atom " (name (:type form)))
@@ -32,17 +31,17 @@
       (when (:selected? form) (om/build completions form))
       (dom/span nil (:text form)))))
 
-(defn stringlike-styles [text line-length]
+(defn- stringlike-styles [text line-length]
   (let [charc (count text)]
     #js {:height (str (* 1.15 (inc (int (/ charc (- line-length 2))))) "rem")
          :width  (str (/ (min charc line-length) 2) "rem")}))
 
-(defn move-caret-to-end [input]
+(defn- move-caret-to-end [input]
   (let [idx (count (.-value input))]
     (set! (.-selectionStart input) idx)
     (set! (.-selectionEnd input) idx)))
 
-(defn stringlike [form owner opts]
+(defn- stringlike [form owner opts]
   (reify
     om/IRender
     (render [_]
@@ -70,7 +69,7 @@
         (when-not (:editing? prev) (move-caret-to-end (om/get-node owner)))
         (when (:editing? prev) (.blur (om/get-node owner)))))))
 
-(defn delimiter [token owner opts]
+(defn- delimiter [token owner opts]
   (om/component
     (dom/span #js {:className (str/join " " (map name (:classes token)))
                    :onClick #((:nav-cb opts) @(:path token))}
@@ -86,7 +85,7 @@
               layout/spacer? (dom/span #js {:className "spacer"} (:text token))
               layout/delimiter? (om/build delimiter token {:opts opts})
               model/stringlike? (om/build stringlike token {:opts opts})
-              (om/build atom token {:opts opts}))))))))
+              (om/build atom* token {:opts opts}))))))))
 
 (defn perform
   "Given an `action` function, returns a wrapper action that will perform
