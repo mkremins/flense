@@ -5,16 +5,13 @@
 .flense .atom,
 .flense .stringlike {
   border: none;
+  display: inline-block;
   font-family: inherit;
   font-size: inherit;
   margin: 0;
   outline: none;
   padding: 0;
   position: relative;
-}
-
-.flense .atom {
-  display: inline-block;
 }
 
 .flense .completions {
@@ -40,9 +37,7 @@
 }
 
 .flense .stringlike {
-  margin-top: -0.3rem;
-  resize: none;
-  top: 0.3rem;
+  white-space: pre-wrap;
 }
 
 .flense .delimiter.string,

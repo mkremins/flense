@@ -33,6 +33,8 @@
 (def symbol? (type-pred :symbol))
 (def vec? (type-pred :vec))
 
+(def editing? (every-pred stringlike? (comp :editing? unwrap)))
+
 (defn deflike? [m]
   (let [{[head sym] :children :as node} (unwrap m)]
     (and (seq? node)

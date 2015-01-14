@@ -16,6 +16,7 @@
 
 .flense .stringlike {
   color: rgb(21,144,155);
+  max-width: 36rem;
 }
 
 .flense .symbol.head {

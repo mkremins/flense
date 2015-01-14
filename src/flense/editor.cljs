@@ -31,43 +31,14 @@
       (when (:selected? form) (om/build completions form))
       (dom/span nil (:text form)))))
 
-(defn- stringlike-styles [text line-length]
-  (let [charc (count text)]
-    #js {:height (str (* 1.15 (inc (int (/ charc (- line-length 2))))) "rem")
-         :width  (str (/ (min charc line-length) 2) "rem")}))
-
-(defn- move-caret-to-end [input]
-  (let [idx (count (.-value input))]
-    (set! (.-selectionStart input) idx)
-    (set! (.-selectionEnd input) idx)))
-
 (defn- stringlike [form owner opts]
-  (reify
-    om/IRender
-    (render [_]
-      (let [text (str/replace (:text form) #"\s+" " ")]
-        (dom/textarea #js {
-          :className (cond-> (str "stringlike " (name (:type form)))
-                             (:editing? form) (str " editing")
-                             (:selected? form) (str " selected"))
-          :onChange #(om/update! form :text (.. % -target -value))
-          :onClick #((:nav-cb opts) (:path @form))
-          :onKeyDown #(when (and (:editing? @form) (not= (.-keyCode %) 38))
-                        (.stopPropagation %))
-          :onKeyPress #(.stopPropagation %)
-          :style (stringlike-styles text (:line-length opts))
-          :value text})))
-    om/IDidMount
-    (did-mount [_]
-      (when (:editing? form)
-        (if (model/placeholder? form)
-          (doto (om/get-node owner) .focus .select)
-          (move-caret-to-end (om/get-node owner)))))
-    om/IDidUpdate
-    (did-update [_ prev _]
-      (if (:editing? form)
-        (when-not (:editing? prev) (move-caret-to-end (om/get-node owner)))
-        (when (:editing? prev) (.blur (om/get-node owner)))))))
+  (om/component
+    (dom/div #js {
+      :className (cond-> (str "stringlike " (name (:type form)))
+                         (:editing? form) (str " editing")
+                         (:selected? form) (str " selected"))
+      :onClick #((:nav-cb opts) (:path @form))}
+      (:text form))))
 
 (defn- delimiter [token owner opts]
   (om/component
