@@ -37,7 +37,8 @@
       :className (cond-> (str "stringlike " (name (:type form)))
                          (:editing? form) (str " editing")
                          (:selected? form) (str " selected"))
-      :onClick #((:nav-cb opts) (:path @form))}
+      :onClick #((:nav-cb opts) (:path @form))
+      :style #js {:max-width (str (/ (:max-width form) 2) "rem")}}
       (:text form))))
 
 (defn- delimiter [token owner opts]

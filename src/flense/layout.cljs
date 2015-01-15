@@ -14,7 +14,9 @@
   (contains? (:classes token) :spacer))
 
 (defn chars [token]
-  (count (or (:text token) (model/tree->string token))))
+  (if (model/stringlike? token)
+    (+ 2 (min (count (:text token)) (- *line-length* 8)))
+    (count (or (:text token) (model/tree->string token)))))
 
 (defn delimiter [opener? {:keys [editing? selected? type] :as form}]
   [{:classes (cond-> #{:delimiter (if opener? :left :right) type}
@@ -36,15 +38,17 @@
     form))
 
 (defn ->tokens [form]
-  (cond
-    (model/coll? form)
+  (condp #(%1 %2) form
+    model/coll?
       (concat (opener form)
               (->> (:children (annotate-head form))
                    (map ->tokens) (interpose (spacer)) (apply concat))
               (closer form))
-    (model/stringlike? form)
-      (concat (opener form) [form] (closer form))
-    :else
+    model/stringlike?
+      (concat (opener form)
+              [(assoc form :max-width (- *line-length* 8))]
+              (closer form))
+    ;else
       [form]))
 
 ;; lay out tokens across multiple lines

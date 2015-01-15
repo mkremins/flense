@@ -12,6 +12,7 @@
   outline: none;
   padding: 0;
   position: relative;
+  vertical-align: top;
 }
 
 .flense .completions {
@@ -40,9 +41,12 @@
   white-space: pre-wrap;
 }
 
-.flense .delimiter.string,
-.flense .delimiter.regex {
+.flense .delimiter.left {
   vertical-align: top;
+}
+
+.flense .delimiter.right {
+  vertical-align: bottom;
 }
 
 .flense .spacer {
