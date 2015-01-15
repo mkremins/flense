@@ -38,7 +38,7 @@
                          (:editing? form) (str " editing")
                          (:selected? form) (str " selected"))
       :onClick #((:nav-cb opts) (:path @form))
-      :style #js {:max-width (str (/ (:max-width form) 2) "rem")}}
+      :style #js {:maxWidth (str (/ (:max-width form) 2) "rem")}}
       (:text form))))
 
 (defn- delimiter [token owner opts]
