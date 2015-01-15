@@ -7,13 +7,13 @@
 
   :dependencies
   [[org.clojure/clojure "1.6.0"]
-   [org.clojure/clojurescript "0.0-2496"]
-   [com.facebook/react "0.11.2"]
-   [om "0.7.3"]
+   [org.clojure/clojurescript "0.0-2665"]
+   [com.facebook/react "0.12.2.1"]
+   [org.om/om "0.8.0"]
    [mkremins/xyzzy "0.3.1"]]
 
   :plugins
-  [[lein-cljsbuild "1.0.3"]]
+  [[lein-cljsbuild "1.0.4"]]
 
   :source-paths ["src"]
 
