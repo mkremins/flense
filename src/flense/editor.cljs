@@ -33,13 +33,16 @@
 
 (defn- stringlike [form owner opts]
   (om/component
-    (dom/div #js {
+    (apply dom/div #js {
       :className (cond-> (str "stringlike " (name (:type form)))
                          (:editing? form) (str " editing")
                          (:selected? form) (str " selected"))
-      :onClick #((:nav-cb opts) (:path @form))
       :style #js {:maxWidth (str (/ (:max-width form) 2) "rem")}}
-      (:text form))))
+      (for [i (range (count (:text form)))]
+        (dom/span #js {
+          :className (when (= i (:char-idx form)) "selected")
+          :onClick #((:nav-cb opts) (:path @form) i)}
+          (nth (:text form) i))))))
 
 (defn- delimiter [token owner opts]
   (om/component
@@ -72,13 +75,19 @@
                    :always (update :tree model/annotate-paths))
       loc)))
 
+(defn- nav-cb [document]
+  (fn ([path]
+        (om/transact! document []
+          #(-> % (z/edit dissoc :editing?) (assoc :path path))))
+      ([path idx]
+        (om/transact! document []
+          #(-> % (z/edit dissoc :editing?) (assoc :path path)
+                 (z/edit assoc :editing? true :char-idx idx))))))
+
 (defn editor [document owner opts]
   (om/component
-    (let [{:keys [tree]} (z/edit document assoc :selected? true)
-          nav-cb (fn [path]
-                   (om/transact! document []
-                     #(-> % (z/edit dissoc :editing?) (assoc :path path))))]
+    (let [{:keys [tree]} (z/edit document assoc :selected? true)]
       (apply dom/div #js {:className "flense"}
         (om/build-all top-level-form (:children tree)
           {:opts (-> opts (update :line-length (fnil identity 72))
-                          (assoc :nav-cb nav-cb))})))))
+                          (assoc :nav-cb (nav-cb document)))})))))

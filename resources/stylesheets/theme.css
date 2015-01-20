@@ -6,7 +6,7 @@
 
 .flense .selected.atom,
 .flense .selected.delimiter:not(.editing),
-.flense .selected.stringlike.editing {
+.flense .stringlike.editing .selected {
   background: rgb(170,203,249);
 }
 

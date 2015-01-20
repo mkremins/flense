@@ -3,13 +3,30 @@
             [flense.model :as m]
             [xyzzy.core :as z]))
 
+(defn- last-char-idx [x]
+  (-> (m/unwrap x) :text count dec))
+
 (defn begin-editing [loc]
-  (when (and (m/stringlike? loc) (not (:editing? (z/node loc))))
-    (z/edit loc assoc :editing? true)))
+  (when (and (m/stringlike? loc) (not (m/editing? loc)))
+    (z/edit loc assoc :editing? true :char-idx (last-char-idx loc))))
 
 (defn cease-editing [loc]
   (when (m/editing? loc)
     (z/edit loc dissoc :editing?)))
+
+(defn next-char [loc]
+  (when (m/editing? loc)
+    (let [node (z/node loc)]
+      (if (< (:char-idx node) (last-char-idx node))
+        (z/edit loc update :char-idx inc)
+        (z/edit loc assoc :char-idx 0)))))
+
+(defn prev-char [loc]
+  (when (m/editing? loc)
+    (let [node (z/node loc)]
+      (if (pos? (:char-idx node))
+        (z/edit loc update :char-idx dec)
+        (z/edit loc assoc :char-idx (last-char-idx node))))))
 
 (defn delete-char [loc]
   (condp #(%1 %2) loc
@@ -19,7 +36,9 @@
           (z/replace loc (m/string->atom (subs text 0 (dec (count text)))))
           (z/replace loc m/placeholder)))
     (every-pred m/editing? (comp seq :text z/node))
-      (z/edit loc update :text #(subs % 0 (dec (count %))))
+      (let [{i :char-idx, :keys [text]} (z/node loc)
+            text' (str (subs text 0 i) (subs text (inc i) (count text)))]
+        (-> loc (z/edit assoc :text text') (z/edit update :char-idx dec)))
     ;else
       nil))
 
@@ -31,11 +50,14 @@
         (z/replace loc (m/string->atom (str (:text (z/node loc)) c))))
     m/editing?
       (if (m/placeholder? loc)
-        (z/edit loc assoc :text c)
-        (z/edit loc update :text str c))
+        (z/edit loc assoc :text c :char-idx 0)
+        (let [{i :char-idx, :keys [text]} (z/node loc)
+              text' (str (subs text 0 (inc i)) c
+                         (subs text (inc i) (count text)))]
+          (-> loc (z/edit assoc :text text') (z/edit update :char-idx inc))))
     ;else
       nil))
 
 (defn wrap-string [loc]
   (when (m/atom? loc)
-    (z/edit loc assoc :type :string :editing? true)))
+    (begin-editing (z/edit loc assoc :type :string))))
