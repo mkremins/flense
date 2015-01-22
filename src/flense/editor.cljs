@@ -78,15 +78,15 @@
 (defn- nav-cb [document]
   (fn ([path]
         (om/transact! document []
-          #(-> % (z/edit dissoc :editing?) (assoc :path path))))
+          #(-> % (z/dissoc :editing?) (assoc :path path))))
       ([path idx]
         (om/transact! document []
-          #(-> % (z/edit dissoc :editing?) (assoc :path path)
-                 (z/edit assoc :editing? true :char-idx idx))))))
+          #(-> % (z/dissoc :editing?) (assoc :path path)
+                 (z/assoc :editing? true :char-idx idx))))))
 
 (defn editor [document owner opts]
   (om/component
-    (let [{:keys [tree]} (z/edit document assoc :selected? true)]
+    (let [{:keys [tree]} (z/assoc document :selected? true)]
       (apply dom/div #js {:className "flense"}
         (om/build-all top-level-form (:children tree)
           {:opts (-> opts (update :line-length (fnil identity 72))

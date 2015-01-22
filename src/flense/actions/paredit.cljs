@@ -21,7 +21,7 @@
     (let [n   (-> loc :path peek)
           sib (-> loc z/right z/node)]
       (-> loc z/up (z/remove-child (inc n)) (z/child n)
-          (z/edit #(update % :children conj sib))))))
+          (z/update :children conj sib)))))
 
 (defn insert-left [loc]
   (-> loc (z/insert-left m/placeholder) z/left))
@@ -36,20 +36,18 @@
   (when ((every-pred m/coll? (comp m/coll? z/left)) loc)
     (let [n  (-> loc :path peek dec)
           cs (-> loc z/left z/node :children)]
-      (-> loc
-          (z/edit (fn [form] (update form :children #(vec (concat cs %)))))
+      (-> loc (z/update :children #(vec (concat cs %)))
           z/up (z/remove-child n) (z/child n)))))
 
 (defn join-right [loc]
   (when ((every-pred m/coll? (comp m/coll? z/right)) loc)
     (let [n  (-> loc :path peek)
           cs (-> loc z/right z/node :children)]
-      (-> loc
-          (z/edit (fn [form] (update form :children #(vec (concat % cs)))))
+      (-> loc (z/update :children #(vec (concat % cs)))
           z/up (z/remove-child (inc n)) (z/child n)))))
 
 (defn- make-type [type loc]
-  (when (m/coll? loc) (z/edit loc assoc :type type)))
+  (when (m/coll? loc) (z/assoc loc :type type)))
 
 (def make-map (partial make-type :map))
 (def make-seq (partial make-type :seq))
@@ -64,15 +62,15 @@
 
 (defn shrink-right [loc]
   (when-let [sib (some-> loc (z/ensure z/up) z/down z/rightmost z/node)]
-    (-> loc (z/edit #(update % :children pop)) (z/insert-right sib))))
+    (-> loc (z/update :children pop) (z/insert-right sib))))
 
 (defn splice [loc]
   (when ((every-pred z/up m/nonempty?) loc)
     (let [n  (-> loc :path peek)
           cs (-> loc z/node :children)]
       (-> loc z/up
-          (z/edit #(-> % (assoc-in [:children n] cs)
-                         (update :children (comp vec flatten))))
+          (z/update :children assoc n cs)
+          (z/update :children (comp vec flatten))
           (z/child n)))))
 
 (defn split-left [loc]
@@ -81,7 +79,7 @@
           node  (-> loc z/up z/node)
           [ls rs] (map vec (split-at split (:children node)))]
       (-> loc z/up
-          (z/edit assoc :children rs)
+          (z/assoc :children rs)
           (z/insert-left (assoc node :children ls))
           z/down))))
 
@@ -91,19 +89,19 @@
           node  (-> loc z/up z/node)
           [ls rs] (map vec (split-at split (:children node)))]
       (-> loc z/up
-          (z/edit assoc :children ls)
+          (z/assoc :children ls)
           (z/insert-right (assoc node :children rs))
           z/down z/rightmost))))
 
 (defn swap-left [loc]
   (when (z/left loc)
     (let [i (-> loc :path peek) j (dec i)]
-      (-> loc z/up (z/edit update :children exchange i j) (z/child j)))))
+      (-> loc z/up (z/update :children exchange i j) (z/child j)))))
 
 (defn swap-right [loc]
   (when (z/right loc)
     (let [i (-> loc :path peek) j (inc i)]
-      (-> loc z/up (z/edit update :children exchange i j) (z/child j)))))
+      (-> loc z/up (z/update :children exchange i j) (z/child j)))))
 
 (defn- wrap-type [type loc]
   (z/down (z/edit loc #(-> {:type type :children [%]}))))

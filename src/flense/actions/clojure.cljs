@@ -11,7 +11,7 @@
 
 (defn toggle-dispatch [loc]
   (when (contains? dispatch-types (:type (z/node loc)))
-    (z/edit loc update :type dispatch-types)))
+    (z/update loc :type dispatch-types)))
 
 ;; expand and collapse macro forms
 
@@ -34,7 +34,7 @@
   (let [node (z/node loc)]
     (when (-> node m/tree->form macro-form?)
       (-> loc (z/edit (comp m/form->tree macroexpand m/tree->form))
-              (z/edit assoc :collapsed-form node)))))
+              (z/assoc :collapsed-form node)))))
 
 (defn collapse-macro [loc]
   (z/edit loc :collapsed-form))

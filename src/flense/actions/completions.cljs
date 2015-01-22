@@ -17,12 +17,12 @@
   (when (has-completions? loc)
     (let [{:keys [completions selected-completion]} (z/node loc)]
       (if (< selected-completion (dec (count completions)))
-        (z/edit loc update :selected-completion inc)
-        (z/edit loc assoc :selected-completion 0)))))
+        (z/update loc :selected-completion inc)
+        (z/assoc loc :selected-completion 0)))))
 
 (defn prev-completion [loc]
   (when (and (has-completions? loc) (pos? (:selected-completion (z/node loc))))
-    (z/edit loc update :selected-completion dec)))
+    (z/update loc :selected-completion dec)))
 
 (defn local-names [loc]
   (->> (clj/collect-binding-locs loc)
@@ -72,5 +72,5 @@
     (let [completions (completions loc)
           selected (:selected-completion (z/node loc))
           idx (if (< selected (count completions)) selected 0)]
-      (z/edit loc assoc :completions completions :selected-completion idx))
+      (z/assoc loc :completions completions :selected-completion idx))
     loc))

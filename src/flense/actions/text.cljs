@@ -8,25 +8,25 @@
 
 (defn begin-editing [loc]
   (when (and (m/stringlike? loc) (not (m/editing? loc)))
-    (z/edit loc assoc :editing? true :char-idx (last-char-idx loc))))
+    (z/assoc loc :editing? true :char-idx (last-char-idx loc))))
 
 (defn cease-editing [loc]
   (when (m/editing? loc)
-    (z/edit loc dissoc :editing?)))
+    (z/dissoc loc :editing?)))
 
 (defn next-char [loc]
   (when (m/editing? loc)
     (let [node (z/node loc)]
       (if (< (:char-idx node) (last-char-idx node))
-        (z/edit loc update :char-idx inc)
-        (z/edit loc assoc :char-idx 0)))))
+        (z/update loc :char-idx inc)
+        (z/assoc loc :char-idx 0)))))
 
 (defn prev-char [loc]
   (when (m/editing? loc)
     (let [node (z/node loc)]
       (if (pos? (:char-idx node))
-        (z/edit loc update :char-idx dec)
-        (z/edit loc assoc :char-idx (last-char-idx node))))))
+        (z/update loc :char-idx dec)
+        (z/assoc loc :char-idx (last-char-idx node))))))
 
 (defn delete-char [loc]
   (condp #(%1 %2) loc
@@ -38,7 +38,7 @@
     (every-pred m/editing? (comp seq :text z/node))
       (let [{i :char-idx, :keys [text]} (z/node loc)
             text' (str (subs text 0 i) (subs text (inc i) (count text)))]
-        (-> loc (z/edit assoc :text text') (z/edit update :char-idx dec)))
+        (-> loc (z/assoc :text text') (z/update :char-idx dec)))
     ;else
       nil))
 
@@ -50,14 +50,14 @@
         (z/replace loc (m/string->atom (str (:text (z/node loc)) c))))
     m/editing?
       (if (m/placeholder? loc)
-        (z/edit loc assoc :text c :char-idx 0)
+        (z/assoc loc :text c :char-idx 0)
         (let [{i :char-idx, :keys [text]} (z/node loc)
               text' (str (subs text 0 (inc i)) c
                          (subs text (inc i) (count text)))]
-          (-> loc (z/edit assoc :text text') (z/edit update :char-idx inc))))
+          (-> loc (z/assoc :text text') (z/update :char-idx inc))))
     ;else
       nil))
 
 (defn wrap-string [loc]
   (when (m/atom? loc)
-    (begin-editing (z/edit loc assoc :type :string))))
+    (begin-editing (z/assoc loc :type :string))))
