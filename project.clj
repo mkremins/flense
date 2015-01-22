@@ -10,7 +10,7 @@
    [org.clojure/clojurescript "0.0-2665"]
    [com.facebook/react "0.12.2.1"]
    [org.om/om "0.8.0"]
-   [mkremins/xyzzy "0.3.1"]]
+   [mkremins/xyzzy "0.3.3"]]
 
   :plugins
   [[lein-cljsbuild "1.0.4"]]
