@@ -10,6 +10,7 @@
    [org.clojure/clojurescript "0.0-2665"]
    [com.facebook/react "0.12.2.1"]
    [org.om/om "0.8.0"]
+   [prismatic/om-tools "0.3.10"]
    [mkremins/xyzzy "0.3.3"]]
 
   :plugins

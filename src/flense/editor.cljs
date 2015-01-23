@@ -4,60 +4,57 @@
             [flense.actions.history :as hist]
             [flense.layout :as layout]
             [flense.model :as model]
-            [om.core :as om :include-macros true]
-            [om.dom :as dom]
+            [om.core :as om]
+            [om-tools.core :refer-macros [defcomponent]]
+            [om-tools.dom :as dom :include-macros true]
             [xyzzy.core :as z]))
 
-(defn- completions [form owner]
-  (om/component
+(defcomponent completions [form owner]
+  (render [_]
     (let [{:keys [completions selected-completion]} form
           selected-completion (or selected-completion 0)]
-      (apply dom/ul #js {:className "completions"}
+      (dom/ul {:class "completions"}
         (for [i (range (count completions))
-              :let [selected? (= i selected-completion)
-                    [type form] (nth completions i)]]
-          (dom/li #js {:className (cond-> (str "completion " (name type))
-                                          selected? (str " selected"))}
+              :let [[type form] (nth completions i)]]
+          (dom/li {:class (cond-> (str "completion " (name type))
+                                  (= i selected-completion) (str " selected"))}
             (pr-str form)))))))
 
-(defn- atom* [form owner opts]
-  (om/component
-    (dom/div #js {
-      :className (cond-> (str "atom " (name (:type form)))
-                         (:head? form) (str " head")
-                         (:selected? form) (str " selected")
-                         (:collapsed-form form) (str " macroexpanded"))
-      :onClick #((:nav-cb opts) (:path @form))}
+(defcomponent atom* [form owner opts]
+  (render [_]
+    (dom/div {:class (cond-> (str "atom " (name (:type form)))
+                             (:head? form) (str " head")
+                             (:selected? form) (str " selected")
+                             (:collapsed-form form) (str " macroexpanded"))
+              :on-click #((:nav-cb opts) (:path @form))}
       (when (:selected? form) (om/build completions form))
-      (dom/span nil (:text form)))))
+      (dom/span (:text form)))))
 
-(defn- stringlike [form owner opts]
-  (om/component
-    (apply dom/div #js {
-      :className (cond-> (str "stringlike " (name (:type form)))
-                         (:editing? form) (str " editing")
-                         (:selected? form) (str " selected"))
-      :style #js {:maxWidth (str (/ (:max-width form) 2) "rem")}}
+(defcomponent stringlike [form owner opts]
+  (render [_]
+    (dom/div {:class (cond-> (str "stringlike " (name (:type form)))
+                             (:editing? form) (str " editing")
+                             (:selected? form) (str " selected"))
+              :style {:max-width (str (/ (:max-width form) 2) "rem")}}
       (for [i (range (count (:text form)))]
-        (dom/span #js {
-          :className (when (= i (:char-idx form)) "selected")
-          :onClick #((:nav-cb opts) (:path @form) i)}
+        (dom/span {:class (when (= i (:char-idx form)) "selected")
+                   :on-click #((:nav-cb opts) (:path @form) i)}
           (nth (:text form) i))))))
 
-(defn- delimiter [token owner opts]
-  (om/component
-    (dom/span #js {:className (str/join " " (map name (:classes token)))
-                   :onClick #((:nav-cb opts) @(:path token))}
+(defcomponent delimiter [token owner opts]
+  (render [_]
+    (dom/span {:class (str/join " " (map name (:classes token)))
+               :on-click #((:nav-cb opts) @(:path token))}
       (:text token))))
 
-(defn top-level-form [form owner opts]
-  (om/component
-    (apply dom/div #js {:className "toplevel"}
+(defcomponent top-level-form [form owner opts]
+  (render [_]
+    (dom/div {:class "toplevel"}
       (for [line (layout/->lines form (:line-length opts))]
-        (apply dom/div #js {:className "line"}
+        (dom/div {:class "line"}
           (for [token line]
             (condp #(%1 %2) token
-              layout/spacer? (dom/span #js {:className "spacer"} (:text token))
+              layout/spacer? (dom/span {:class "spacer"} (:text token))
               layout/delimiter? (om/build delimiter token {:opts opts})
               model/stringlike? (om/build stringlike token {:opts opts})
               (om/build atom* token {:opts opts}))))))))
@@ -84,10 +81,10 @@
           #(-> % (z/dissoc :editing?) (assoc :path path)
                  (z/assoc :editing? true :char-idx idx))))))
 
-(defn editor [document owner opts]
-  (om/component
+(defcomponent editor [document owner opts]
+  (render [_]
     (let [{:keys [tree]} (z/assoc document :selected? true)]
-      (apply dom/div #js {:className "flense"}
+      (dom/div {:class "flense"}
         (om/build-all top-level-form (:children tree)
           {:opts (-> opts (update :line-length (fnil identity 72))
                           (assoc :nav-cb (nav-cb document)))})))))
