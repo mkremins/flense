@@ -5,7 +5,8 @@
 }
 
 .flense .selected.atom,
-.flense .selected.delimiter:not(.editing) {
+.flense .selected.delimiter:not(.editing),
+.flense .editing .char.in-range {
   background: rgb(170,203,249);
 }
 
@@ -13,12 +14,12 @@
   50% { border-color: white; }
 }
 
-.flense .editing .caret-before {
+.flense .editing .char.caret-before {
   -webkit-animation: blink-caret .5s step-end infinite alternate;
   border-left: 1px solid #aaa;
 }
 
-.flense .editing .caret-after {
+.flense .editing .char.caret-after {
   -webkit-animation: blink-caret .5s step-end infinite alternate;
   border-right: 1px solid #aaa;
 }
