@@ -13,8 +13,8 @@
 (defn- move-caret-to [node pos]
   (assoc node :range-start pos :range-end pos))
 
-(defn- move-caret-by [node f]
-  (-> node (update :range-start f) (update :range-end f)))
+(defn- move-caret-by [node offset]
+  (-> node (move-caret-to (+ (caret-pos node) offset))))
 
 (defn begin-editing [loc]
   (when (and (m/stringlike? loc) (not (m/editing? loc)))
@@ -30,7 +30,7 @@
   (when (m/editing? loc)
     (if-let [pos (caret-pos loc)]
       (if (< pos (last-caret-pos loc))
-        (z/edit loc move-caret-by inc)
+        (z/edit loc move-caret-by 1)
         (z/edit loc move-caret-to 0))
       loc)))
 
@@ -38,7 +38,7 @@
   (when (m/editing? loc)
     (if-let [pos (caret-pos loc)]
       (if (pos? pos)
-        (z/edit loc move-caret-by dec)
+        (z/edit loc move-caret-by -1)
         (z/edit loc move-caret-to (last-caret-pos loc)))
       loc)))
 
@@ -60,18 +60,19 @@
     ;else
       nil))
 
-(defn insert [c loc]
+(defn insert [s loc]
   (condp #(%1 %2) loc
     m/atom?
       (if (m/placeholder? loc)
-        (z/replace loc (m/string->atom c))
-        (z/replace loc (m/string->atom (str (:text (z/node loc)) c))))
+        (z/replace loc (m/string->atom s))
+        (z/replace loc (m/string->atom (str (:text (z/node loc)) s))))
     m/editing?
       (if-let [pos (caret-pos loc)]
         (let [{:keys [text]} (z/node loc)
-              text' (str (subs text 0 pos) c (subs text pos (count text)))]
-          (-> loc (z/assoc :text text') (z/edit move-caret-by inc)))
-        (insert c (delete loc)))
+              text' (str (subs text 0 pos) s (subs text pos (count text)))]
+          (-> loc (z/assoc :text text') (z/edit move-caret-by (count s))))
+        (insert s (delete loc))) ; delete everything in the selected range,
+                                 ; then insert at the new caret position
     ;else
       nil))
 
