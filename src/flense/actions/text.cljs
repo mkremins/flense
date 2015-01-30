@@ -32,7 +32,8 @@
       (if (< pos (last-caret-pos loc))
         (z/edit loc move-caret-by 1)
         (z/edit loc move-caret-to 0))
-      loc)))
+      (let [{:keys [range-start range-end]} (z/node loc)]
+        (z/edit loc move-caret-to (max range-start range-end))))))
 
 (defn prev-char [loc]
   (when (m/editing? loc)
@@ -40,7 +41,8 @@
       (if (pos? pos)
         (z/edit loc move-caret-by -1)
         (z/edit loc move-caret-to (last-caret-pos loc)))
-      loc)))
+      (let [{:keys [range-start range-end]} (z/node loc)]
+        (z/edit loc move-caret-to (min range-start range-end))))))
 
 (defn delete [loc]
   (condp #(%1 %2) loc
