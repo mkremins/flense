@@ -5,9 +5,22 @@
 }
 
 .flense .selected.atom,
-.flense .selected.delimiter:not(.editing),
-.flense .stringlike.editing .selected {
+.flense .selected.delimiter:not(.editing) {
   background: rgb(170,203,249);
+}
+
+@-webkit-keyframes blink-caret {
+  50% { border-color: white; }
+}
+
+.flense .editing .caret-before {
+  -webkit-animation: blink-caret .5s step-end infinite alternate;
+  border-left: 1px solid #aaa;
+}
+
+.flense .editing .caret-after {
+  -webkit-animation: blink-caret .5s step-end infinite alternate;
+  border-right: 1px solid #aaa;
 }
 
 .flense .keyword {

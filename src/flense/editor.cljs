@@ -36,10 +36,14 @@
                              (:editing? form) (str " editing")
                              (:selected? form) (str " selected"))
               :style {:max-width (str (/ (:max-width form) 2) "rem")}}
-      (for [i (range (count (:text form)))]
-        (dom/span {:class (when (= i (:char-idx form)) "selected")
-                   :on-click #((:nav-cb opts) (:path @form) i)}
-          (nth (:text form) i))))))
+      (let [{:keys [caret-pos text]} form
+            len (count text)]
+        (for [i (range len)]
+          (dom/span {:class (cond (= i caret-pos) "caret-before"
+                                  (and (= i (dec len)) (= caret-pos len)) "caret-after"
+                                  :else "")
+                     :on-click #((:nav-cb opts) (:path @form) (inc i))}
+            (nth text i)))))))
 
 (defcomponent delimiter [token owner opts]
   (render [_]
@@ -79,7 +83,7 @@
       ([path idx]
         (om/transact! document []
           #(-> % (z/dissoc :editing?) (assoc :path path)
-                 (z/assoc :editing? true :char-idx idx))))))
+                 (z/assoc :editing? true :caret-pos idx))))))
 
 (defcomponent editor [document owner opts]
   (render [_]
