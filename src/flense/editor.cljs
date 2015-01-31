@@ -37,14 +37,13 @@
                              (:selected? form) (str " selected"))
               :style {:max-width (str (/ (:max-width form) 2) "rem")}}
       (let [{start :range-start, end :range-end, :keys [text]} form
-            [start end] [(min start end) (max start end)]
             pos (when (= start end) start)
             len (count text)]
         (for [i (range len)]
           (dom/span {:class (str "char "
                                  (cond (= i pos) "caret-before"
                                        (and (= i (dec len)) (= pos len)) "caret-after"
-                                       (and (not pos) (<= start i end)) "in-range"))
+                                       (and (not pos) (<= start i (dec end))) "in-range"))
                      :on-click #((:nav-cb opts) (:path @form) i)}
             (nth text i)))))))
 

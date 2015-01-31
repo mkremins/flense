@@ -1,6 +1,7 @@
 (ns flense.actions.text
   (:require [flense.actions.completions :as completions]
             [flense.model :as m]
+            [flense.util :refer [exchange]]
             [xyzzy.core :as z]))
 
 (def ^:private last-caret-pos
@@ -11,38 +12,47 @@
     (when (= range-start range-end) range-start)))
 
 (defn- move-caret-to [node pos]
-  (assoc node :range-start pos :range-end pos))
+  (-> node (assoc :range-start pos :range-end pos) (dissoc :range-direction)))
 
 (defn- move-caret-by [node offset]
   (-> node (move-caret-to (+ (caret-pos node) offset))))
+
+(defn- normalize-range [{start :range-start, end :range-end :as node}]
+  (cond-> node (< end start) (exchange :range-start :range-end)
+               (caret-pos node) (dissoc :range-direction)))
+
+(defn adjust-range-left [loc]
+  (when (m/editing? loc)
+    (let [node (z/node loc)]
+      (cond (= (:range-direction node) :right)
+              (-> loc (z/update :range-end dec) (z/edit normalize-range))
+            (pos? (:range-start node))
+              (-> loc (z/update :range-start dec)
+                      (z/assoc :range-direction :left)
+                      (z/edit normalize-range))
+            :else loc))))
+
+(defn adjust-range-right [loc]
+  (when (m/editing? loc)
+    (let [node (z/node loc)]
+      (cond (= (:range-direction node) :left)
+              (-> loc (z/update :range-start inc) (z/edit normalize-range))
+            (< (:range-end node) (last-caret-pos node))
+              (-> loc (z/update :range-end inc)
+                      (z/assoc :range-direction :right)
+                      (z/edit normalize-range))
+            :else loc))))
 
 (defn begin-editing [loc]
   (when (and (m/stringlike? loc) (not (m/editing? loc)))
     (let [end (last-caret-pos loc)
           start (if (m/placeholder? loc) 0 end)]
-      (z/assoc loc :editing? true :range-start start :range-end end))))
+      (z/assoc loc :editing? true :range-start start :range-end end
+                   :range-direction (when (> end start) :right)))))
 
 (defn cease-editing [loc]
   (when (m/editing? loc)
-    (z/dissoc loc :editing? :range-start :range-end)))
-
-(defn next-char [loc]
-  (when (m/editing? loc)
-    (if-let [pos (caret-pos loc)]
-      (if (< pos (last-caret-pos loc))
-        (z/edit loc move-caret-by 1)
-        (z/edit loc move-caret-to 0))
-      (let [{:keys [range-start range-end]} (z/node loc)]
-        (z/edit loc move-caret-to (max range-start range-end))))))
-
-(defn prev-char [loc]
-  (when (m/editing? loc)
-    (if-let [pos (caret-pos loc)]
-      (if (pos? pos)
-        (z/edit loc move-caret-by -1)
-        (z/edit loc move-caret-to (last-caret-pos loc)))
-      (let [{:keys [range-start range-end]} (z/node loc)]
-        (z/edit loc move-caret-to (min range-start range-end))))))
+    (z/dissoc loc :editing? :range-start :range-end :range-direction)))
 
 (defn delete [loc]
   (condp #(%1 %2) loc
@@ -77,6 +87,22 @@
                                  ; then insert at the new caret position
     ;else
       nil))
+
+(defn move-caret-left [loc]
+  (when (m/editing? loc)
+    (if-let [pos (caret-pos loc)]
+      (if (pos? pos)
+        (z/edit loc move-caret-by -1)
+        (z/edit loc move-caret-to (last-caret-pos loc)))
+      (z/edit loc move-caret-to (:range-start (z/node loc))))))
+
+(defn move-caret-right [loc]
+  (when (m/editing? loc)
+    (if-let [pos (caret-pos loc)]
+      (if (< pos (last-caret-pos loc))
+        (z/edit loc move-caret-by 1)
+        (z/edit loc move-caret-to 0))
+      (z/edit loc move-caret-to (:range-end (z/node loc))))))
 
 (defn wrap-string [loc]
   (when (m/atom? loc)
