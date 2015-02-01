@@ -21,6 +21,25 @@
   (cond-> node (< end start) (exchange :range-start :range-end)
                (caret-pos node) (dissoc :range-direction)))
 
+(def ^:private alphanumeric?
+  (partial re-matches #"\w"))
+
+(defn- find-word-boundary-left [{:keys [range-start text]}]
+  (or (->> (range (dec range-start) -1 -1)
+           (map (juxt identity #(nth text %)))
+           (drop-while (comp (complement alphanumeric?) second))
+           (take-while (comp alphanumeric? second))
+           last first)
+      0))
+
+(defn- find-word-boundary-right [{:keys [range-end text]}]
+  (or (->> (range range-end (count text))
+           (map (juxt identity #(nth text %)))
+           (drop-while (comp (complement alphanumeric?) second))
+           (drop-while (comp alphanumeric? second))
+           ffirst)
+      (count text)))
+
 (defn adjust-range-left [loc]
   (when (m/editing? loc)
     (let [node (z/node loc)]
@@ -103,6 +122,14 @@
         (z/edit loc move-caret-by 1)
         (z/edit loc move-caret-to 0))
       (z/edit loc move-caret-to (:range-end (z/node loc))))))
+
+(defn move-caret-left-by-word [loc]
+  (when (m/editing? loc)
+    (z/edit loc move-caret-to (find-word-boundary-left (z/node loc)))))
+
+(defn move-caret-right-by-word [loc]
+  (when (m/editing? loc)
+    (z/edit loc move-caret-to (find-word-boundary-right (z/node loc)))))
 
 (defn wrap-string [loc]
   (when (m/atom? loc)
