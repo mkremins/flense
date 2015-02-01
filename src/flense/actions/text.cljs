@@ -17,6 +17,12 @@
 (defn- move-caret-by [node offset]
   (-> node (move-caret-to (+ (caret-pos node) offset))))
 
+(defn- collapse-range-left [node]
+  (-> node (move-caret-to (:range-start node))))
+
+(defn- collapse-range-right [node]
+  (-> node (move-caret-to (:range-end node))))
+
 (defn- normalize-range [{start :range-start, end :range-end :as node}]
   (cond-> node (< end start) (exchange :range-start :range-end)
                (caret-pos node) (dissoc :range-direction)))
@@ -63,6 +69,30 @@
                       (z/assoc :range-direction :right)
                       (z/edit normalize-range))
             :else loc))))
+
+(defn adjust-range-left-by-word [loc]
+  (when (m/editing? loc)
+    (let [node (z/node loc)]
+      (if (= (:range-direction node) :right)
+        (let [end (-> node collapse-range-right find-word-boundary-left)]
+          (if (<= end (:range-start node))
+            (z/edit loc collapse-range-left)
+            (z/assoc loc :range-end end)))
+        (-> loc (z/assoc :range-start (find-word-boundary-left node)
+                         :range-direction :left)
+                (z/edit normalize-range))))))
+
+(defn adjust-range-right-by-word [loc]
+  (when (m/editing? loc)
+    (let [node (z/node loc)]
+      (if (= (:range-direction node) :left)
+        (let [start (-> node collapse-range-left find-word-boundary-right)]
+          (if (>= start (:range-end node))
+            (z/edit loc collapse-range-right)
+            (z/assoc loc :range-start start)))
+        (-> loc (z/assoc :range-end (find-word-boundary-right node)
+                         :range-direction :right)
+                (z/edit normalize-range))))))
 
 (defn begin-editing [loc]
   (when (and (m/stringlike? loc) (not (m/editing? loc)))
@@ -115,7 +145,7 @@
       (if (pos? pos)
         (z/edit loc move-caret-by -1)
         (z/edit loc move-caret-to (last-caret-pos loc)))
-      (z/edit loc move-caret-to (:range-start (z/node loc))))))
+      (z/edit loc collapse-range-left))))
 
 (defn move-caret-right [loc]
   (when (m/editing? loc)
@@ -123,7 +153,7 @@
       (if (< pos (last-caret-pos loc))
         (z/edit loc move-caret-by 1)
         (z/edit loc move-caret-to 0))
-      (z/edit loc move-caret-to (:range-end (z/node loc))))))
+      (z/edit loc collapse-range-right))))
 
 (defn move-caret-left-by-word [loc]
   (when (m/editing? loc)
