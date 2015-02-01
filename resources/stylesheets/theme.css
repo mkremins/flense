@@ -11,17 +11,19 @@
 }
 
 @-webkit-keyframes blink-caret {
-  50% { border-color: white; }
+  50% { border-color: transparent; }
 }
 
 .flense .editing .char.caret-before {
   -webkit-animation: blink-caret .5s step-end infinite alternate;
   border-left: 1px solid #aaa;
+  margin-left: -1px;
 }
 
 .flense .editing .char.caret-after {
   -webkit-animation: blink-caret .5s step-end infinite alternate;
   border-right: 1px solid #aaa;
+  margin-right: -1px;
 }
 
 .flense .keyword {
