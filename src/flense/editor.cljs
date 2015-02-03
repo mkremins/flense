@@ -79,7 +79,20 @@
             (update :tree model/annotate-paths))
         loc))))
 
-(defn- nav-cb [document]
+(defn- nav-cb
+  "Given an Om cursor to a `document` (an xyzzy zipper over a Clojure parse
+  tree), returns a navigation callback – a function of one or two arguments
+  that, when invoked, will make the editor focus on a particular node.
+
+  The first argument to the navigation callback should be the `path` to the
+  node on which you want to focus. The second argument is an optional index
+  into the text contents of a stringlike node; if specified, the text editing
+  caret will be placed at this `pos` (i.e. position) after the focus is moved.
+
+  Note: navigation callbacks use `om.core/transact!` to mutate the `document`
+  cursors from which they were created. The `nav-cb` function should thus be
+  considered a necessary evil rather than a well-designed part of the API."
+  [document]
   (fn ([path]
         (om/transact! document []
           #(-> % (z/dissoc :editing?) (assoc :path path))))
