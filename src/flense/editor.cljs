@@ -72,11 +72,12 @@
   editor state using `om.core/transact!` or `cljs.core/swap!`."
   [action]
   (fn [loc]
-    (if-let [loc' (action loc)]
-      (cond-> loc' (not (#{hist/redo hist/undo} action)) (hist/save loc)
-                   :always completions/update-completions
-                   :always (update :tree model/annotate-paths))
-      loc)))
+    (let [loc' (action loc)]
+      (if (and loc' (not= loc' loc))
+        (-> (cond-> loc' (not (#{hist/redo hist/undo} action)) (hist/save loc))
+            completions/update-completions
+            (update :tree model/annotate-paths))
+        loc))))
 
 (defn- nav-cb [document]
   (fn ([path]
