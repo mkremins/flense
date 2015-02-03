@@ -1,4 +1,8 @@
 (ns flense.editor
+  "Defines the top-level `editor` Om component and a number of subcomponents
+  that are used to render various parts of the UI. Also defines the `perform`
+  helper function, which is used to wrap functions that describe user actions
+  before they are used to update the editor state."
   (:require [clojure.string :as str]
             [flense.actions.completions :as completions]
             [flense.actions.history :as hist]
