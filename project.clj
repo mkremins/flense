@@ -7,7 +7,7 @@
 
   :dependencies
   [[org.clojure/clojure "1.6.0" :scope "provided"]
-   [org.clojure/clojurescript "0.0-2727" :scope "provided"]
-   [org.omcljs/om "0.8.4" :scope "provided"]
-   [prismatic/om-tools "0.3.10" :scope "provided"]
+   [org.clojure/clojurescript "0.0-3126" :scope "provided"]
+   [org.omcljs/om "0.8.8" :scope "provided"]
+   [prismatic/om-tools "0.3.11" :scope "provided"]
    [mkremins/xyzzy "0.3.3"]])
