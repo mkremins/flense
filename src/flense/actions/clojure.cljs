@@ -39,12 +39,7 @@
 (defn collapse-macro [loc]
   (z/edit loc :collapsed-form))
 
-;; jump to definition
-
-(defn- find-def-form [loc sym-name]
-  (z/find-next-node loc
-    (every-pred m/deflike? (comp #{sym-name} :text second :children))
-    z/next))
+;; find introduction of binding symbol
 
 (defn- bsym-locs [loc]
   (case (:type (z/node loc))
@@ -70,11 +65,48 @@
       (recur loc' (concat locs (binding-locs loc')))
       locs)))
 
-(defn jump-to-definition [loc]
+(defn find-scoped-declaration [loc sym-name]
+  (loop [loc loc]
+    ;; TODO doesn't work under certain shadowing conditions
+    (when-let [loc' (z/up loc)]
+      (or (seek (m/symbol-named? sym-name) (binding-locs loc))
+          (recur loc')))))
+
+(defn find-var-definition [loc var-name]
+  (z/find-next-node
+    (z/top loc)
+    (every-pred m/deflike? (comp (m/symbol-named? var-name) second :children))
+    z/next))
+
+(defn find-introduction [loc]
   (when (m/symbol? loc)
     (let [sym-name (:text (z/node loc))]
-      (loop [loc loc]
-        (if-let [loc' (z/up loc)]
-          (or (seek #(= (:text (z/node %)) sym-name) (binding-locs loc))
-              (recur loc'))
-          (some-> (find-def-form loc sym-name) z/down z/right))))))
+      (or (find-scoped-declaration loc sym-name)
+          (some-> loc (find-var-definition sym-name) z/down z/right)))))
+
+;; rename binding symbol
+
+(defn enclosing-scope
+  "Returns the first loc above `loc` at which a new lexical scope is
+  introduced, or nil if no such loc exists."
+  [loc]
+  (z/find-next-node loc m/lexical-scope? z/up))
+
+(defn find-references
+  "Returns a seq of locs that refer to the same binding as the binding symbol
+  at `loc`. Obeys scoping rules."
+  [loc]
+  (let [loc (find-introduction loc)]
+    ;; TODO probably doesn't work for top-level defs
+    (some->> loc enclosing-scope z/descendants
+             (filter (m/symbol-named? (:text (z/node loc))))
+             (filter #(= (:path (find-introduction %)) (:path loc))))))
+
+(defn rename-symbol
+  "Renames the binding symbol at `loc` to `new-name`. Obeys scoping rules."
+  [loc new-name]
+  (let [new-sym (m/string->atom new-name)]
+    (-> (reduce (fn [loc ref-path]
+                  (z/replace (assoc loc :path ref-path) new-sym))
+                loc (map :path (find-references loc)))
+        (assoc :path (:path loc)))))

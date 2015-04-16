@@ -10,4 +10,4 @@
    [org.clojure/clojurescript "0.0-3126" :scope "provided"]
    [org.omcljs/om "0.8.8" :scope "provided"]
    [prismatic/om-tools "0.3.11" :scope "provided"]
-   [mkremins/xyzzy "0.3.3"]])
+   [mkremins/xyzzy "0.3.4"]])

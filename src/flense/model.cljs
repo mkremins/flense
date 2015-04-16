@@ -35,6 +35,10 @@
 
 (def editing? (every-pred stringlike? (comp :editing? unwrap)))
 
+(defn symbol-named?
+  ([name] (partial symbol-named? name))
+  ([name m] (= (:text (unwrap m)) name)))
+
 (defn deflike? [m]
   (let [{[head sym] :children :as node} (unwrap m)]
     (and (seq? node)
@@ -55,6 +59,8 @@
          (#{"binding" "doseq" "for" "if-let" "if-some" "let" "loop"
             "when-first" "when-let" "when-some"} (:text head))
          (vec? bvec))))
+
+(def lexical-scope? (some-fn fnlike? fnlike-method? letlike?))
 
 (defn find-placeholder [loc direction]
   (z/find-next loc placeholder? direction))
