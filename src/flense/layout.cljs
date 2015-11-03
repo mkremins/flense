@@ -2,8 +2,7 @@
   (:refer-clojure :exclude [chars])
   (:require [flense.model :as model]))
 
-;; render forms to tokens
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; render forms to tokens
 
 (def ^:dynamic *line-length*)
 
@@ -51,26 +50,37 @@
     ;else
       [form]))
 
-;; lay out tokens across multiple lines
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; lay out tokens across multiple lines
+
+(defn head-symbol [form]
+  (when (and (#{:fn :seq} (:type form))
+               (= (:type (first (:children form))) :symbol))
+    (symbol (get-in form [:children 0 :text]))))
+
+(def always-multiline
+  '#{binding definline definterface defmacro defmethod defn defn- defonce
+     defprotocol defrecord defstruct deftype do doseq dotimes extend
+     extend-protocol extend-type for let loop proxy reify specify specify!})
+
+(defn always-multiline? [form]
+  (or (contains? always-multiline (head-symbol form))
+      (some always-multiline? (:children form))))
 
 (defn close-off [lines closer]
   (conj (pop lines) (concat (peek lines) closer)))
 
 (defn fits-on-line? [line form]
-  (<= (apply + (chars form) 1 (map chars line)) *line-length*))
+  (and (<= (apply + (chars form) 1 (map chars line)) *line-length*)
+       (not (always-multiline? form))))
 
 (defn fits-on-own-line? [form]
-  (<= (chars form) *line-length*))
+  (and (<= (chars form) *line-length*)
+       (not (always-multiline? form))))
 
 (defn has-content? [line]
   (not-every? #(contains? (:classes %) :spacer) line))
 
-(defmulti ->lines*
-  (fn [form]
-    (when (and (#{:fn :seq} (:type form))
-               (= (:type (first (:children form))) :symbol))
-      (symbol (get-in form [:children 0 :text])))))
+(defmulti ->lines* head-symbol)
 
 (declare ->lines)
 
@@ -110,19 +120,19 @@
       (if-let [child (first children)]
         (cond
           (fits-on-line? line child) ; append child to current line
-          (let [line (cond-> line (has-content? line) (concat (spacer)))]
-            (recur lines
-                   (concat line (->tokens child))
-                   (rest children)))
+            (let [line (cond-> line (has-content? line) (concat (spacer)))]
+              (recur lines
+                     (concat line (->tokens child))
+                     (rest children)))
           (fits-on-own-line? child) ; insert a new line containing child
-          (recur (conj lines line)
-                 (concat indent (->tokens child))
-                 (rest children))
+            (recur (conj lines line)
+                   (concat indent (->tokens child))
+                   (rest children))
           :else ; split child across multiple lines and insert them all
-          (let [lines (cond-> lines (has-content? line) (conj line))]
-            (recur (vec (concat lines (map #(concat indent %) (->lines child))))
-                   (if (rest children) indent ())
-                   (rest children))))
+            (let [lines (cond-> lines (has-content? line) (conj line))]
+              (recur (vec (concat lines (map #(concat indent %) (->lines child))))
+                     (if (rest children) indent ())
+                     (rest children))))
         (if (has-content? line)
           (conj lines (concat line (closer form)))
           (close-off lines (closer form)))))))
@@ -138,8 +148,7 @@
           (:fn :seq) (->lines* (annotate-head form))
           (:vec :set) (->lines* form))))))
 
-;; lay out clojure.core macros
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; lay out clojure.core macros
 
 ;; simple "header+body" layout is good enough for most core macros
 
