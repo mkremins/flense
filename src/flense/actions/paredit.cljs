@@ -104,7 +104,8 @@
       (-> loc z/up (z/update :children exchange i j) (z/child j)))))
 
 (defn- wrap-type [type loc]
-  (z/down (z/edit loc #(-> {:type type :children [%]}))))
+  (when (z/up loc)
+    (z/down (z/edit loc #(-> {:type type :children [%]})))))
 
 (def wrap-map (partial wrap-type :map))
 (def wrap-seq (partial wrap-type :seq))
