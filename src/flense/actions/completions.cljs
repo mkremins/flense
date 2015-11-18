@@ -41,12 +41,18 @@
     "when"      (when ... ...)
     "when-let"  (when-let [... ...] ...)})
 
+(defn should-have-completions? [loc]
+  (and (m/atom? loc)
+       (not (and (m/deflike? (z/up loc))
+                 (z/left loc)
+                 (not (z/left (z/left loc)))))))
+
 (defn completions
   "Given a location `loc`, returns a seq of completions that might be inserted
   at that location. Each completion is a tuple `[type form]`, where `type` is a
   keyword naming the type of thing to insert and `form` is a Clojure form."
   [loc]
-  (when (m/atom? loc)
+  (when (should-have-completions? loc)
     (if (m/placeholder? loc)
       (concat (map #(-> [:local (symbol %)]) (take 3 (local-names loc)))
               (map #(-> [:core %]) '[fn if let loop when]))
