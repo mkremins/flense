@@ -41,15 +41,6 @@
     "when"      (when ... ...)
     "when-let"  (when-let [... ...] ...)})
 
-(defn similarity
-  "Naïve string similarity algorithm. Returns the length of the longest prefix
-  shared by `s1` and `s2`. Should probably be replaced by something better at
-  some point in the future."
-  [s1 s2]
-  (cond (= s1 s2) (count s1)
-        (= (first s1) (first s2)) (inc (similarity (rest s1) (rest s2)))
-        :else 0))
-
 (defn completions
   "Given a location `loc`, returns a seq of completions that might be inserted
   at that location. Each completion is a tuple `[type form]`, where `type` is a
@@ -60,9 +51,13 @@
       (concat (map #(-> [:local (symbol %)]) (take 3 (local-names loc)))
               (map #(-> [:core %]) '[fn if let loop when]))
       (let [text (:text (z/node loc))
-            best-of #(->> (map (juxt identity (partial similarity text)) %)
-                          (filter (comp pos? second)) (sort-by second >)
-                          (map first) (take 3))]
+            best-of (fn [names]
+                      (->> (remove #{text} names)
+                           (map (juxt identity #(.indexOf % text)))
+                           (remove #(= (second %) -1))
+                           (sort-by second)
+                           (map first)
+                           (take 3)))]
         (concat (when-let [template (templates text)] [[:template template]])
                 (map #(-> [:local (symbol %)]) (best-of (local-names loc)))
                 (map #(-> [:core (symbol %)]) (best-of (keys templates))))))))
