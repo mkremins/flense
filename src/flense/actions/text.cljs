@@ -1,6 +1,5 @@
 (ns flense.actions.text
-  (:require [flense.actions.completions :as completions]
-            [flense.model :as m]
+  (:require [flense.model :as m]
             [flense.util :refer [exchange]]
             [xyzzy.core :as z]))
 
