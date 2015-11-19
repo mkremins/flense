@@ -4,8 +4,7 @@ To embed a Flense editor component in your own project, you'll need to do a litt
 
 ```clojure
 (ns foo.bar
-  (:require [cljs.core.async :as async]
-            [flense.editor :as flense]
+  (:require [flense.editor :as flense]
             [flense.model :refer [forms->document]]
             [om.core :as om]))
 
@@ -17,7 +16,7 @@ To embed a Flense editor component in your own project, you'll need to do a litt
 
 ```clojure
 (om/root flense/editor app-state
-  {:target (.getElementById js/document "flense")
+  {:target (js/document.getElementById "flense")
    :opts {:line-length 72}})
 ```
 
